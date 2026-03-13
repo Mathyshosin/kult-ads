@@ -35,9 +35,29 @@ export default function AnalyzePage() {
     }
   }, [brandAnalysis]);
 
+  // Normalize URL for comparison
+  function normalizeUrl(u: string): string {
+    let normalized = u.trim().toLowerCase();
+    if (!normalized.startsWith("http")) normalized = "https://" + normalized;
+    // Remove trailing slash
+    normalized = normalized.replace(/\/+$/, "");
+    return normalized;
+  }
+
+  // Check if the entered URL matches the existing analysis
+  const isSameUrl =
+    hasExistingAnalysis &&
+    normalizeUrl(url) === normalizeUrl(brandAnalysis.url);
+
   async function handleAnalyze(e: React.FormEvent) {
     e.preventDefault();
     if (!url.trim()) return;
+
+    // If same URL already analyzed, skip API calls and go straight to review
+    if (isSameUrl) {
+      router.push("/dashboard/review");
+      return;
+    }
 
     setError("");
     setPhase(0);
@@ -204,8 +224,10 @@ export default function AnalyzePage() {
               type="submit"
               className="w-full bg-primary text-white py-3.5 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
             >
-              {hasExistingAnalysis
-                ? "Re-analyser ce site"
+              {isSameUrl
+                ? "Continuer avec les données existantes"
+                : hasExistingAnalysis
+                ? "Analyser ce nouveau site"
                 : "Analyser le site"}
             </button>
           )}
