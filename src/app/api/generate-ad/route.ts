@@ -9,7 +9,7 @@ const CONVERSION_ANGLES = [
     id: "fomo",
     label: "FOMO / Urgency",
     visualDirection:
-      "Create urgency — use bold, attention-grabbing composition. Dramatic lighting, close-up of the product as if it's about to sell out. High contrast, energetic feel.",
+      "MOOD: Urgency & scarcity. Use dramatic studio lighting with high contrast. Dark or bold background that creates tension. The product is lit with a spotlight effect as if it's the last one available. Subtle motion blur or dynamic angle to create energy.",
     copyDirection:
       "Utilise l'urgence et la rareté (stock limité, dernière chance, offre qui expire). Crée un sentiment de FOMO.",
   },
@@ -17,7 +17,7 @@ const CONVERSION_ANGLES = [
     id: "promo",
     label: "Promo / Offer",
     visualDirection:
-      "Promotional feel — the product should look like an incredible deal. Bright, vibrant colors, festive/sale atmosphere. The product is the star surrounded by visual cues of value.",
+      "MOOD: Celebration & value. Bright, clean background (white, soft gradient, or brand color). The product is perfectly centered with professional e-commerce lighting. Festive but elegant atmosphere — confetti, sparkles or geometric shapes in the background. Premium sale vibes.",
     copyDirection:
       "Mets en avant l'offre promotionnelle, le prix barré, le pourcentage de réduction. Rends l'offre irrésistible.",
   },
@@ -25,7 +25,7 @@ const CONVERSION_ANGLES = [
     id: "benefits",
     label: "Product Benefits",
     visualDirection:
-      "Feature-focused — show the product in a way that highlights its quality and key features. Clean, editorial style. Detailed product shot with beautiful lighting that makes every detail visible.",
+      "MOOD: Clean & editorial. Minimalist white or neutral background. The product shot like a high-end magazine editorial — perfect lighting, every detail visible. Clean composition with lots of breathing room. Think Apple-style product photography.",
     copyDirection:
       "Mets en avant les bénéfices concrets du produit. Qu'est-ce que le client gagne ? Résous un problème. Sois spécifique.",
   },
@@ -33,7 +33,7 @@ const CONVERSION_ANGLES = [
     id: "social-proof",
     label: "Social Proof",
     visualDirection:
-      "Trust and popularity — show the product in a way that suggests many people love it. Warm, inviting composition. The product should look established, trusted, and popular. Lifestyle context with human element.",
+      "MOOD: Warm & trustworthy. Soft, warm lighting. The product in a real-life context — on a table, held by hands, in a cozy environment. Lifestyle photography feel with natural light. The product looks loved and well-used. Warm color temperature.",
     copyDirection:
       "Utilise la preuve sociale : avis clients, nombre de ventes, satisfaction. Montre que d'autres font confiance à ce produit.",
   },
@@ -41,7 +41,7 @@ const CONVERSION_ANGLES = [
     id: "before-after",
     label: "Before / After",
     visualDirection:
-      "Transformation visual — show the product as a solution. Split composition or dramatic reveal. Before: dull/problematic. After: vibrant/solved with the product as the hero. Strong visual contrast.",
+      "MOOD: Contrast & transformation. Split composition or strong visual contrast. One side muted/grey/dull (the problem), the other side vibrant/colorful (the solution with the product). The product bridges the gap as the hero element. Dramatic difference between both sides.",
     copyDirection:
       "Montre la transformation avant/après. Le problème sans le produit vs la solution avec. Contraste fort.",
   },
@@ -49,7 +49,7 @@ const CONVERSION_ANGLES = [
     id: "lifestyle",
     label: "Lifestyle / Aspiration",
     visualDirection:
-      "Aspirational lifestyle — show the product in a dream scenario. Beautiful setting, warm golden light, the product integrated into an ideal life. Make the viewer want this lifestyle.",
+      "MOOD: Aspirational & dreamy. Beautiful real-world setting — luxury interior, nature, travel destination. Golden hour lighting, soft bokeh. The product is naturally integrated into this aspirational scene. Makes the viewer desire this lifestyle. Cinematic color grading.",
     copyDirection:
       "Vends le lifestyle, pas juste le produit. Projette le client dans une vie meilleure grâce au produit. Émotionnel et aspirationnel.",
   },
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: "STYLE TEMPLATE - Use this as visual style reference ONLY",
+        label: "STYLE TEMPLATE - Copy the BACKGROUND STYLE and LAYOUT only",
       });
 
       if (productImageBase64) {
@@ -107,81 +107,100 @@ export async function POST(request: Request) {
           base64: productImageBase64,
           mimeType: productImageMimeType || "image/png",
           label:
-            "CLIENT PRODUCT PHOTO - This is the actual product to feature",
+            "CLIENT PRODUCT PHOTO - Place this EXACT product in the ad WITHOUT any modification",
         });
       }
 
-      visualPrompt = `You are an elite advertising designer specialized in high-converting social media ads.
+      visualPrompt = `You are a professional product photographer creating ultra-realistic advertising images.
 
-TASK: Create a NEW ad that combines the STYLE of the template with the CLIENT'S PRODUCT, optimized for the "${angle.label}" conversion angle.
+YOUR GOAL: Create a PHOTOREALISTIC product ad by placing the client's product (from the second image) into a new background inspired by the template's style (first image).
 
-STYLE TEMPLATE (first image):
-- Use this ONLY as a style/layout reference
-- Copy the visual style: background style, color palette, composition, lighting mood, decorative elements
-- DO NOT copy the product shown in the template — it is NOT the client's product
-- DO NOT reproduce the template exactly — create something NEW inspired by it
+═══ ABSOLUTE RULE — PRODUCT INTEGRITY ═══
+The product in the second image MUST appear EXACTLY as-is in the final image.
+- NEVER add anything to the product (no ribbons, no bows, no stickers, no tags, no accessories, no decorations)
+- NEVER change the product's color, shape, texture, or proportions
+- NEVER add text, watermarks, stamps, badges, or labels ON the product
+- NEVER modify the product in ANY way — treat it as a sacred, untouchable element
+- Simply PLACE the product as-is onto the new background
+- The product should look like it was professionally photographed in this new setting
 
-CLIENT'S PRODUCT (second image if provided):
-- Product name: ${product.name}
-- Description: ${product.description}
-- This is the ACTUAL product that MUST appear prominently in the ad
-- If no product photo is provided, create a realistic representation of: ${product.name}
+═══ STYLE REFERENCE (first image) ═══
+Look at the template image and take inspiration from:
+- The background style, colors, and mood
+- The overall composition and layout
+- The lighting direction and atmosphere
+Do NOT copy the template's product — only its visual environment.
 
-BRAND INFO:
+═══ PHOTOREALISM REQUIREMENTS ═══
+- The final image MUST look like a real photograph, NOT an illustration or cartoon
+- Use realistic lighting, shadows, and reflections consistent with the scene
+- Professional studio/advertising photography quality
+- Real textures, real materials, real physics
+- If you see the product has a specific finish (matte, glossy, fabric, etc.), preserve it exactly
+- Natural color grading — no oversaturated or fantasy colors
+
+═══ SCENE SETUP ═══
+- Product: ${product.name} — ${product.description}
 - Brand: ${brandAnalysis.brandName}
-- Brand colors: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "use colors from the style template"}
+- Brand colors for the BACKGROUND only: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "use colors from the style template"}
 - Tone: ${brandAnalysis.tone || "professional"}
-- Target audience: ${brandAnalysis.targetAudience || "general consumer"}
-${offer ? `\nPROMOTION: ${offer.title} — ${offer.description}` : ""}
+${offer ? `- Promotion context: ${offer.title}` : ""}
 
-CONVERSION ANGLE — "${angle.label}":
+═══ CONVERSION ANGLE — "${angle.label}" ═══
 ${angle.visualDirection}
 
-CRITICAL RULES:
-1. The client's product (${product.name}) MUST be the hero/center of the image
-2. Use the template's visual STYLE (backgrounds, mood, layout) but with the client's product
-3. Apply the "${angle.label}" conversion angle to the visual composition
-4. Make it look like a REAL, polished social media ad that drives clicks
-5. DO NOT include any text, letters, words, or numbers in the image — text is added separately
-6. Aspect ratio: ${aspectRatio}
-7. Professional advertising photography quality
-8. This MUST look DIFFERENT from other ads — unique composition for this angle`;
+═══ FINAL CHECKLIST ═══
+1. The product is IDENTICAL to the client's photo — nothing added, nothing changed
+2. The image looks like a REAL PHOTOGRAPH (not illustration, not cartoon, not 3D render)
+3. NO text, letters, words, numbers, or symbols anywhere in the image
+4. Aspect ratio: ${aspectRatio}
+5. The background and mood match the "${angle.label}" conversion angle
+6. Professional advertising photography that could run on Instagram/Facebook`;
     } else {
       // ── FREE-FORM GENERATION ──
       if (productImageBase64) {
         referenceImages.push({
           base64: productImageBase64,
           mimeType: productImageMimeType || "image/png",
-          label: "PRODUCT PHOTO - Feature this product in the ad",
+          label: "CLIENT PRODUCT PHOTO - Place this EXACT product in the ad WITHOUT any modification",
         });
       }
 
-      visualPrompt = `You are an elite advertising designer specialized in high-converting social media ads.
+      visualPrompt = `You are a professional product photographer creating ultra-realistic advertising images.
 
-TASK: Create a stunning ad for the "${angle.label}" conversion angle.
+YOUR GOAL: Create a PHOTOREALISTIC product advertisement image.
 
-PRODUCT:
-- Name: ${product.name}
-- Description: ${product.description}
-- The product MUST be the central focus of the image
+═══ ABSOLUTE RULE — PRODUCT INTEGRITY ═══
+If a product photo is provided, it MUST appear EXACTLY as-is in the final image.
+- NEVER add anything to the product (no ribbons, no bows, no stickers, no tags, no accessories)
+- NEVER change the product's color, shape, texture, or proportions
+- NEVER add text, watermarks, stamps, or labels ON the product
+- Simply PLACE the product as-is onto a beautiful advertising background
 
-BRAND:
+═══ PHOTOREALISM REQUIREMENTS ═══
+- The final image MUST look like a real photograph taken by a professional photographer
+- NOT an illustration, NOT a cartoon, NOT a 3D render, NOT digital art
+- Real lighting with natural shadows and reflections
+- Real textures and materials
+- Professional studio or on-location advertising photography
+
+═══ SCENE SETUP ═══
+- Product: ${product.name} — ${product.description}
 - Brand: ${brandAnalysis.brandName}
-- Brand colors: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "use modern, appealing colors"}
+- Brand colors for BACKGROUND: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "use modern, appealing colors"}
 - Tone: ${brandAnalysis.tone || "professional"}
-- Target audience: ${brandAnalysis.targetAudience || "general consumer"}
-${offer ? `\nPROMOTION: ${offer.title} — ${offer.description}` : ""}
+${offer ? `- Promotion context: ${offer.title}` : ""}
 
-CONVERSION ANGLE — "${angle.label}":
+═══ CONVERSION ANGLE — "${angle.label}" ═══
 ${angle.visualDirection}
 
-CRITICAL RULES:
-1. DO NOT include any text, letters, words, or numbers in the image
-2. Aspect ratio: ${aspectRatio}
-3. The product must be clearly visible and prominent
-4. Professional advertising photography quality
-5. Optimized for stopping the scroll on social media
-6. This MUST look DIFFERENT from other ads — unique composition for this angle`;
+═══ FINAL CHECKLIST ═══
+1. Product is IDENTICAL to the provided photo — nothing added, nothing changed
+2. Image looks like a REAL PHOTOGRAPH
+3. NO text, letters, words, numbers, or symbols anywhere
+4. Aspect ratio: ${aspectRatio}
+5. Background mood matches "${angle.label}" angle
+6. Professional quality ready for Instagram/Facebook ads`;
     }
 
     // Run copy and visual generation in parallel
