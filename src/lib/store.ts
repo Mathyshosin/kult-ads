@@ -148,7 +148,7 @@ export const useWizardStore = create<WizardState>()(
       name: "kult-ads-wizard",
       storage: createJSONStorage(() =>
         typeof window !== "undefined"
-          ? sessionStorage
+          ? localStorage
           : {
               getItem: () => null,
               setItem: () => {},
@@ -158,7 +158,8 @@ export const useWizardStore = create<WizardState>()(
       partialize: (state) => ({
         currentStep: state.currentStep,
         brandAnalysis: state.brandAnalysis,
-        // Don't persist images/ads - base64 data is too large for sessionStorage
+        uploadedImages: state.uploadedImages,
+        // generatedAds not persisted — too heavy with base64 backgrounds
       }),
     }
   )

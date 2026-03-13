@@ -3,11 +3,19 @@
 import Link from "next/link";
 import { Sparkles, LogOut } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 
 export default function DashboardHeader() {
   const reset = useWizardStore((s) => s.reset);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const logout = useAuthStore((s) => s.logout);
   const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border">
@@ -19,6 +27,11 @@ export default function DashboardHeader() {
           <span className="text-lg font-bold text-foreground">Kult-ads</span>
         </Link>
         <div className="flex items-center gap-4">
+          {currentUser && (
+            <span className="text-xs text-muted hidden sm:block">
+              {currentUser.name || currentUser.email}
+            </span>
+          )}
           <button
             onClick={() => {
               reset();
@@ -28,12 +41,13 @@ export default function DashboardHeader() {
           >
             Nouvelle campagne
           </button>
-          <Link
-            href="/"
+          <button
+            onClick={handleLogout}
             className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors"
+            title="Se déconnecter"
           >
             <LogOut className="w-4 h-4" />
-          </Link>
+          </button>
         </div>
       </div>
     </nav>

@@ -4,16 +4,25 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Sparkles, Mail, Lock, User, ArrowRight } from "lucide-react";
 import { useState } from "react";
+import { useAuthStore } from "@/lib/auth-store";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const router = useRouter();
+  const signup = useAuthStore((s) => s.signup);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/dashboard/analyze");
+    setError("");
+    const result = signup(name, email, password);
+    if (result.success) {
+      router.push("/dashboard/analyze");
+    } else {
+      setError(result.error || "Erreur lors de la création du compte.");
+    }
   };
 
   return (
@@ -107,6 +116,13 @@ export default function SignupPage() {
               <span className="bg-surface px-4 text-muted">ou</span>
             </div>
           </div>
+
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+              {error}
+            </div>
+          )}
 
           {/* Signup form */}
           <form onSubmit={handleSubmit} className="space-y-5">
