@@ -9,6 +9,7 @@ import type {
   UploadedImage,
   GeneratedAd,
   WizardStep,
+  AdTemplate,
 } from "./types";
 
 interface WizardState {
@@ -35,6 +36,31 @@ interface WizardState {
   reset: () => void;
 }
 
+// ── Template store (in-memory only, no persistence — base64 too large) ──
+interface TemplateState {
+  templates: AdTemplate[];
+  addTemplate: (template: AdTemplate) => void;
+  removeTemplate: (id: string) => void;
+  updateTemplate: (id: string, partial: Partial<AdTemplate>) => void;
+  clearTemplates: () => void;
+}
+
+export const useTemplateStore = create<TemplateState>()((set) => ({
+  templates: [],
+  addTemplate: (template) =>
+    set((state) => ({ templates: [...state.templates, template] })),
+  removeTemplate: (id) =>
+    set((state) => ({ templates: state.templates.filter((t) => t.id !== id) })),
+  updateTemplate: (id, partial) =>
+    set((state) => ({
+      templates: state.templates.map((t) =>
+        t.id === id ? { ...t, ...partial } : t
+      ),
+    })),
+  clearTemplates: () => set({ templates: [] }),
+}));
+
+// ── Wizard store ──
 export const useWizardStore = create<WizardState>()(
   persist(
     (set) => ({

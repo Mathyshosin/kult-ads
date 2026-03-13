@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useWizardStore } from "@/lib/store";
+import { useWizardStore, useTemplateStore } from "@/lib/store";
 import AdPreviewCard from "@/components/ad-preview-card";
+import TemplateCard from "@/components/template-card";
 import {
   ArrowLeft,
   Loader2,
   Sparkles,
   AlertCircle,
+  LayoutGrid,
 } from "lucide-react";
 
 export default function GeneratePage() {
@@ -19,9 +21,12 @@ export default function GeneratePage() {
   const addGeneratedAd = useWizardStore((s) => s.addGeneratedAd);
   const clearAds = useWizardStore((s) => s.clearAds);
 
+  const templates = useTemplateStore((s) => s.templates);
+
   const [selectedProduct, setSelectedProduct] = useState("");
   const [selectedOffer, setSelectedOffer] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState("");
   const [formats, setFormats] = useState({ square: true, story: true });
   const [variations, setVariations] = useState(2);
   const [generating, setGenerating] = useState(false);
@@ -53,6 +58,7 @@ export default function GeneratePage() {
     const product = brandAnalysis!.products.find((p) => p.id === selectedProduct);
     const offer = brandAnalysis!.offers.find((o) => o.id === selectedOffer);
     const image = uploadedImages.find((i) => i.id === selectedImage);
+    const template = templates.find((t) => t.id === selectedTemplate);
 
     const selectedFormats = [
       ...(formats.square ? (["square"] as const) : []),
@@ -77,6 +83,8 @@ export default function GeneratePage() {
               productImageBase64: image?.base64,
               productImageMimeType: image?.mimeType,
               format,
+              templateImageBase64: template?.imageBase64,
+              templateImageMimeType: template?.mimeType,
             }),
           });
 
@@ -221,6 +229,70 @@ export default function GeneratePage() {
               </div>
             )}
 
+            {/* Template selector */}
+            {templates.length > 0 && (
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-2">
+                  Template de référence
+                </label>
+                <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
+                  <button
+                    onClick={() => setSelectedTemplate("")}
+                    className={`aspect-square rounded-lg border-2 transition-colors flex flex-col items-center justify-center text-center p-2 ${
+                      !selectedTemplate
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/40"
+                    }`}
+                  >
+                    <Sparkles className="w-5 h-5 text-muted mb-1" />
+                    <span className="text-[10px] text-muted font-medium">
+                      Sans template
+                    </span>
+                  </button>
+                  {templates
+                    .filter((t) =>
+                      formats.square && !formats.story
+                        ? t.format === "square"
+                        : !formats.square && formats.story
+                          ? t.format === "story"
+                          : true
+                    )
+                    .map((tpl) => (
+                      <button
+                        key={tpl.id}
+                        onClick={() => setSelectedTemplate(tpl.id)}
+                        className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors relative ${
+                          selectedTemplate === tpl.id
+                            ? "border-primary ring-2 ring-primary/20"
+                            : "border-border hover:border-primary/40"
+                        }`}
+                      >
+                        <img
+                          src={tpl.previewUrl}
+                          alt={tpl.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute bottom-0 inset-x-0 bg-black/60 px-1.5 py-1">
+                          <p className="text-[9px] text-white truncate font-medium">
+                            {tpl.name}
+                          </p>
+                        </div>
+                        <div className="absolute top-1 right-1">
+                          <span className="bg-black/50 text-white text-[8px] px-1.5 py-0.5 rounded-full">
+                            {tpl.format === "story" ? "S" : "C"}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                </div>
+                {selectedTemplate && (
+                  <p className="text-[10px] text-primary mt-1.5 font-medium">
+                    ✓ L&apos;IA reproduira le style de ce template
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Variations */}
             <div>
               <label className="block text-xs font-medium text-foreground mb-1.5">
@@ -307,6 +379,7 @@ export default function GeneratePage() {
                     const image = uploadedImages.find(
                       (i) => i.id === selectedImage
                     );
+                    const tpl = templates.find((t) => t.id === selectedTemplate);
 
                     try {
                       const res = await fetch("/api/generate-ad", {
@@ -319,6 +392,8 @@ export default function GeneratePage() {
                           productImageBase64: image?.base64,
                           productImageMimeType: image?.mimeType,
                           format: ad.format,
+                          templateImageBase64: tpl?.imageBase64,
+                          templateImageMimeType: tpl?.mimeType,
                         }),
                       });
 

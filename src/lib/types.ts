@@ -51,4 +51,14 @@ export interface GeneratedAd {
   timestamp: number;
 }
 
+export interface AdTemplate {
+  id: string;
+  name: string;
+  format: "square" | "story";
+  category: string;
+  imageBase64: string;
+  mimeType: string;
+  previewUrl: string;
+}
+
 export type WizardStep = 1 | 2 | 3 | 4;

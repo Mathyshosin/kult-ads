@@ -4,7 +4,7 @@ import { generateImage } from "@/lib/gemini";
 
 export async function POST(request: Request) {
   try {
-    const { brandAnalysis, product, offer, productImageBase64, productImageMimeType, format } =
+    const { brandAnalysis, product, offer, productImageBase64, productImageMimeType, format, templateImageBase64, templateImageMimeType } =
       await request.json();
 
     if (!brandAnalysis || !product || !format) {
@@ -16,8 +16,26 @@ export async function POST(request: Request) {
 
     const aspectRatio = format === "square" ? "1:1" : "9:16";
 
-    // Build the visual prompt
-    const visualPrompt = `Create a professional, eye-catching advertising visual for the brand "${brandAnalysis.brandName}".
+    // Build the visual prompt — different if we have a template reference
+    let visualPrompt: string;
+    let referenceImageBase64: string | undefined;
+    let referenceImageMimeType: string | undefined;
+
+    if (templateImageBase64) {
+      // Template-based generation: reproduce the template with client info
+      visualPrompt = `Reproduce this exact ad template style, layout, and visual composition.
+Replace the product shown with: ${product.name} - ${product.description}.
+${offer ? `Include this promotional offer visually: ${offer.title} - ${offer.description}.` : ""}
+Brand: ${brandAnalysis.brandName}.
+Brand colors: ${brandAnalysis.colors?.join(", ") || "keep the template colors"}.
+Keep the same visual structure, design elements, color scheme, and professional quality as the reference template.
+DO NOT include any text or letters in the image - text will be added separately.
+Format: ${aspectRatio}.`;
+      referenceImageBase64 = templateImageBase64;
+      referenceImageMimeType = templateImageMimeType || "image/png";
+    } else {
+      // Free-form generation (no template)
+      visualPrompt = `Create a professional, eye-catching advertising visual for the brand "${brandAnalysis.brandName}".
 Product: ${product.name} - ${product.description}.
 ${offer ? `Current promotion: ${offer.title} - ${offer.description}` : ""}
 Style: modern, clean, high-quality advertisement suitable for social media.
@@ -25,6 +43,9 @@ Brand colors: ${brandAnalysis.colors?.join(", ") || "use appealing colors"}.
 The image should be visually striking and professional.
 DO NOT include any text or letters in the image - text will be added separately.
 Aspect ratio: ${aspectRatio}.`;
+      referenceImageBase64 = productImageBase64;
+      referenceImageMimeType = productImageMimeType;
+    }
 
     // Run copy and visual generation in parallel
     const [copyRaw, visualResult] = await Promise.all([
@@ -40,8 +61,8 @@ Aspect ratio: ${aspectRatio}.`;
       generateImage(
         visualPrompt,
         aspectRatio,
-        productImageBase64,
-        productImageMimeType
+        referenceImageBase64,
+        referenceImageMimeType
       ),
     ]);
 
