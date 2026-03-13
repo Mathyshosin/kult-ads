@@ -57,7 +57,8 @@ export async function generateAdConcepts(
   uniqueSellingPoints: string[],
   offerTitle?: string,
   offerDescription?: string,
-  count: number = 4
+  count: number = 4,
+  customDirection?: string
 ): Promise<string> {
   const systemPrompt = `Tu es un directeur artistique expert en publicités statiques pour Instagram/Facebook/TikTok.
 
@@ -114,6 +115,7 @@ Produit : ${productName} — ${productDescription}
 Audience : ${targetAudience}
 Points forts : ${uniqueSellingPoints.join(", ")}
 ${offerTitle ? `Offre en cours : ${offerTitle} — ${offerDescription}` : "Pas d'offre spéciale."}
+${customDirection ? `\nDIRECTION CRÉATIVE DU CLIENT (PRIORITAIRE) :\n${customDirection}\nInspire-toi de ces demandes pour créer les concepts. C'est la priorité.` : ""}
 
 Génère ${count} concepts d'ads variés et adaptés à CE produit. Chaque concept doit être radicalement différent.`,
       },

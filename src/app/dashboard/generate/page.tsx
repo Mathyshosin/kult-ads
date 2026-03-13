@@ -32,14 +32,15 @@ export default function GeneratePage() {
   const [selectedProduct, setSelectedProduct] = useState("");
   const [selectedOffer, setSelectedOffer] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
-  const [formats, setFormats] = useState({ square: true, story: true });
   const [variations, setVariations] = useState(2);
+  const [customDirection, setCustomDirection] = useState("");
   const [generating, setGenerating] = useState(false);
   const [phase, setPhase] = useState<"idle" | "concepts" | "generating">("idle");
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [failedCount, setFailedCount] = useState(0);
   const [error, setError] = useState("");
   const [concepts, setConcepts] = useState<AdConcept[]>([]);
+  const [convertingId, setConvertingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!brandAnalysis) {
@@ -69,11 +70,6 @@ export default function GeneratePage() {
     const offer = brandAnalysis!.offers.find((o) => o.id === selectedOffer);
     const image = uploadedImages.find((i) => i.id === selectedImage);
 
-    const selectedFormats = [
-      ...(formats.square ? (["square"] as const) : []),
-      ...(formats.story ? (["story"] as const) : []),
-    ];
-
     // ── PHASE 1: Generate smart concepts with Claude ──
     setPhase("concepts");
 
@@ -86,7 +82,8 @@ export default function GeneratePage() {
           brandAnalysis,
           product,
           offer: offer || null,
-          count: variations, // One concept per variation
+          count: variations,
+          customDirection: customDirection.trim() || undefined,
         }),
       });
 
@@ -112,49 +109,47 @@ export default function GeneratePage() {
       return;
     }
 
-    // ── PHASE 2: Generate ads using concepts ──
+    // ── PHASE 2: Generate ads (always square) ──
     setPhase("generating");
-    const totalAds = selectedFormats.length * adConcepts.length;
+    const totalAds = adConcepts.length;
     setProgress({ current: 0, total: totalAds });
 
     let current = 0;
     let failed = 0;
 
-    for (const format of selectedFormats) {
-      for (const concept of adConcepts) {
-        try {
-          const res = await fetch("/api/generate-ad", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              brandAnalysis,
-              product,
-              offer: offer || null,
-              productImageBase64: image?.base64,
-              productImageMimeType: image?.mimeType,
-              format,
-              concept, // Pass the smart concept
-            }),
-          });
+    for (const concept of adConcepts) {
+      try {
+        const res = await fetch("/api/generate-ad", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            brandAnalysis,
+            product,
+            offer: offer || null,
+            productImageBase64: image?.base64,
+            productImageMimeType: image?.mimeType,
+            format: "square",
+            concept,
+          }),
+        });
 
-          if (!res.ok) {
-            failed++;
-            setFailedCount(failed);
-            current++;
-            setProgress({ current, total: totalAds });
-            continue;
-          }
-
-          const ad = await res.json();
-          addGeneratedAd(ad);
-          current++;
-          setProgress({ current, total: totalAds });
-        } catch {
+        if (!res.ok) {
           failed++;
           setFailedCount(failed);
           current++;
           setProgress({ current, total: totalAds });
+          continue;
         }
+
+        const ad = await res.json();
+        addGeneratedAd(ad);
+        current++;
+        setProgress({ current, total: totalAds });
+      } catch {
+        failed++;
+        setFailedCount(failed);
+        current++;
+        setProgress({ current, total: totalAds });
       }
     }
 
@@ -166,6 +161,38 @@ export default function GeneratePage() {
 
     setGenerating(false);
     setPhase("idle");
+  }
+
+  async function handleConvertToStory(ad: typeof generatedAds[0]) {
+    setConvertingId(ad.id);
+    const product = brandAnalysis!.products.find((p) => p.id === ad.productId);
+    const offer = brandAnalysis!.offers.find((o) => o.id === ad.offerId);
+    const image = uploadedImages.find((i) => i.id === selectedImage);
+    const matchingConcept = concepts.find((c) => c.adType === ad.conversionAngle);
+
+    try {
+      const res = await fetch("/api/generate-ad", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brandAnalysis,
+          product,
+          offer: offer || null,
+          productImageBase64: image?.base64,
+          productImageMimeType: image?.mimeType,
+          format: "story",
+          concept: matchingConcept,
+        }),
+      });
+
+      if (res.ok) {
+        const newAd = await res.json();
+        addGeneratedAd(newAd);
+      }
+    } catch {
+      // Silent fail
+    }
+    setConvertingId(null);
   }
 
   return (
@@ -186,41 +213,6 @@ export default function GeneratePage() {
             <h2 className="text-sm font-semibold text-foreground">
               Configuration
             </h2>
-
-            {/* Formats */}
-            <div>
-              <label className="block text-xs font-medium text-foreground mb-2">
-                Formats
-              </label>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formats.square}
-                    onChange={(e) =>
-                      setFormats({ ...formats, square: e.target.checked })
-                    }
-                    className="rounded border-border text-primary focus:ring-primary/20"
-                  />
-                  <span className="text-sm text-foreground">
-                    Carré (1080x1080)
-                  </span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formats.story}
-                    onChange={(e) =>
-                      setFormats({ ...formats, story: e.target.checked })
-                    }
-                    className="rounded border-border text-primary focus:ring-primary/20"
-                  />
-                  <span className="text-sm text-foreground">
-                    Story (1080x1920)
-                  </span>
-                </label>
-              </div>
-            </div>
 
             {/* Product */}
             <div>
@@ -289,6 +281,23 @@ export default function GeneratePage() {
               </div>
             )}
 
+            {/* Custom direction */}
+            <div>
+              <label className="block text-xs font-medium text-foreground mb-1.5">
+                Direction créative (optionnel)
+              </label>
+              <textarea
+                value={customDirection}
+                onChange={(e) => setCustomDirection(e.target.value)}
+                placeholder="Ex: Je veux une ad comparaison culotte VS serviette, une ad avec des femmes qui portent le produit, une ad offre spéciale..."
+                rows={3}
+                className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none placeholder:text-muted/60"
+              />
+              <p className="text-[10px] text-muted mt-1">
+                Décrivez les types d&apos;ads que vous voulez. L&apos;IA s&apos;en inspirera pour créer les concepts.
+              </p>
+            </div>
+
             {/* Variations */}
             <div>
               <label className="block text-xs font-medium text-foreground mb-1.5">
@@ -305,21 +314,12 @@ export default function GeneratePage() {
                   </option>
                 ))}
               </select>
-              <p className="text-[10px] text-muted mt-1">
-                L&apos;IA crée {variations} angles stratégiques différents, chacun en {
-                  [formats.square && "carré", formats.story && "story"].filter(Boolean).join(" + ") || "aucun format"
-                }
-              </p>
             </div>
 
             {/* Generate button */}
             <button
               onClick={handleGenerate}
-              disabled={
-                generating ||
-                (!formats.square && !formats.story) ||
-                !selectedProduct
-              }
+              disabled={generating || !selectedProduct}
               className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {generating ? (
@@ -403,6 +403,12 @@ export default function GeneratePage() {
                   key={ad.id}
                   ad={ad}
                   onUpdateAd={(id, updates) => updateGeneratedAd(id, updates)}
+                  isConvertingToStory={convertingId === ad.id}
+                  onConvertToStory={
+                    ad.format === "square"
+                      ? () => handleConvertToStory(ad)
+                      : undefined
+                  }
                   onRegenerate={async () => {
                     const product = brandAnalysis.products.find(
                       (p) => p.id === ad.productId
@@ -425,7 +431,6 @@ export default function GeneratePage() {
                           productImageBase64: image?.base64,
                           productImageMimeType: image?.mimeType,
                           format: ad.format,
-                          // Use a matching concept if available, or let the API use default
                           concept: concepts.find((c) => c.adType === ad.conversionAngle),
                         }),
                       });
@@ -435,7 +440,7 @@ export default function GeneratePage() {
                         addGeneratedAd(newAd);
                       }
                     } catch {
-                      // Silent fail for regeneration
+                      // Silent fail
                     }
                   }}
                 />
@@ -449,8 +454,7 @@ export default function GeneratePage() {
               </h3>
               <p className="text-sm text-muted mt-1 max-w-sm">
                 L&apos;IA va analyser votre produit, créer des concepts
-                stratégiques adaptés, puis générer chaque publicité avec un
-                fond et un texte optimisés pour la conversion.
+                stratégiques adaptés, puis générer chaque publicité.
               </p>
               <div className="flex items-center gap-6 mt-6 text-[11px] text-muted">
                 <div className="flex items-center gap-1.5">

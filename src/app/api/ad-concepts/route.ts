@@ -3,7 +3,7 @@ import { generateAdConcepts } from "@/lib/claude";
 
 export async function POST(request: Request) {
   try {
-    const { brandAnalysis, product, offer, count } = await request.json();
+    const { brandAnalysis, product, offer, count, customDirection } = await request.json();
 
     if (!brandAnalysis || !product) {
       return NextResponse.json(
@@ -23,7 +23,8 @@ export async function POST(request: Request) {
       brandAnalysis.uniqueSellingPoints || [],
       offer?.title,
       offer?.description,
-      count || 4
+      count || 4,
+      customDirection
     );
 
     // Parse the JSON from Claude

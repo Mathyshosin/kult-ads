@@ -2,13 +2,15 @@
 
 import { useState, useRef, useCallback } from "react";
 import type { GeneratedAd } from "@/lib/types";
-import { Download, RefreshCw, Pencil, Check, Type } from "lucide-react";
+import { Download, RefreshCw, Pencil, Check, Type, Smartphone, Loader2 } from "lucide-react";
 import { toPng } from "html-to-image";
 
 interface AdPreviewCardProps {
   ad: GeneratedAd;
   onRegenerate?: () => void;
   onUpdateAd?: (id: string, updates: Partial<GeneratedAd>) => void;
+  onConvertToStory?: () => void;
+  isConvertingToStory?: boolean;
 }
 
 // Text overlay styles
@@ -65,6 +67,8 @@ export default function AdPreviewCard({
   ad,
   onRegenerate,
   onUpdateAd,
+  onConvertToStory,
+  isConvertingToStory,
 }: AdPreviewCardProps) {
   const isStory = ad.format === "story";
   const cardRef = useRef<HTMLDivElement>(null);
@@ -107,7 +111,6 @@ export default function AdPreviewCard({
       link.click();
     } catch (err) {
       console.error("Export error:", err);
-      // Fallback: download image directly
       const link = document.createElement("a");
       link.href = `data:${ad.mimeType};base64,${ad.imageBase64}`;
       link.download = `kult-ad-${ad.format}-${ad.id}.png`;
@@ -173,7 +176,7 @@ export default function AdPreviewCard({
           isStory ? "aspect-[9/16]" : "aspect-square"
         } rounded-2xl overflow-hidden bg-black`}
       >
-        {/* Full scene image from Gemini (product integrated) */}
+        {/* Full scene image from Gemini */}
         <img
           src={`data:${ad.mimeType};base64,${ad.imageBase64}`}
           alt="Ad"
@@ -228,6 +231,23 @@ export default function AdPreviewCard({
           <Download className="w-3.5 h-3.5" />
           {isExporting ? "Export..." : "Télécharger"}
         </button>
+
+        {/* Convert to Story */}
+        {onConvertToStory && (
+          <button
+            onClick={onConvertToStory}
+            disabled={isConvertingToStory}
+            className="flex items-center gap-1 px-3 py-2.5 rounded-xl border border-border text-xs font-medium text-muted hover:bg-gray-100 transition-colors disabled:opacity-50"
+            title="Adapter en format Story"
+          >
+            {isConvertingToStory ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Smartphone className="w-3.5 h-3.5" />
+            )}
+            Story
+          </button>
+        )}
 
         {/* Edit text */}
         <button
