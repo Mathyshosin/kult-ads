@@ -3,42 +3,42 @@ import { generateAdCopy } from "@/lib/claude";
 import { generateImage } from "@/lib/gemini";
 import { getRandomTemplateWithImage } from "@/lib/template-store";
 
-// Each angle = a completely different ad creative concept
+// Each angle = a different BACKGROUND atmosphere/mood
 const CONVERSION_ANGLES = [
   {
     id: "fomo",
     label: "Urgency",
-    scene: "Create an urgent, high-energy advertising scene. Dramatic lighting, dark moody background with bold accent colors. The product should feel exclusive and about to disappear. Think flash-sale campaign.",
+    scene: "Dramatic, urgent advertising backdrop. Dark moody atmosphere with bold accent lighting (red/orange glow). High contrast, cinematic tension. Think luxury flash-sale campaign.",
     copy: "Utilise l'urgence et la rareté (stock limité, dernière chance, offre qui expire). Crée un sentiment de FOMO.",
   },
   {
     id: "promo",
     label: "Promo",
-    scene: "Create a celebratory, premium sale scene. Clean bright background with festive elements (confetti, geometric shapes, sparkles). The product is the star — centered, well-lit, premium feel. Sale campaign vibes.",
+    scene: "Festive, celebratory advertising backdrop. Bright clean background with confetti, sparkles, or geometric shapes. Premium sale atmosphere. Joyful and energetic colors.",
     copy: "Mets en avant l'offre promo, le prix barré, le pourcentage de réduction. Rends l'offre irrésistible.",
   },
   {
     id: "benefits",
     label: "Benefits",
-    scene: "Create a clean, editorial product scene. Minimalist background, beautiful studio lighting. Show the product like a luxury magazine ad — close up, every detail visible, aspirational. Think Vogue or Apple ad.",
+    scene: "Clean, minimalist editorial backdrop. Pure white or soft neutral background with elegant lighting. Studio photography feel. Think Apple or Vogue ad — breathing room, luxury simplicity.",
     copy: "Mets en avant les bénéfices concrets du produit. Qu'est-ce que le client gagne ? Sois spécifique sur la valeur.",
   },
   {
     id: "social-proof",
     label: "Social Proof",
-    scene: "Create a warm lifestyle scene where the product is being used or displayed naturally. Real-life context — on a beautiful table, in a cozy room, in someone's hands. Warm natural lighting. The product looks loved and desirable.",
+    scene: "Warm, inviting lifestyle backdrop. Cozy interior, beautiful table surface, or natural setting. Warm golden light, soft textures. Feels like home, trust, and comfort.",
     copy: "Utilise la preuve sociale : avis clients, nombre de ventes, satisfaction. Montre que d'autres font confiance.",
   },
   {
     id: "before-after",
     label: "Transformation",
-    scene: "Create a dramatic transformation scene. Use split composition or strong contrast — one side dull and grey (the problem), the other side vibrant and colorful (with the product as the solution). Visual storytelling.",
+    scene: "Split-tone dramatic backdrop. One side grey/muted/dull, the other side vibrant/colorful/alive. Strong visual contrast, like a before/after reveal. Transformation energy.",
     copy: "Montre la transformation avant/après. Le problème sans le produit vs la solution avec. Contraste émotionnel fort.",
   },
   {
     id: "lifestyle",
     label: "Lifestyle",
-    scene: "Create a dreamy aspirational scene. Beautiful real-world setting — luxury space, nature, or travel. Golden hour lighting, soft bokeh, cinematic color grading. The product is naturally part of this desirable lifestyle.",
+    scene: "Dreamy aspirational backdrop. Beautiful real-world setting — luxury interior, tropical nature, or travel destination. Golden hour lighting, soft bokeh, cinematic color grading. Makes you desire this life.",
     copy: "Vends le lifestyle, pas le produit. Projette le client dans une vie meilleure. Émotionnel et aspirationnel.",
   },
 ];
@@ -71,10 +71,10 @@ export async function POST(request: Request) {
         : Math.floor(Math.random() * CONVERSION_ANGLES.length);
     const angle = CONVERSION_ANGLES[angleIdx];
 
-    // Auto-pick a random template
+    // Auto-pick a random template as style reference
     const template = getRandomTemplateWithImage(format);
 
-    // Build reference images
+    // Reference images: ONLY the template (NO product image — it will be composited in CSS)
     const referenceImages: Array<{
       base64: string;
       mimeType: string;
@@ -89,35 +89,25 @@ export async function POST(request: Request) {
       });
     }
 
-    if (productImageBase64) {
-      referenceImages.push({
-        base64: productImageBase64,
-        mimeType: productImageMimeType || "image/png",
-        label: "PRODUCT",
-      });
-    }
+    // Short, focused prompt — BACKGROUND ONLY, no product
+    const visualPrompt = `Create a premium advertising BACKGROUND image for the brand "${brandAnalysis.brandName}".
 
-    // Short, direct prompt that Gemini handles well
-    const visualPrompt = `Create a high-end social media ad image for ${brandAnalysis.brandName}.
+A product will be composited on top later — DO NOT include any product, object, or item in this image.
+This is ONLY the background scene/atmosphere.
 
-Product: ${product.name}${product.description ? ` — ${product.description}` : ""}
-${offer ? `Offer: ${offer.title}` : ""}
-Style: ${brandAnalysis.tone || "professional"}, brand colors: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "modern palette"}
+Creative direction (${angle.label}): ${angle.scene}
 
-CREATIVE DIRECTION (${angle.label}):
-${angle.scene}
+Brand colors: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "modern palette"}
+${template ? "Use the STYLE REFERENCE for visual inspiration (colors, mood, style)." : ""}
 
-${template ? "Use the STYLE REFERENCE image as inspiration for the visual style, background, and mood. Do NOT copy its product." : ""}
-${productImageBase64 ? "Feature the PRODUCT from the reference photo — keep it recognizable but integrate it naturally into the scene." : `Feature the product: ${product.name}`}
+Rules:
+- Photorealistic, high-end advertising photography
+- NO text, letters, words, or numbers
+- NO products or objects — pure background/atmosphere
+- Leave clear central space where a product will be placed
+- Aspect ratio: ${aspectRatio}`;
 
-Requirements:
-- Photorealistic, professional advertising photography
-- NO text, NO letters, NO words, NO numbers anywhere in the image
-- The product must be the focal point
-- Aspect ratio: ${aspectRatio}
-- Make it scroll-stopping and premium`;
-
-    // Run copy and visual generation in parallel
+    // Run copy and background generation in parallel
     const [copyRaw, visualResult] = await Promise.all([
       generateAdCopy(
         brandAnalysis.brandName,
@@ -149,7 +139,7 @@ Requirements:
 
     if (!visualResult) {
       return NextResponse.json(
-        { error: "Échec de la génération du visuel" },
+        { error: "Échec de la génération du fond" },
         { status: 500 }
       );
     }
@@ -157,7 +147,7 @@ Requirements:
     return NextResponse.json({
       id: `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       format,
-      imageBase64: visualResult.imageBase64,
+      imageBase64: visualResult.imageBase64,     // Background only
       mimeType: visualResult.mimeType,
       headline: copy.headline,
       bodyText: copy.bodyText,
@@ -166,6 +156,10 @@ Requirements:
       offerId: offer?.id,
       conversionAngle: angle.id,
       timestamp: Date.now(),
+      // Passthrough product image for compositing in the frontend
+      productImageBase64: productImageBase64 || undefined,
+      productImageMimeType: productImageMimeType || undefined,
+      productPosition: { preset: "center", scale: 45 },
     });
   } catch (error) {
     console.error("[generate-ad] ERROR:", error);

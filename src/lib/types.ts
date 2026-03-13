@@ -38,17 +38,32 @@ export interface UploadedImage {
   prompt?: string;
 }
 
+export type PositionPreset =
+  | "top-left" | "top-center" | "top-right"
+  | "center-left" | "center" | "center-right"
+  | "bottom-left" | "bottom-center" | "bottom-right";
+
+export interface ProductPosition {
+  preset: PositionPreset;
+  scale: number; // 20-80, % of container width
+}
+
 export interface GeneratedAd {
   id: string;
   format: "square" | "story";
-  imageBase64: string;
+  imageBase64: string;          // Background image from Gemini
   mimeType: string;
   headline: string;
   bodyText: string;
   callToAction: string;
   productId?: string;
   offerId?: string;
+  conversionAngle?: string;
   timestamp: number;
+  // Compositing fields
+  productImageBase64?: string;
+  productImageMimeType?: string;
+  productPosition?: ProductPosition;
 }
 
 export interface AdTemplate {
