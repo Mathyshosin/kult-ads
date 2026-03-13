@@ -3,6 +3,58 @@ import { generateAdCopy } from "@/lib/claude";
 import { generateImage } from "@/lib/gemini";
 import { getRandomTemplateWithImage } from "@/lib/template-store";
 
+// Conversion angles — each ad gets a different one
+const CONVERSION_ANGLES = [
+  {
+    id: "fomo",
+    label: "FOMO / Urgency",
+    visualDirection:
+      "Create urgency — use bold, attention-grabbing composition. Dramatic lighting, close-up of the product as if it's about to sell out. High contrast, energetic feel.",
+    copyDirection:
+      "Utilise l'urgence et la rareté (stock limité, dernière chance, offre qui expire). Crée un sentiment de FOMO.",
+  },
+  {
+    id: "promo",
+    label: "Promo / Offer",
+    visualDirection:
+      "Promotional feel — the product should look like an incredible deal. Bright, vibrant colors, festive/sale atmosphere. The product is the star surrounded by visual cues of value.",
+    copyDirection:
+      "Mets en avant l'offre promotionnelle, le prix barré, le pourcentage de réduction. Rends l'offre irrésistible.",
+  },
+  {
+    id: "benefits",
+    label: "Product Benefits",
+    visualDirection:
+      "Feature-focused — show the product in a way that highlights its quality and key features. Clean, editorial style. Detailed product shot with beautiful lighting that makes every detail visible.",
+    copyDirection:
+      "Mets en avant les bénéfices concrets du produit. Qu'est-ce que le client gagne ? Résous un problème. Sois spécifique.",
+  },
+  {
+    id: "social-proof",
+    label: "Social Proof",
+    visualDirection:
+      "Trust and popularity — show the product in a way that suggests many people love it. Warm, inviting composition. The product should look established, trusted, and popular. Lifestyle context with human element.",
+    copyDirection:
+      "Utilise la preuve sociale : avis clients, nombre de ventes, satisfaction. Montre que d'autres font confiance à ce produit.",
+  },
+  {
+    id: "before-after",
+    label: "Before / After",
+    visualDirection:
+      "Transformation visual — show the product as a solution. Split composition or dramatic reveal. Before: dull/problematic. After: vibrant/solved with the product as the hero. Strong visual contrast.",
+    copyDirection:
+      "Montre la transformation avant/après. Le problème sans le produit vs la solution avec. Contraste fort.",
+  },
+  {
+    id: "lifestyle",
+    label: "Lifestyle / Aspiration",
+    visualDirection:
+      "Aspirational lifestyle — show the product in a dream scenario. Beautiful setting, warm golden light, the product integrated into an ideal life. Make the viewer want this lifestyle.",
+    copyDirection:
+      "Vends le lifestyle, pas juste le produit. Projette le client dans une vie meilleure grâce au produit. Émotionnel et aspirationnel.",
+  },
+];
+
 export async function POST(request: Request) {
   try {
     const {
@@ -12,6 +64,7 @@ export async function POST(request: Request) {
       productImageBase64,
       productImageMimeType,
       format,
+      variationIndex,
     } = await request.json();
 
     if (!brandAnalysis || !product || !format) {
@@ -22,6 +75,13 @@ export async function POST(request: Request) {
     }
 
     const aspectRatio = format === "square" ? "1:1" : "9:16";
+
+    // Pick a conversion angle — rotate through them, never repeat in sequence
+    const angleIdx =
+      typeof variationIndex === "number"
+        ? variationIndex % CONVERSION_ANGLES.length
+        : Math.floor(Math.random() * CONVERSION_ANGLES.length);
+    const angle = CONVERSION_ANGLES[angleIdx];
 
     // Auto-pick a random template from the admin library
     const template = getRandomTemplateWithImage(format);
@@ -36,8 +96,6 @@ export async function POST(request: Request) {
 
     if (template) {
       // ── TEMPLATE-BASED GENERATION ──
-      // Send both the template (for style) and the product image (for the actual product)
-
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
@@ -48,13 +106,14 @@ export async function POST(request: Request) {
         referenceImages.push({
           base64: productImageBase64,
           mimeType: productImageMimeType || "image/png",
-          label: "CLIENT PRODUCT PHOTO - This is the actual product to feature",
+          label:
+            "CLIENT PRODUCT PHOTO - This is the actual product to feature",
         });
       }
 
-      visualPrompt = `You are a professional advertising designer. Your job is to create a new advertisement image.
+      visualPrompt = `You are an elite advertising designer specialized in high-converting social media ads.
 
-TASK: Create a NEW ad that combines the STYLE of the template with the CLIENT'S PRODUCT.
+TASK: Create a NEW ad that combines the STYLE of the template with the CLIENT'S PRODUCT, optimized for the "${angle.label}" conversion angle.
 
 STYLE TEMPLATE (first image):
 - Use this ONLY as a style/layout reference
@@ -72,18 +131,23 @@ BRAND INFO:
 - Brand: ${brandAnalysis.brandName}
 - Brand colors: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "use colors from the style template"}
 - Tone: ${brandAnalysis.tone || "professional"}
-${offer ? `\nPROMOTION:\n- ${offer.title}: ${offer.description}` : ""}
+- Target audience: ${brandAnalysis.targetAudience || "general consumer"}
+${offer ? `\nPROMOTION: ${offer.title} — ${offer.description}` : ""}
 
-RULES:
+CONVERSION ANGLE — "${angle.label}":
+${angle.visualDirection}
+
+CRITICAL RULES:
 1. The client's product (${product.name}) MUST be the hero/center of the image
 2. Use the template's visual STYLE (backgrounds, mood, layout) but with the client's product
-3. Make it look like a real, polished social media ad
-4. DO NOT include any text, letters, words, or numbers in the image
-5. Aspect ratio: ${aspectRatio}
-6. High quality, professional advertising photography style`;
+3. Apply the "${angle.label}" conversion angle to the visual composition
+4. Make it look like a REAL, polished social media ad that drives clicks
+5. DO NOT include any text, letters, words, or numbers in the image — text is added separately
+6. Aspect ratio: ${aspectRatio}
+7. Professional advertising photography quality
+8. This MUST look DIFFERENT from other ads — unique composition for this angle`;
     } else {
-      // ── FREE-FORM GENERATION (no template available) ──
-
+      // ── FREE-FORM GENERATION ──
       if (productImageBase64) {
         referenceImages.push({
           base64: productImageBase64,
@@ -92,7 +156,9 @@ RULES:
         });
       }
 
-      visualPrompt = `You are a professional advertising designer. Create a stunning social media advertisement image.
+      visualPrompt = `You are an elite advertising designer specialized in high-converting social media ads.
+
+TASK: Create a stunning ad for the "${angle.label}" conversion angle.
 
 PRODUCT:
 - Name: ${product.name}
@@ -103,19 +169,19 @@ BRAND:
 - Brand: ${brandAnalysis.brandName}
 - Brand colors: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "use modern, appealing colors"}
 - Tone: ${brandAnalysis.tone || "professional"}
-${offer ? `\nPROMOTION:\n- ${offer.title}: ${offer.description}` : ""}
+- Target audience: ${brandAnalysis.targetAudience || "general consumer"}
+${offer ? `\nPROMOTION: ${offer.title} — ${offer.description}` : ""}
 
-STYLE:
-- Modern, clean, high-end social media ad
-- Professional product photography with beautiful lighting
-- Eye-catching composition that makes people stop scrolling
-- Lifestyle feel — the product should look desirable
+CONVERSION ANGLE — "${angle.label}":
+${angle.visualDirection}
 
-RULES:
+CRITICAL RULES:
 1. DO NOT include any text, letters, words, or numbers in the image
 2. Aspect ratio: ${aspectRatio}
 3. The product must be clearly visible and prominent
-4. High quality, professional advertising photography`;
+4. Professional advertising photography quality
+5. Optimized for stopping the scroll on social media
+6. This MUST look DIFFERENT from other ads — unique composition for this angle`;
     }
 
     // Run copy and visual generation in parallel
@@ -127,7 +193,8 @@ RULES:
         product.description,
         offer?.title,
         offer?.description,
-        format
+        format,
+        angle.copyDirection
       ),
       generateImage(visualPrompt, aspectRatio, referenceImages),
     ]);
@@ -164,6 +231,7 @@ RULES:
       callToAction: copy.callToAction,
       productId: product.id,
       offerId: offer?.id,
+      conversionAngle: angle.id,
       timestamp: Date.now(),
     });
   } catch (error) {

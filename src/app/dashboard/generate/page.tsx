@@ -63,6 +63,7 @@ export default function GeneratePage() {
     setProgress({ current: 0, total: totalAds });
 
     let current = 0;
+    let globalVariationIndex = 0;
 
     for (const format of selectedFormats) {
       for (let i = 0; i < variations; i++) {
@@ -77,8 +78,10 @@ export default function GeneratePage() {
               productImageBase64: image?.base64,
               productImageMimeType: image?.mimeType,
               format,
+              variationIndex: globalVariationIndex,
             }),
           });
+          globalVariationIndex++;
 
           if (!res.ok) {
             const data = await res.json();
