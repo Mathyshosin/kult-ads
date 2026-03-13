@@ -141,16 +141,20 @@ Génère le texte publicitaire en français.`,
     systemPrompt: `(Pas de system prompt — Gemini utilise un prompt direct avec images de référence)
 
 Images de référence envoyées :
-1. [STYLE REFERENCE] — Un template de la bibliothèque (style, layout, qualité)
-2. [PRODUCT PHOTO] — La photo du produit à intégrer dans la scène`,
-    userPromptTemplate: `Create a professional advertising image for "{brandName}".
+1. [STYLE REFERENCE] — "replicate this exact ad style, composition and professional quality"
+2. [PRODUCT] — "this is the exact product to feature. Do NOT modify it."`,
+    userPromptTemplate: `High-end {aspectRatio} advertising photo for "{brandName}".
 
-{scenePrompt}
+Scene: {scenePrompt}
 
-Use the PRODUCT PHOTO and place it naturally in the scene. Keep the product EXACTLY as shown — do not modify, redesign, or add anything to it.
-Match the style, quality and layout of the STYLE REFERENCE.
-Brand colors: {colors}.
-Photorealistic. NO text or letters. Aspect ratio: {aspectRatio}.`,
+Rules:
+- The PRODUCT is the hero. Feature it prominently, it must be the clear focal point.
+- Keep the product IDENTICAL to the PRODUCT reference — same packaging, colors, shape. Do NOT redesign, add ribbons, change labels, or alter it.
+- Copy the STYLE REFERENCE composition, lighting style, and professional quality.
+- Leave breathing room in the image (top or bottom third) for text overlay later.
+- Color palette: {colors}.
+- Photorealistic, shot on professional camera, shallow depth of field on background.
+- Absolutely NO text, words, letters, numbers, watermarks, or UI elements.`,
   },
   {
     id: "gemini-config",

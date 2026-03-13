@@ -24,7 +24,6 @@ export async function POST(request: Request) {
 
     const aspectRatio = format === "square" ? "1:1" : "9:16";
 
-    // Use concept from Claude if provided
     const scenePrompt = concept?.scenePrompt
       || "The product displayed beautifully on a clean, minimal surface with soft professional lighting.";
     const copyAngle = concept?.copyAngle
@@ -45,7 +44,7 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: "STYLE REFERENCE — match this ad layout style, colors, and professional quality",
+        label: "STYLE REFERENCE — replicate this exact ad style, composition and professional quality",
       });
     }
 
@@ -53,34 +52,44 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: productImageBase64,
         mimeType: productImageMimeType || "image/png",
-        label: "PRODUCT PHOTO — integrate this exact product into the scene",
+        label: "PRODUCT — this is the exact product to feature. Do NOT modify it.",
       });
     }
 
-    // Short prompt: scene description + strict rules
-    const visualPrompt = `Create a professional advertising image for "${brandAnalysis.brandName}".
+    // ── IMPROVED GEMINI PROMPT ──
+    const visualPrompt = `High-end ${aspectRatio} advertising photo for "${brandAnalysis.brandName}".
 
-${scenePrompt}
+Scene: ${scenePrompt}
 
-Use the PRODUCT PHOTO and place it naturally in the scene. Keep the product EXACTLY as shown — do not modify, redesign, or add anything to it.
-${template ? "Match the style, quality and layout of the STYLE REFERENCE." : ""}
-Brand colors: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "use modern palette"}.
-Photorealistic. NO text or letters. Aspect ratio: ${aspectRatio}.`;
+Rules:
+- The PRODUCT is the hero. Feature it prominently, it must be the clear focal point.
+- Keep the product IDENTICAL to the PRODUCT reference — same packaging, colors, shape. Do NOT redesign, add ribbons, change labels, or alter it.
+- ${template ? "Copy the STYLE REFERENCE composition, lighting style, and professional quality." : "Professional studio-quality lighting and composition."}
+- Leave breathing room in the image (top or bottom third) for text overlay later.
+- Color palette: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "modern, clean"}.
+- Photorealistic, shot on professional camera, shallow depth of field on background.
+- Absolutely NO text, words, letters, numbers, watermarks, or UI elements.`;
 
-    // Generate copy and image in parallel
-    const [copyRaw, visualResult] = await Promise.all([
-      generateAdCopy(
-        brandAnalysis.brandName,
-        brandAnalysis.tone,
-        product.name,
-        product.description,
-        offer?.title,
-        offer?.description,
-        format,
-        copyAngle
-      ),
-      generateImage(visualPrompt, aspectRatio, referenceImages),
-    ]);
+    // ── SEQUENTIAL: Image first, then copy ──
+    const visualResult = await generateImage(visualPrompt, aspectRatio, referenceImages);
+
+    if (!visualResult) {
+      return NextResponse.json(
+        { error: "Échec de la génération de l'image" },
+        { status: 500 }
+      );
+    }
+
+    const copyRaw = await generateAdCopy(
+      brandAnalysis.brandName,
+      brandAnalysis.tone,
+      product.name,
+      product.description,
+      offer?.title,
+      offer?.description,
+      format,
+      copyAngle
+    );
 
     // Parse copy
     let copy;
@@ -95,13 +104,6 @@ Photorealistic. NO text or letters. Aspect ratio: ${aspectRatio}.`;
             bodyText: product.description.slice(0, 60),
             callToAction: "Découvrir",
           };
-    }
-
-    if (!visualResult) {
-      return NextResponse.json(
-        { error: "Échec de la génération de l'image" },
-        { status: 500 }
-      );
     }
 
     return NextResponse.json({
