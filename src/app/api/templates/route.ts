@@ -6,15 +6,13 @@ import {
   updateTemplate,
 } from "@/lib/template-store";
 
-// GET — list all templates (returns metadata only, no base64 for listing)
+// GET — list all templates
 export async function GET() {
-  const templates = getTemplates();
-  // Return light version for listing (without heavy base64)
-  const light = templates.map(({ imageBase64, ...rest }) => rest);
-  return NextResponse.json({ templates: light });
+  const templates = await getTemplates();
+  return NextResponse.json({ templates });
 }
 
-// POST — add or manage templates
+// POST — add, remove, or update templates
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -30,34 +28,50 @@ export async function POST(request: Request) {
         );
       }
 
-      const template = {
-        id: `tpl-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        name: name || "Template sans nom",
-        format: format || "square",
-        category: category || "promo",
+      const template = await addTemplate(
+        name || "Template sans nom",
+        format || "square",
+        category || "promo",
         imageBase64,
-        mimeType,
-        previewUrl: `data:${mimeType};base64,${imageBase64}`,
-      };
+        mimeType
+      );
 
-      addTemplate(template);
-      return NextResponse.json({ template: { ...template, imageBase64: undefined } });
+      if (!template) {
+        return NextResponse.json(
+          { error: "Erreur lors de l'ajout du template" },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ template });
     }
 
     // Action: remove
     if (body.action === "remove" && body.id) {
-      removeTemplate(body.id);
+      const success = await removeTemplate(body.id);
+      if (!success) {
+        return NextResponse.json(
+          { error: "Erreur lors de la suppression" },
+          { status: 500 }
+        );
+      }
       return NextResponse.json({ success: true });
     }
 
     // Action: update metadata
     if (body.action === "update" && body.id) {
       const { name, format, category } = body;
-      updateTemplate(body.id, {
+      const success = await updateTemplate(body.id, {
         ...(name !== undefined && { name }),
         ...(format !== undefined && { format }),
         ...(category !== undefined && { category }),
       });
+      if (!success) {
+        return NextResponse.json(
+          { error: "Erreur lors de la mise à jour" },
+          { status: 500 }
+        );
+      }
       return NextResponse.json({ success: true });
     }
 

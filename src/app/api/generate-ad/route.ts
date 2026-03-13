@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateAdCopy } from "@/lib/claude";
 import { generateImage } from "@/lib/gemini";
-import { getRandomTemplate } from "@/lib/template-store";
+import { getRandomTemplateWithImage } from "@/lib/template-store";
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const aspectRatio = format === "square" ? "1:1" : "9:16";
 
     // Auto-pick a random template from the admin library for this format
-    const template = getRandomTemplate(format);
+    const template = await getRandomTemplateWithImage(format);
 
     // Build the visual prompt — different if we have a template reference
     let visualPrompt: string;
