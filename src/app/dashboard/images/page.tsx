@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useWizardStore } from "@/lib/store";
 import ImageUploadZone from "@/components/image-upload-zone";
@@ -11,6 +11,8 @@ import {
   Loader2,
   Wand2,
   ImageIcon,
+  Scissors,
+  Check,
 } from "lucide-react";
 
 const sceneTypes = [
@@ -35,6 +37,59 @@ export default function ImagesPage() {
   const [sceneType, setSceneType] = useState("hands");
   const [customPrompt, setCustomPrompt] = useState("");
   const [error, setError] = useState("");
+  const [removingBgId, setRemovingBgId] = useState<string | null>(null);
+  const [bgRemovedIds, setBgRemovedIds] = useState<Set<string>>(new Set());
+
+  // Background removal function
+  const removeBackground = useCallback(async (imageId: string) => {
+    const img = uploadedImages.find((i) => i.id === imageId);
+    if (!img) return;
+
+    setRemovingBgId(imageId);
+    try {
+      const { removeBackground: removeBg } = await import("@imgly/background-removal");
+
+      // Convert base64 to blob
+      const response = await fetch(`data:${img.mimeType};base64,${img.base64}`);
+      const blob = await response.blob();
+
+      // Remove background
+      const resultBlob = await removeBg(blob, {
+        progress: (key: string, current: number, total: number) => {
+          console.log(`[bg-removal] ${key}: ${current}/${total}`);
+        },
+      });
+
+      // Convert result to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          const base64 = result.split(",")[1];
+          resolve(base64);
+        };
+      });
+      reader.readAsDataURL(resultBlob);
+      const newBase64 = await base64Promise;
+
+      // Update the image in store
+      removeImage(imageId);
+      addImage({
+        ...img,
+        base64: newBase64,
+        mimeType: "image/png",
+        previewUrl: `data:image/png;base64,${newBase64}`,
+        name: img.name.replace(/\.\w+$/, "-detoured.png"),
+      });
+
+      setBgRemovedIds((prev) => new Set(prev).add(imageId));
+    } catch (err) {
+      console.error("Background removal error:", err);
+      setError("Erreur lors du détourage. Réessaie.");
+    } finally {
+      setRemovingBgId(null);
+    }
+  }, [uploadedImages, removeImage, addImage]);
 
   useEffect(() => {
     if (!brandAnalysis) {
@@ -251,23 +306,63 @@ export default function ImagesPage() {
                 key={img.id}
                 className="relative group rounded-xl overflow-hidden border border-border aspect-square"
               >
+                {/* Checkerboard background to show transparency */}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)",
+                    backgroundSize: "16px 16px",
+                    backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+                  }}
+                />
                 <img
                   src={img.previewUrl}
                   alt={img.name}
-                  className="w-full h-full object-cover"
+                  className="relative w-full h-full object-cover"
                 />
+                {/* Loading overlay during bg removal */}
+                {removingBgId === img.id && (
+                  <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2 z-10">
+                    <Loader2 className="w-6 h-6 animate-spin text-white" />
+                    <span className="text-white text-[10px] font-medium">Détourage...</span>
+                  </div>
+                )}
                 {img.isAiGenerated && (
                   <div className="absolute top-2 left-2 bg-primary/90 text-white text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Wand2 className="w-2.5 h-2.5" />
                     IA
                   </div>
                 )}
-                <button
-                  onClick={() => removeImage(img.id)}
-                  className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+                {/* Detoured badge */}
+                {img.name.includes("-detoured") && (
+                  <div className="absolute top-2 left-2 bg-green-500/90 text-white text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Check className="w-2.5 h-2.5" />
+                    Détouré
+                  </div>
+                )}
+                {/* Actions on hover */}
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Remove bg button */}
+                  {!img.name.includes("-detoured") && !img.isAiGenerated && (
+                    <button
+                      onClick={() => removeBackground(img.id)}
+                      disabled={removingBgId !== null}
+                      className="bg-black/50 hover:bg-primary text-white p-1.5 rounded-lg transition-colors disabled:opacity-50"
+                      title="Supprimer le fond"
+                    >
+                      <Scissors className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  {/* Delete button */}
+                  <button
+                    onClick={() => removeImage(img.id)}
+                    className="bg-black/50 hover:bg-red-500 text-white p-1.5 rounded-lg transition-colors"
+                    title="Supprimer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
