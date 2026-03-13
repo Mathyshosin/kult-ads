@@ -13,11 +13,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const refImages = referenceImageBase64
+      ? [{ base64: referenceImageBase64, mimeType: referenceImageMimeType || "image/png", label: "REFERENCE" }]
+      : [];
+
     const result = await generateImage(
       prompt,
       aspectRatio || "1:1",
-      referenceImageBase64,
-      referenceImageMimeType
+      refImages
     );
 
     if (!result) {

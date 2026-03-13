@@ -2,21 +2,28 @@ import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY || "" });
 
+interface ReferenceImage {
+  base64: string;
+  mimeType: string;
+  label: string; // e.g. "TEMPLATE" or "PRODUCT PHOTO"
+}
+
 export async function generateImage(
   prompt: string,
   aspectRatio: string = "1:1",
-  referenceImageBase64?: string,
-  referenceImageMimeType?: string
+  referenceImages: ReferenceImage[] = []
 ): Promise<{ imageBase64: string; mimeType: string } | null> {
-  const contents: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
-    { text: prompt },
-  ];
+  const contents: Array<
+    { text: string } | { inlineData: { mimeType: string; data: string } }
+  > = [{ text: prompt }];
 
-  if (referenceImageBase64) {
+  // Add all reference images
+  for (const img of referenceImages) {
+    contents.push({ text: `[${img.label}]` });
     contents.push({
       inlineData: {
-        mimeType: referenceImageMimeType || "image/png",
-        data: referenceImageBase64,
+        mimeType: img.mimeType,
+        data: img.base64,
       },
     });
   }

@@ -5,8 +5,14 @@ import { getRandomTemplateWithImage } from "@/lib/template-store";
 
 export async function POST(request: Request) {
   try {
-    const { brandAnalysis, product, offer, productImageBase64, productImageMimeType, format } =
-      await request.json();
+    const {
+      brandAnalysis,
+      product,
+      offer,
+      productImageBase64,
+      productImageMimeType,
+      format,
+    } = await request.json();
 
     if (!brandAnalysis || !product || !format) {
       return NextResponse.json(
@@ -17,38 +23,99 @@ export async function POST(request: Request) {
 
     const aspectRatio = format === "square" ? "1:1" : "9:16";
 
-    // Auto-pick a random template from the admin library for this format
+    // Auto-pick a random template from the admin library
     const template = getRandomTemplateWithImage(format);
 
-    // Build the visual prompt — different if we have a template reference
+    // Build reference images array and prompt
     let visualPrompt: string;
-    let referenceImageBase64: string | undefined;
-    let referenceImageMimeType: string | undefined;
+    const referenceImages: Array<{
+      base64: string;
+      mimeType: string;
+      label: string;
+    }> = [];
 
     if (template) {
-      // Template-based generation: reproduce the template with client info
-      visualPrompt = `Reproduce this exact ad template style, layout, and visual composition.
-Replace the product shown with: ${product.name} - ${product.description}.
-${offer ? `Include this promotional offer visually: ${offer.title} - ${offer.description}.` : ""}
-Brand: ${brandAnalysis.brandName}.
-Brand colors: ${brandAnalysis.colors?.join(", ") || "keep the template colors"}.
-Keep the same visual structure, design elements, color scheme, and professional quality as the reference template.
-DO NOT include any text or letters in the image - text will be added separately.
-Format: ${aspectRatio}.`;
-      referenceImageBase64 = template.imageBase64;
-      referenceImageMimeType = template.mimeType;
+      // ── TEMPLATE-BASED GENERATION ──
+      // Send both the template (for style) and the product image (for the actual product)
+
+      referenceImages.push({
+        base64: template.imageBase64,
+        mimeType: template.mimeType,
+        label: "STYLE TEMPLATE - Use this as visual style reference ONLY",
+      });
+
+      if (productImageBase64) {
+        referenceImages.push({
+          base64: productImageBase64,
+          mimeType: productImageMimeType || "image/png",
+          label: "CLIENT PRODUCT PHOTO - This is the actual product to feature",
+        });
+      }
+
+      visualPrompt = `You are a professional advertising designer. Your job is to create a new advertisement image.
+
+TASK: Create a NEW ad that combines the STYLE of the template with the CLIENT'S PRODUCT.
+
+STYLE TEMPLATE (first image):
+- Use this ONLY as a style/layout reference
+- Copy the visual style: background style, color palette, composition, lighting mood, decorative elements
+- DO NOT copy the product shown in the template — it is NOT the client's product
+- DO NOT reproduce the template exactly — create something NEW inspired by it
+
+CLIENT'S PRODUCT (second image if provided):
+- Product name: ${product.name}
+- Description: ${product.description}
+- This is the ACTUAL product that MUST appear prominently in the ad
+- If no product photo is provided, create a realistic representation of: ${product.name}
+
+BRAND INFO:
+- Brand: ${brandAnalysis.brandName}
+- Brand colors: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "use colors from the style template"}
+- Tone: ${brandAnalysis.tone || "professional"}
+${offer ? `\nPROMOTION:\n- ${offer.title}: ${offer.description}` : ""}
+
+RULES:
+1. The client's product (${product.name}) MUST be the hero/center of the image
+2. Use the template's visual STYLE (backgrounds, mood, layout) but with the client's product
+3. Make it look like a real, polished social media ad
+4. DO NOT include any text, letters, words, or numbers in the image
+5. Aspect ratio: ${aspectRatio}
+6. High quality, professional advertising photography style`;
     } else {
-      // Free-form generation (no template in library)
-      visualPrompt = `Create a professional, eye-catching advertising visual for the brand "${brandAnalysis.brandName}".
-Product: ${product.name} - ${product.description}.
-${offer ? `Current promotion: ${offer.title} - ${offer.description}` : ""}
-Style: modern, clean, high-quality advertisement suitable for social media.
-Brand colors: ${brandAnalysis.colors?.join(", ") || "use appealing colors"}.
-The image should be visually striking and professional.
-DO NOT include any text or letters in the image - text will be added separately.
-Aspect ratio: ${aspectRatio}.`;
-      referenceImageBase64 = productImageBase64;
-      referenceImageMimeType = productImageMimeType;
+      // ── FREE-FORM GENERATION (no template available) ──
+
+      if (productImageBase64) {
+        referenceImages.push({
+          base64: productImageBase64,
+          mimeType: productImageMimeType || "image/png",
+          label: "PRODUCT PHOTO - Feature this product in the ad",
+        });
+      }
+
+      visualPrompt = `You are a professional advertising designer. Create a stunning social media advertisement image.
+
+PRODUCT:
+- Name: ${product.name}
+- Description: ${product.description}
+- The product MUST be the central focus of the image
+
+BRAND:
+- Brand: ${brandAnalysis.brandName}
+- Brand colors: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "use modern, appealing colors"}
+- Tone: ${brandAnalysis.tone || "professional"}
+${offer ? `\nPROMOTION:\n- ${offer.title}: ${offer.description}` : ""}
+
+STYLE:
+- Modern, clean, high-end social media ad
+- Professional product photography with beautiful lighting
+- Eye-catching composition that makes people stop scrolling
+- Lifestyle feel — the product should look desirable
+
+RULES:
+1. DO NOT include any text, letters, words, or numbers in the image
+2. Aspect ratio: ${aspectRatio}
+3. The product must be clearly visible and prominent
+4. High quality, professional advertising photography`;
     }
 
     // Run copy and visual generation in parallel
@@ -62,12 +129,7 @@ Aspect ratio: ${aspectRatio}.`;
         offer?.description,
         format
       ),
-      generateImage(
-        visualPrompt,
-        aspectRatio,
-        referenceImageBase64,
-        referenceImageMimeType
-      ),
+      generateImage(visualPrompt, aspectRatio, referenceImages),
     ]);
 
     // Parse copy
