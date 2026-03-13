@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const aspectRatio = format === "square" ? "1:1" : "9:16";
 
     // Auto-pick a random template from the admin library for this format
-    const template = await getRandomTemplateWithImage(format);
+    const template = getRandomTemplateWithImage(format);
 
     // Build the visual prompt — different if we have a template reference
     let visualPrompt: string;

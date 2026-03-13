@@ -1,183 +1,134 @@
-// Server-side template operations using Supabase
-// Table: templates (id, name, format, category, image_path, mime_type, created_at)
-// Storage bucket: templates (stores the actual image files)
+// Server-side template storage using local files
+// Metadata: src/data/templates.json
+// Images: public/templates/<id>.png|jpg|webp
+//
+// Works in dev (read + write) and production (read-only, files committed to git)
 
-import { supabase } from "./supabase";
-import type { AdTemplate } from "./types";
+import fs from "fs";
+import path from "path";
 
-const BUCKET = "templates";
+interface TemplateMeta {
+  id: string;
+  name: string;
+  format: "square" | "story";
+  category: string;
+  filename: string;
+  mimeType: string;
+}
 
-// ── Fetch all templates ──
-export async function getTemplates(): Promise<AdTemplate[]> {
-  const { data, error } = await supabase
-    .from("templates")
-    .select("*")
-    .order("created_at", { ascending: false });
+const DATA_FILE = path.join(process.cwd(), "src/data/templates.json");
+const IMAGES_DIR = path.join(process.cwd(), "public/templates");
 
-  if (error) {
-    console.error("Error fetching templates:", error);
+// ── Read metadata ──
+function readMeta(): TemplateMeta[] {
+  try {
+    const raw = fs.readFileSync(DATA_FILE, "utf-8");
+    return JSON.parse(raw);
+  } catch {
     return [];
   }
+}
 
-  return (data || []).map((row) => ({
-    id: row.id,
-    name: row.name,
-    format: row.format,
-    category: row.category,
-    imageBase64: "", // Not loaded in listing
-    mimeType: row.mime_type,
-    previewUrl: getPublicUrl(row.image_path),
+// ── Write metadata ──
+function writeMeta(templates: TemplateMeta[]): void {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(templates, null, 2));
+}
+
+// ── Public: get all templates (for listing) ──
+export function getTemplates(): (TemplateMeta & { previewUrl: string })[] {
+  return readMeta().map((t) => ({
+    ...t,
+    previewUrl: `/templates/${t.filename}`,
   }));
 }
 
-// ── Get templates by format ──
-export async function getTemplatesByFormat(
+// ── Public: get random template with base64 image for Gemini ──
+export function getRandomTemplateWithImage(
   format: "square" | "story"
-): Promise<AdTemplate[]> {
-  const { data, error } = await supabase
-    .from("templates")
-    .select("*")
-    .eq("format", format);
+): { imageBase64: string; mimeType: string } | null {
+  const matching = readMeta().filter((t) => t.format === format);
+  if (matching.length === 0) return null;
 
-  if (error) {
-    console.error("Error fetching templates by format:", error);
-    return [];
-  }
+  const template = matching[Math.floor(Math.random() * matching.length)];
+  const imagePath = path.join(IMAGES_DIR, template.filename);
 
-  return data || [];
-}
-
-// ── Get a random template with its image data for generation ──
-export async function getRandomTemplateWithImage(
-  format: "square" | "story"
-): Promise<{ imageBase64: string; mimeType: string } | null> {
-  const { data, error } = await supabase
-    .from("templates")
-    .select("*")
-    .eq("format", format);
-
-  if (error || !data || data.length === 0) return null;
-
-  // Pick random
-  const row = data[Math.floor(Math.random() * data.length)];
-
-  // Download the image from storage
-  const { data: fileData, error: downloadError } = await supabase.storage
-    .from(BUCKET)
-    .download(row.image_path);
-
-  if (downloadError || !fileData) {
-    console.error("Error downloading template image:", downloadError);
+  try {
+    const buffer = fs.readFileSync(imagePath);
+    return {
+      imageBase64: buffer.toString("base64"),
+      mimeType: template.mimeType,
+    };
+  } catch {
+    console.error(`Template image not found: ${imagePath}`);
     return null;
   }
-
-  // Convert blob to base64
-  const buffer = Buffer.from(await fileData.arrayBuffer());
-  const imageBase64 = buffer.toString("base64");
-
-  return {
-    imageBase64,
-    mimeType: row.mime_type,
-  };
 }
 
-// ── Add a new template ──
-export async function addTemplate(
+// ── Public: add a new template (dev mode only) ──
+export function addTemplate(
   name: string,
   format: "square" | "story",
   category: string,
   imageBase64: string,
   mimeType: string
-): Promise<AdTemplate | null> {
+): TemplateMeta & { previewUrl: string } {
   const id = `tpl-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-  const ext = mimeType.includes("png") ? "png" : mimeType.includes("webp") ? "webp" : "jpg";
-  const imagePath = `${id}.${ext}`;
+  const ext = mimeType.includes("png")
+    ? "png"
+    : mimeType.includes("webp")
+      ? "webp"
+      : "jpg";
+  const filename = `${id}.${ext}`;
 
-  // Upload image to storage
+  // Write image file
   const buffer = Buffer.from(imageBase64, "base64");
-  const { error: uploadError } = await supabase.storage
-    .from(BUCKET)
-    .upload(imagePath, buffer, {
-      contentType: mimeType,
-      upsert: false,
-    });
+  fs.writeFileSync(path.join(IMAGES_DIR, filename), buffer);
 
-  if (uploadError) {
-    console.error("Error uploading template image:", uploadError);
-    return null;
-  }
-
-  // Insert metadata row
-  const { error: insertError } = await supabase.from("templates").insert({
+  // Update metadata
+  const templates = readMeta();
+  const newTemplate: TemplateMeta = {
     id,
     name,
     format,
     category,
-    image_path: imagePath,
-    mime_type: mimeType,
-  });
-
-  if (insertError) {
-    console.error("Error inserting template:", insertError);
-    // Cleanup uploaded file
-    await supabase.storage.from(BUCKET).remove([imagePath]);
-    return null;
-  }
-
-  return {
-    id,
-    name,
-    format,
-    category,
-    imageBase64: "",
+    filename,
     mimeType,
-    previewUrl: getPublicUrl(imagePath),
   };
+  templates.push(newTemplate);
+  writeMeta(templates);
+
+  return { ...newTemplate, previewUrl: `/templates/${filename}` };
 }
 
-// ── Remove a template ──
-export async function removeTemplate(id: string): Promise<boolean> {
-  // Get image path first
-  const { data } = await supabase
-    .from("templates")
-    .select("image_path")
-    .eq("id", id)
-    .single();
+// ── Public: remove a template ──
+export function removeTemplate(id: string): boolean {
+  const templates = readMeta();
+  const template = templates.find((t) => t.id === id);
+  if (!template) return false;
 
-  if (data?.image_path) {
-    await supabase.storage.from(BUCKET).remove([data.image_path]);
+  // Delete image file
+  const imagePath = path.join(IMAGES_DIR, template.filename);
+  try {
+    fs.unlinkSync(imagePath);
+  } catch {
+    // File might not exist
   }
 
-  const { error } = await supabase.from("templates").delete().eq("id", id);
-
-  if (error) {
-    console.error("Error removing template:", error);
-    return false;
-  }
-
+  // Update metadata
+  writeMeta(templates.filter((t) => t.id !== id));
   return true;
 }
 
-// ── Update template metadata ──
-export async function updateTemplate(
+// ── Public: update template metadata ──
+export function updateTemplate(
   id: string,
   partial: { name?: string; format?: string; category?: string }
-): Promise<boolean> {
-  const { error } = await supabase
-    .from("templates")
-    .update(partial)
-    .eq("id", id);
+): boolean {
+  const templates = readMeta();
+  const idx = templates.findIndex((t) => t.id === id);
+  if (idx === -1) return false;
 
-  if (error) {
-    console.error("Error updating template:", error);
-    return false;
-  }
-
+  templates[idx] = { ...templates[idx], ...partial } as TemplateMeta;
+  writeMeta(templates);
   return true;
-}
-
-// ── Helper: get public URL for an image ──
-function getPublicUrl(imagePath: string): string {
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(imagePath);
-  return data.publicUrl;
 }

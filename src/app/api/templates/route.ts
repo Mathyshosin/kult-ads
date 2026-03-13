@@ -8,7 +8,7 @@ import {
 
 // GET — list all templates
 export async function GET() {
-  const templates = await getTemplates();
+  const templates = getTemplates();
   return NextResponse.json({ templates });
 }
 
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
         );
       }
 
-      const template = await addTemplate(
+      const template = addTemplate(
         name || "Template sans nom",
         format || "square",
         category || "promo",
@@ -36,42 +36,23 @@ export async function POST(request: Request) {
         mimeType
       );
 
-      if (!template) {
-        return NextResponse.json(
-          { error: "Erreur lors de l'ajout du template" },
-          { status: 500 }
-        );
-      }
-
       return NextResponse.json({ template });
     }
 
     // Action: remove
     if (body.action === "remove" && body.id) {
-      const success = await removeTemplate(body.id);
-      if (!success) {
-        return NextResponse.json(
-          { error: "Erreur lors de la suppression" },
-          { status: 500 }
-        );
-      }
+      removeTemplate(body.id);
       return NextResponse.json({ success: true });
     }
 
     // Action: update metadata
     if (body.action === "update" && body.id) {
       const { name, format, category } = body;
-      const success = await updateTemplate(body.id, {
+      updateTemplate(body.id, {
         ...(name !== undefined && { name }),
         ...(format !== undefined && { format }),
         ...(category !== undefined && { category }),
       });
-      if (!success) {
-        return NextResponse.json(
-          { error: "Erreur lors de la mise à jour" },
-          { status: 500 }
-        );
-      }
       return NextResponse.json({ success: true });
     }
 
