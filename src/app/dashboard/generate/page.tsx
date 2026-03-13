@@ -16,9 +16,8 @@ import {
 interface AdConcept {
   id: string;
   adType: string;
-  backgroundPrompt: string;
+  scenePrompt: string;
   copyAngle: string;
-  layoutHint: string;
 }
 
 export default function GeneratePage() {

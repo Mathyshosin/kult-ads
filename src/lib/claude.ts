@@ -59,52 +59,42 @@ export async function generateAdConcepts(
   offerDescription?: string,
   count: number = 4
 ): Promise<string> {
-  const systemPrompt = `Tu es un directeur artistique et media buyer expert en publicités statiques pour les réseaux sociaux (Instagram, Facebook, TikTok).
+  const systemPrompt = `Tu es un directeur artistique expert en publicités statiques pour Instagram/Facebook/TikTok.
 
-Tu dois créer des CONCEPTS PUBLICITAIRES stratégiques et variés, adaptés spécifiquement au produit.
+CONTEXTE : L'IA d'image (Gemini) va recevoir la photo du produit en référence + un template de style. Elle doit créer une image publicitaire COMPLÈTE avec le produit intégré naturellement dans la scène. Le texte sera ajouté par-dessus en CSS.
 
-CONTEXTE TECHNIQUE :
-- Le produit sera composité en PNG transparent par-dessus le fond (3 couches : fond + produit + texte CSS)
-- Tu dois décrire le FOND uniquement (le produit est ajouté séparément par-dessus)
-- Le fond doit être RÉALISTE, professionnel et COHÉRENT avec le type de produit
+Tu dois créer des concepts d'ads avec un prompt de SCÈNE COMPLÈTE pour chaque ad.
 
-RÈGLES CRITIQUES :
-1. backgroundPrompt DOIT être en ANGLAIS, COURT (2-3 phrases max)
-2. backgroundPrompt ne doit JAMAIS mentionner le produit lui-même
-3. backgroundPrompt doit décrire un fond RÉALISTE adapté au produit
-4. Chaque concept doit avoir un adType DIFFÉRENT
-5. Pense comme un expert media buyer : quels angles CONVERTISSENT le mieux pour CE produit ?
+RÈGLES :
+1. scenePrompt en ANGLAIS, COURT (2-3 phrases MAX — les prompts longs causent des erreurs)
+2. scenePrompt décrit la SCÈNE ENTIÈRE : comment le produit est présenté, le décor, l'ambiance
+3. Le produit est fourni en photo — Gemini doit l'intégrer TEL QUEL sans le modifier
+4. Chaque concept = un adType DIFFÉRENT et une scène DIFFÉRENTE
+5. Pense comme un media buyer expert : quels visuels CONVERTISSENT pour ce type de produit ?
 
-EXEMPLES DE FONDS ADAPTÉS PAR CATÉGORIE :
-- Lingerie/sous-vêtements → fond uni pastel doux, surface en marbre blanc, tissu satin plié, tiroir ouvert avec lingerie, salle de bain lumineuse épurée
-- Cosmétiques/soins → vanity table en marbre, étagère de salle de bain, fond rose/doré, comptoir avec plantes, gouttelettes d'eau sur surface
-- Tech/gadgets → bureau minimaliste sombre, fond néon subtil, surface en bois avec éclairage directionnel, setup desk épuré
-- Alimentaire → table en bois rustique, cuisine lumineuse, nappe en lin, planche à découper, fond texturé naturel
-- Mode/vêtements → mur en béton texturé, fond studio uni, rue urbaine floutée, portant avec cintres
-- Sport/fitness → salle de sport floutée, tapis de yoga, surface en béton, vestiaire épuré
-- Maison/déco → intérieur scandinave, étagère en bois, fond texturé mur, salon lumineux flouté
+EXEMPLES DE SCÈNES PAR CATÉGORIE :
+- Culottes/lingerie → produit posé à plat sur du marbre blanc, ou tenu en main devant un miroir, ou plié dans un tiroir de lingerie, ou porté par une femme confiante
+- Cosmétiques → produit sur vanity table en marbre, ou tenu en main avec un beau teint, ou posé avec des fleurs et textures
+- Tech → produit sur bureau minimaliste, ou tenu en main dans un café, ou à côté d'un laptop
+- Alimentaire → produit sur table en bois avec ingrédients frais, ou dans une cuisine lumineuse
 
-TYPES D'ADS STRATÉGIQUES (choisis les plus pertinents pour ce produit) :
-- "offre" : mise en avant promo/réduction (fond festif, confettis, couleurs vives)
-- "bénéfice" : focus sur un avantage clé du produit (fond épuré, minimaliste)
-- "comparaison" : produit VS alternative (fond divisé en 2 tons, contraste visuel)
-- "témoignage" : preuve sociale, avis client (fond chaleureux, confiance)
-- "avant-après" : transformation visible (fond split, contraste)
-- "lifestyle" : le produit dans la vie quotidienne (fond naturel, contextualisé)
-- "premium" : positionnement haut de gamme (fond luxe, textures nobles)
-- "urgence" : offre limitée, stock réduit (fond dramatique, contrasté)
-- "nouveauté" : lancement, découverte (fond frais, moderne, dynamique)
-- "éducatif" : pourquoi ce produit est différent (fond clean, instructif)
+TYPES D'ADS :
+- "offre" : promo, réduction (scène punchy et attirante)
+- "bénéfice" : avantage clé (scène clean et produit en héro)
+- "comparaison" : VS alternative (scène split/contrastée)
+- "témoignage" : preuve sociale (scène chaleureuse, authentique)
+- "lifestyle" : produit dans la vraie vie (scène naturelle)
+- "premium" : luxe, haut de gamme (scène élégante)
+- "urgence" : stock limité (scène dramatique)
 
-Retourne UNIQUEMENT un JSON valide :
+JSON UNIQUEMENT :
 {
   "concepts": [
     {
       "id": "concept-1",
       "adType": "string",
-      "backgroundPrompt": "string (EN ANGLAIS, 2-3 phrases, fond uniquement)",
-      "copyAngle": "string (direction pour le copywriting, EN FRANÇAIS)",
-      "layoutHint": "product-center" | "product-left" | "product-right" | "product-small-bottom"
+      "scenePrompt": "string (ANGLAIS, 2-3 phrases, scène complète avec produit)",
+      "copyAngle": "string (direction copywriting, FRANÇAIS)"
     }
   ]
 }`;
@@ -123,10 +113,9 @@ Couleurs : ${colors.join(", ")}
 Produit : ${productName} — ${productDescription}
 Audience : ${targetAudience}
 Points forts : ${uniqueSellingPoints.join(", ")}
-${offerTitle ? `Offre en cours : ${offerTitle} — ${offerDescription}` : "Pas d'offre spéciale en cours."}
+${offerTitle ? `Offre en cours : ${offerTitle} — ${offerDescription}` : "Pas d'offre spéciale."}
 
-Génère exactement ${count} concepts publicitaires variés, stratégiques et ADAPTÉS à ce produit spécifique.
-Chaque concept doit être radicalement différent. Pense comme un media buyer qui veut tester différents angles.`,
+Génère ${count} concepts d'ads variés et adaptés à CE produit. Chaque concept doit être radicalement différent.`,
       },
     ],
   });

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import type { GeneratedAd, ProductPosition, PositionPreset } from "@/lib/types";
-import { Download, RefreshCw, Pencil, Check, Type, Move, Minus, Plus } from "lucide-react";
+import type { GeneratedAd } from "@/lib/types";
+import { Download, RefreshCw, Pencil, Check, Type } from "lucide-react";
 import { toPng } from "html-to-image";
 
 interface AdPreviewCardProps {
@@ -61,25 +61,6 @@ const AD_STYLES = [
   },
 ];
 
-// Position CSS mapping
-const POSITION_CLASSES: Record<PositionPreset, string> = {
-  "top-left": "top-[8%] left-[8%]",
-  "top-center": "top-[8%] left-1/2 -translate-x-1/2",
-  "top-right": "top-[8%] right-[8%]",
-  "center-left": "top-1/2 left-[8%] -translate-y-1/2",
-  "center": "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-  "center-right": "top-1/2 right-[8%] -translate-y-1/2",
-  "bottom-left": "bottom-[8%] left-[8%]",
-  "bottom-center": "bottom-[8%] left-1/2 -translate-x-1/2",
-  "bottom-right": "bottom-[8%] right-[8%]",
-};
-
-const POSITION_GRID: PositionPreset[][] = [
-  ["top-left", "top-center", "top-right"],
-  ["center-left", "center", "center-right"],
-  ["bottom-left", "bottom-center", "bottom-right"],
-];
-
 export default function AdPreviewCard({
   ad,
   onRegenerate,
@@ -96,12 +77,6 @@ export default function AdPreviewCard({
   const [styleIndex, setStyleIndex] = useState(0);
   const [showTextOverlay, setShowTextOverlay] = useState(true);
 
-  // Product position state
-  const [productPosition, setProductPosition] = useState<ProductPosition>(
-    ad.productPosition || { preset: "center", scale: 45 }
-  );
-  const [showPositionPanel, setShowPositionPanel] = useState(false);
-
   // Export state
   const [isExporting, setIsExporting] = useState(false);
 
@@ -116,32 +91,11 @@ export default function AdPreviewCard({
     setStyleIndex((prev) => (prev + 1) % AD_STYLES.length);
   }, []);
 
-  const handlePositionChange = useCallback(
-    (preset: PositionPreset) => {
-      const newPos = { ...productPosition, preset };
-      setProductPosition(newPos);
-      onUpdateAd?.(ad.id, { productPosition: newPos });
-    },
-    [ad.id, productPosition, onUpdateAd]
-  );
-
-  const handleScaleChange = useCallback(
-    (delta: number) => {
-      const newScale = Math.min(80, Math.max(20, productPosition.scale + delta));
-      const newPos = { ...productPosition, scale: newScale };
-      setProductPosition(newPos);
-      onUpdateAd?.(ad.id, { productPosition: newPos });
-    },
-    [ad.id, productPosition, onUpdateAd]
-  );
-
   async function handleDownload() {
     if (!cardRef.current) return;
     setIsExporting(true);
-    setShowPositionPanel(false);
     try {
-      // Small delay to let state update (hide position panel)
-      await new Promise((r) => setTimeout(r, 100));
+      await new Promise((r) => setTimeout(r, 50));
       const dataUrl = await toPng(cardRef.current, {
         quality: 1,
         pixelRatio: 2,
@@ -153,7 +107,7 @@ export default function AdPreviewCard({
       link.click();
     } catch (err) {
       console.error("Export error:", err);
-      // Fallback: download background only
+      // Fallback: download image directly
       const link = document.createElement("a");
       link.href = `data:${ad.mimeType};base64,${ad.imageBase64}`;
       link.download = `kult-ad-${ad.format}-${ad.id}.png`;
@@ -167,13 +121,12 @@ export default function AdPreviewCard({
     navigator.clipboard.writeText(text);
   }
 
-  // Font sizes
+  // Font sizes based on format
   const headlineSize = isStory ? "text-xl" : "text-lg";
   const bodySize = isStory ? "text-sm" : "text-xs";
   const ctaSize = isStory ? "text-sm" : "text-xs";
   const padding = isStory ? "p-6" : "p-4";
 
-  // Text render helper (shared between box and non-box styles)
   const renderTextContent = () => (
     <>
       {isEditing ? (
@@ -220,35 +173,21 @@ export default function AdPreviewCard({
           isStory ? "aspect-[9/16]" : "aspect-square"
         } rounded-2xl overflow-hidden bg-black`}
       >
-        {/* LAYER 0: Background (Gemini) */}
+        {/* Full scene image from Gemini (product integrated) */}
         <img
           src={`data:${ad.mimeType};base64,${ad.imageBase64}`}
-          alt="Background"
+          alt="Ad"
           className="absolute inset-0 w-full h-full object-cover"
         />
 
-        {/* LAYER 1: Product image (client PNG, composited via CSS) */}
-        {ad.productImageBase64 && (
-          <div
-            className={`absolute ${POSITION_CLASSES[productPosition.preset]} z-10`}
-            style={{ width: `${productPosition.scale}%` }}
-          >
-            <img
-              src={`data:${ad.productImageMimeType || "image/png"};base64,${ad.productImageBase64}`}
-              alt="Product"
-              className="w-full h-auto object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
-            />
-          </div>
-        )}
-
-        {/* LAYER 2: Text overlay (CSS) */}
+        {/* Text overlay (CSS) */}
         {showTextOverlay && (
           <>
             {style.overlay && (
-              <div className={`absolute inset-0 ${style.overlay} z-20`} />
+              <div className={`absolute inset-0 ${style.overlay} z-10`} />
             )}
             <div
-              className={`absolute inset-0 flex flex-col ${style.textPosition} ${padding} z-30`}
+              className={`absolute inset-0 flex flex-col ${style.textPosition} ${padding} z-20`}
             >
               {style.hasBox ? (
                 <div className="bg-black/70 backdrop-blur-sm rounded-xl p-4 space-y-2">
@@ -263,59 +202,20 @@ export default function AdPreviewCard({
           </>
         )}
 
-        {/* Format badge (hidden during export) */}
+        {/* Badges */}
         {!isExporting && (
-          <div className="absolute top-3 right-3 bg-black/50 text-white text-[10px] font-medium px-2 py-0.5 rounded-full z-40">
-            {isStory ? "Story" : "Carré"}
+          <div className="absolute top-3 right-3 flex gap-1.5 z-30">
+            {ad.conversionAngle && (
+              <span className="bg-primary/80 text-white text-[9px] font-semibold px-2 py-0.5 rounded-full">
+                {ad.conversionAngle}
+              </span>
+            )}
+            <span className="bg-black/50 text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
+              {isStory ? "Story" : "Carré"}
+            </span>
           </div>
         )}
       </div>
-
-      {/* === POSITION PANEL (outside export area) === */}
-      {showPositionPanel && ad.productImageBase64 && (
-        <div className="bg-white rounded-xl border border-border p-3 space-y-3">
-          <p className="text-[10px] font-semibold text-muted uppercase tracking-wider">
-            Position du produit
-          </p>
-
-          {/* 3x3 position grid */}
-          <div className="grid grid-cols-3 gap-1 w-20 mx-auto">
-            {POSITION_GRID.map((row, rowIdx) =>
-              row.map((preset) => (
-                <button
-                  key={preset}
-                  onClick={() => handlePositionChange(preset)}
-                  className={`w-6 h-6 rounded-sm border transition-colors ${
-                    productPosition.preset === preset
-                      ? "bg-primary border-primary"
-                      : "bg-gray-100 border-border hover:bg-gray-200"
-                  }`}
-                  title={preset}
-                />
-              ))
-            )}
-          </div>
-
-          {/* Size controls */}
-          <div className="flex items-center justify-center gap-2">
-            <button
-              onClick={() => handleScaleChange(-5)}
-              className="p-1 rounded border border-border hover:bg-gray-100"
-            >
-              <Minus className="w-3 h-3" />
-            </button>
-            <span className="text-xs font-medium text-foreground w-10 text-center">
-              {productPosition.scale}%
-            </span>
-            <button
-              onClick={() => handleScaleChange(5)}
-              className="p-1 rounded border border-border hover:bg-gray-100"
-            >
-              <Plus className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* === CONTROLS === */}
       <div className="flex items-center gap-1.5">
@@ -341,21 +241,6 @@ export default function AdPreviewCard({
         >
           {isEditing ? <Check className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
         </button>
-
-        {/* Position product */}
-        {ad.productImageBase64 && (
-          <button
-            onClick={() => setShowPositionPanel(!showPositionPanel)}
-            className={`p-2.5 rounded-xl border text-xs transition-colors ${
-              showPositionPanel
-                ? "bg-primary border-primary text-white"
-                : "border-border text-muted hover:bg-gray-100"
-            }`}
-            title="Position du produit"
-          >
-            <Move className="w-3.5 h-3.5" />
-          </button>
-        )}
 
         {/* Toggle text */}
         <button

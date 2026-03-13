@@ -12,7 +12,6 @@ export async function POST(request: Request) {
       productImageBase64,
       productImageMimeType,
       format,
-      // Dynamic concept from Claude (new system)
       concept,
     } = await request.json();
 
@@ -25,18 +24,17 @@ export async function POST(request: Request) {
 
     const aspectRatio = format === "square" ? "1:1" : "9:16";
 
-    // Use concept from Claude if provided, otherwise use a generic fallback
-    const backgroundPrompt = concept?.backgroundPrompt
-      || "Clean, minimal advertising background. Soft neutral tones, professional studio lighting. Elegant and modern.";
+    // Use concept from Claude if provided
+    const scenePrompt = concept?.scenePrompt
+      || "The product displayed beautifully on a clean, minimal surface with soft professional lighting.";
     const copyAngle = concept?.copyAngle
-      || "Mets en avant le bénéfice principal du produit de manière percutante.";
+      || "Mets en avant le bénéfice principal du produit.";
     const adType = concept?.adType || "bénéfice";
-    const layoutHint = concept?.layoutHint || "product-center";
 
-    // Auto-pick a random template as style reference
+    // Pick a random template as STYLE reference
     const template = getRandomTemplateWithImage(format);
 
-    // Reference images: ONLY the template (NO product image — composited in CSS)
+    // Reference images: template (style) + product photo (to integrate)
     const referenceImages: Array<{
       base64: string;
       mimeType: string;
@@ -47,29 +45,29 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: "STYLE REFERENCE",
+        label: "STYLE REFERENCE — match this ad layout style, colors, and professional quality",
       });
     }
 
-    // Short, focused prompt using the concept's background description
-    const visualPrompt = `Create a premium advertising BACKGROUND image for the brand "${brandAnalysis.brandName}".
+    if (productImageBase64) {
+      referenceImages.push({
+        base64: productImageBase64,
+        mimeType: productImageMimeType || "image/png",
+        label: "PRODUCT PHOTO — integrate this exact product into the scene",
+      });
+    }
 
-A product will be composited on top later — DO NOT include any product, object, or item.
-This is ONLY the background scene/atmosphere.
+    // Short prompt: scene description + strict rules
+    const visualPrompt = `Create a professional advertising image for "${brandAnalysis.brandName}".
 
-${backgroundPrompt}
+${scenePrompt}
 
-Brand colors: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "modern palette"}
-${template ? "Use the STYLE REFERENCE for visual inspiration (colors, mood, style)." : ""}
+Use the PRODUCT PHOTO and place it naturally in the scene. Keep the product EXACTLY as shown — do not modify, redesign, or add anything to it.
+${template ? "Match the style, quality and layout of the STYLE REFERENCE." : ""}
+Brand colors: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "use modern palette"}.
+Photorealistic. NO text or letters. Aspect ratio: ${aspectRatio}.`;
 
-Rules:
-- Photorealistic, high-end advertising photography
-- NO text, letters, words, or numbers anywhere
-- NO products or objects — pure background/atmosphere
-- Leave clear space where a product will be placed
-- Aspect ratio: ${aspectRatio}`;
-
-    // Run copy and background generation in parallel
+    // Generate copy and image in parallel
     const [copyRaw, visualResult] = await Promise.all([
       generateAdCopy(
         brandAnalysis.brandName,
@@ -101,19 +99,10 @@ Rules:
 
     if (!visualResult) {
       return NextResponse.json(
-        { error: "Échec de la génération du fond" },
+        { error: "Échec de la génération de l'image" },
         { status: 500 }
       );
     }
-
-    // Map layoutHint to default product position
-    const positionMap: Record<string, { preset: string; scale: number }> = {
-      "product-center": { preset: "center", scale: 45 },
-      "product-left": { preset: "center-left", scale: 40 },
-      "product-right": { preset: "center-right", scale: 40 },
-      "product-small-bottom": { preset: "bottom-center", scale: 30 },
-    };
-    const defaultPosition = positionMap[layoutHint] || positionMap["product-center"];
 
     return NextResponse.json({
       id: `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -127,10 +116,6 @@ Rules:
       offerId: offer?.id,
       conversionAngle: adType,
       timestamp: Date.now(),
-      // Passthrough product image for compositing
-      productImageBase64: productImageBase64 || undefined,
-      productImageMimeType: productImageMimeType || undefined,
-      productPosition: defaultPosition,
     });
   } catch (error) {
     console.error("[generate-ad] ERROR:", error);
