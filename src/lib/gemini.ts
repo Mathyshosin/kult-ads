@@ -11,7 +11,8 @@ interface ReferenceImage {
 export async function generateImage(
   prompt: string,
   aspectRatio: string = "1:1",
-  referenceImages: ReferenceImage[] = []
+  referenceImages: ReferenceImage[] = [],
+  maxRetries: number = 3
 ): Promise<{ imageBase64: string; mimeType: string } | null> {
   const contents: Array<
     { text: string } | { inlineData: { mimeType: string; data: string } }
@@ -28,25 +29,49 @@ export async function generateImage(
     });
   }
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-image",
-    contents,
-    config: {
-      responseModalities: ["IMAGE", "TEXT"],
-    },
-  });
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[gemini] Attempt ${attempt}/${maxRetries}...`);
 
-  // Extract image from response
-  const parts = response.candidates?.[0]?.content?.parts || [];
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash-image",
+        contents,
+        config: {
+          responseModalities: ["IMAGE", "TEXT"],
+        },
+      });
 
-  for (const part of parts) {
-    if (part.inlineData) {
-      return {
-        imageBase64: part.inlineData.data || "",
-        mimeType: part.inlineData.mimeType || "image/png",
-      };
+      // Extract image from response
+      const parts = response.candidates?.[0]?.content?.parts || [];
+
+      for (const part of parts) {
+        if (part.inlineData) {
+          console.log(`[gemini] Success on attempt ${attempt}`);
+          return {
+            imageBase64: part.inlineData.data || "",
+            mimeType: part.inlineData.mimeType || "image/png",
+          };
+        }
+      }
+
+      // No image in response — log and retry
+      console.warn(
+        `[gemini] Attempt ${attempt}: No image in response. finishReason:`,
+        response.candidates?.[0]?.finishReason || "unknown"
+      );
+    } catch (err) {
+      console.error(
+        `[gemini] Attempt ${attempt} error:`,
+        err instanceof Error ? err.message : err
+      );
+    }
+
+    // Wait a bit before retry (exponential backoff)
+    if (attempt < maxRetries) {
+      await new Promise((r) => setTimeout(r, 1000 * attempt));
     }
   }
 
+  console.error(`[gemini] All ${maxRetries} attempts failed`);
   return null;
 }

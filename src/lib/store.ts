@@ -31,6 +31,7 @@ interface WizardState {
   addImage: (image: UploadedImage) => void;
   removeImage: (id: string) => void;
   addGeneratedAd: (ad: GeneratedAd) => void;
+  updateGeneratedAd: (id: string, updates: Partial<GeneratedAd>) => void;
   clearAds: () => void;
   reset: () => void;
 }
@@ -126,6 +127,12 @@ export const useWizardStore = create<WizardState>()(
       addGeneratedAd: (ad) =>
         set((state) => ({
           generatedAds: [...state.generatedAds, ad],
+        })),
+      updateGeneratedAd: (id, updates) =>
+        set((state) => ({
+          generatedAds: state.generatedAds.map((ad) =>
+            ad.id === id ? { ...ad, ...updates } : ad
+          ),
         })),
       clearAds: () => set({ generatedAds: [] }),
       reset: () =>

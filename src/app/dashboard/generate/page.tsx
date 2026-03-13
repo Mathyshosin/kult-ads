@@ -17,6 +17,7 @@ export default function GeneratePage() {
   const uploadedImages = useWizardStore((s) => s.uploadedImages);
   const generatedAds = useWizardStore((s) => s.generatedAds);
   const addGeneratedAd = useWizardStore((s) => s.addGeneratedAd);
+  const updateGeneratedAd = useWizardStore((s) => s.updateGeneratedAd);
   const clearAds = useWizardStore((s) => s.clearAds);
 
   const [selectedProduct, setSelectedProduct] = useState("");
@@ -299,6 +300,7 @@ export default function GeneratePage() {
                 <AdPreviewCard
                   key={ad.id}
                   ad={ad}
+                  onUpdateAd={(id, updates) => updateGeneratedAd(id, updates)}
                   onRegenerate={async () => {
                     const product = brandAnalysis.products.find(
                       (p) => p.id === ad.productId

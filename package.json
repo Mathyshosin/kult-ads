@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.78.0",
     "@google/genai": "^1.45.0",
     "cheerio": "^1.2.0",
+    "html-to-image": "^1.11.13",
     "lucide-react": "^0.577.0",
     "next": "16.1.6",
     "react": "19.2.3",

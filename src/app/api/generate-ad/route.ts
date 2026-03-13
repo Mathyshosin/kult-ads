@@ -254,6 +254,7 @@ ${angle.visualDirection}
       timestamp: Date.now(),
     });
   } catch (error) {
+    console.error("[generate-ad] ERROR:", error);
     const message =
       error instanceof Error ? error.message : "Erreur lors de la génération";
     return NextResponse.json({ error: message }, { status: 500 });
