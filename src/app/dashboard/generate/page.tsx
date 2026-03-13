@@ -10,7 +10,6 @@ import {
   Sparkles,
   AlertCircle,
   Brain,
-  Zap,
 } from "lucide-react";
 
 interface AdConcept {
@@ -60,17 +59,28 @@ export default function GeneratePage() {
 
   if (!brandAnalysis) return null;
 
+  // Get existing ad types to avoid duplicates
+  const existingAdTypes = generatedAds
+    .filter((a) => a.conversionAngle)
+    .map((a) => a.conversionAngle!);
+
+  // Helper to get current product/offer/image
+  function getSelections() {
+    return {
+      product: brandAnalysis!.products.find((p) => p.id === selectedProduct) || brandAnalysis!.products[0],
+      offer: brandAnalysis!.offers.find((o) => o.id === selectedOffer) || null,
+      image: uploadedImages.find((i) => i.id === selectedImage) || uploadedImages[0],
+    };
+  }
+
   async function handleGenerate() {
     setGenerating(true);
     setError("");
     setFailedCount(0);
-    setConcepts([]);
 
-    const product = brandAnalysis!.products.find((p) => p.id === selectedProduct);
-    const offer = brandAnalysis!.offers.find((o) => o.id === selectedOffer);
-    const image = uploadedImages.find((i) => i.id === selectedImage);
+    const { product, offer, image } = getSelections();
 
-    // ── PHASE 1: Generate smart concepts with Claude ──
+    // ── PHASE 1: Generate concepts ──
     setPhase("concepts");
 
     let adConcepts: AdConcept[] = [];
@@ -81,21 +91,19 @@ export default function GeneratePage() {
         body: JSON.stringify({
           brandAnalysis,
           product,
-          offer: offer || null,
+          offer,
           count: variations,
           customDirection: customDirection.trim() || undefined,
+          existingAdTypes: existingAdTypes.length > 0 ? existingAdTypes : undefined,
         }),
       });
 
-      if (!conceptRes.ok) {
-        throw new Error("Erreur lors de la génération des concepts");
-      }
+      if (!conceptRes.ok) throw new Error("Erreur concepts");
 
       const conceptData = await conceptRes.json();
       adConcepts = conceptData.concepts || [];
-      setConcepts(adConcepts);
-    } catch (err) {
-      console.error("Concept generation failed:", err);
+      setConcepts((prev) => [...prev, ...adConcepts]);
+    } catch {
       setError("Erreur lors de la génération des concepts. Réessaie.");
       setGenerating(false);
       setPhase("idle");
@@ -109,7 +117,7 @@ export default function GeneratePage() {
       return;
     }
 
-    // ── PHASE 2: Generate ads (always square) ──
+    // ── PHASE 2: Generate ads ──
     setPhase("generating");
     const totalAds = adConcepts.length;
     setProgress({ current: 0, total: totalAds });
@@ -125,7 +133,7 @@ export default function GeneratePage() {
           body: JSON.stringify({
             brandAnalysis,
             product,
-            offer: offer || null,
+            offer,
             productImageBase64: image?.base64,
             productImageMimeType: image?.mimeType,
             format: "square",
@@ -136,27 +144,22 @@ export default function GeneratePage() {
         if (!res.ok) {
           failed++;
           setFailedCount(failed);
-          current++;
-          setProgress({ current, total: totalAds });
-          continue;
+        } else {
+          const ad = await res.json();
+          addGeneratedAd(ad);
         }
-
-        const ad = await res.json();
-        addGeneratedAd(ad);
-        current++;
-        setProgress({ current, total: totalAds });
       } catch {
         failed++;
         setFailedCount(failed);
-        current++;
-        setProgress({ current, total: totalAds });
       }
+      current++;
+      setProgress({ current, total: totalAds });
     }
 
     if (failed > 0 && failed < totalAds) {
-      setError(`${totalAds - failed}/${totalAds} ads générées (${failed} ont échoué)`);
+      setError(`${totalAds - failed}/${totalAds} ads générées`);
     } else if (failed === totalAds) {
-      setError("Toutes les générations ont échoué. Réessaie dans quelques secondes.");
+      setError("Toutes les générations ont échoué. Réessaie.");
     }
 
     setGenerating(false);
@@ -165,9 +168,7 @@ export default function GeneratePage() {
 
   async function handleConvertToStory(ad: typeof generatedAds[0]) {
     setConvertingId(ad.id);
-    const product = brandAnalysis!.products.find((p) => p.id === ad.productId);
-    const offer = brandAnalysis!.offers.find((o) => o.id === ad.offerId);
-    const image = uploadedImages.find((i) => i.id === selectedImage);
+    const { product, offer, image } = getSelections();
     const matchingConcept = concepts.find((c) => c.adType === ad.conversionAngle);
 
     try {
@@ -177,11 +178,11 @@ export default function GeneratePage() {
         body: JSON.stringify({
           brandAnalysis,
           product,
-          offer: offer || null,
+          offer,
           productImageBase64: image?.base64,
           productImageMimeType: image?.mimeType,
           format: "story",
-          concept: matchingConcept,
+          concept: matchingConcept || undefined,
         }),
       });
 
@@ -196,286 +197,211 @@ export default function GeneratePage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-foreground">
           Générez vos publicités
         </h1>
-        <p className="mt-2 text-muted">
-          L&apos;IA analyse votre produit et crée des ads stratégiques et adaptées.
-        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left: Config panel */}
-        <div className="lg:col-span-1 space-y-4">
-          <div className="bg-white rounded-2xl border border-border p-6 space-y-5">
-            <h2 className="text-sm font-semibold text-foreground">
-              Configuration
-            </h2>
-
-            {/* Product */}
-            <div>
-              <label className="block text-xs font-medium text-foreground mb-1.5">
-                Produit
-              </label>
-              <select
-                value={selectedProduct}
-                onChange={(e) => setSelectedProduct(e.target.value)}
-                className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              >
-                {brandAnalysis.products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Offer */}
-            {brandAnalysis.offers.length > 0 && (
-              <div>
-                <label className="block text-xs font-medium text-foreground mb-1.5">
-                  Offre (optionnel)
-                </label>
-                <select
-                  value={selectedOffer}
-                  onChange={(e) => setSelectedOffer(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                >
-                  <option value="">Sans offre</option>
-                  {brandAnalysis.offers.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Image */}
-            {uploadedImages.length > 0 && (
-              <div>
-                <label className="block text-xs font-medium text-foreground mb-1.5">
-                  Image produit
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {uploadedImages.map((img) => (
-                    <button
-                      key={img.id}
-                      onClick={() => setSelectedImage(img.id)}
-                      className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-                        selectedImage === img.id
-                          ? "border-primary"
-                          : "border-border hover:border-primary/40"
-                      }`}
-                    >
-                      <img
-                        src={img.previewUrl}
-                        alt={img.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Custom direction */}
-            <div>
-              <label className="block text-xs font-medium text-foreground mb-1.5">
-                Direction créative (optionnel)
-              </label>
-              <textarea
-                value={customDirection}
-                onChange={(e) => setCustomDirection(e.target.value)}
-                placeholder="Ex: Je veux une ad comparaison culotte VS serviette, une ad avec des femmes qui portent le produit, une ad offre spéciale..."
-                rows={3}
-                className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none placeholder:text-muted/60"
-              />
-              <p className="text-[10px] text-muted mt-1">
-                Décrivez les types d&apos;ads que vous voulez. L&apos;IA s&apos;en inspirera pour créer les concepts.
-              </p>
-            </div>
-
-            {/* Variations */}
-            <div>
-              <label className="block text-xs font-medium text-foreground mb-1.5">
-                Nombre de concepts
-              </label>
-              <select
-                value={variations}
-                onChange={(e) => setVariations(Number(e.target.value))}
-                className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              >
-                {[2, 3, 4, 5, 6].map((n) => (
-                  <option key={n} value={n}>
-                    {n} concepts
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Generate button */}
-            <button
-              onClick={handleGenerate}
-              disabled={generating || !selectedProduct}
-              className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      {/* Config bar — horizontal and compact */}
+      <div className="bg-white rounded-2xl border border-border p-5 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Product */}
+          <div>
+            <label className="block text-xs font-medium text-foreground mb-1">
+              Produit
+            </label>
+            <select
+              value={selectedProduct}
+              onChange={(e) => setSelectedProduct(e.target.value)}
+              className="w-full px-3 py-2 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             >
-              {generating ? (
-                phase === "concepts" ? (
-                  <>
-                    <Brain className="w-4 h-4 animate-pulse" />
-                    Analyse du produit...
-                  </>
-                ) : (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {progress.current}/{progress.total} en cours...
-                    {failedCount > 0 && ` (${failedCount} fail)`}
-                  </>
-                )
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Générer les publicités
-                </>
-              )}
-            </button>
-
-            {generatedAds.length > 0 && (
-              <button
-                onClick={clearAds}
-                className="w-full text-xs text-muted hover:text-foreground transition-colors py-2"
-              >
-                Effacer toutes les publicités
-              </button>
-            )}
+              {brandAnalysis.products.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
           </div>
 
-          {/* Concepts display */}
-          {concepts.length > 0 && (
-            <div className="bg-white rounded-2xl border border-border p-4 space-y-3">
-              <h3 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-primary" />
-                Concepts générés
-              </h3>
-              <div className="space-y-2">
-                {concepts.map((c, i) => (
-                  <div
-                    key={c.id}
-                    className="text-[11px] p-2.5 rounded-lg bg-surface border border-border"
-                  >
-                    <span className="font-semibold text-primary">
-                      {i + 1}. {c.adType}
-                    </span>
-                    <p className="text-muted mt-0.5 leading-snug">
-                      {c.copyAngle}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Offer */}
+          <div>
+            <label className="block text-xs font-medium text-foreground mb-1">
+              Offre
+            </label>
+            <select
+              value={selectedOffer}
+              onChange={(e) => setSelectedOffer(e.target.value)}
+              className="w-full px-3 py-2 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            >
+              <option value="">Sans offre</option>
+              {brandAnalysis.offers.map((o) => (
+                <option key={o.id} value={o.id}>{o.title}</option>
+              ))}
+            </select>
+          </div>
 
-          <button
-            onClick={() => router.push("/dashboard/images")}
-            className="flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Retour aux images
-          </button>
-        </div>
-
-        {/* Right: Gallery */}
-        <div className="lg:col-span-2">
-          {error && (
-            <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-              <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-              <p className="text-sm text-amber-700">{error}</p>
-            </div>
-          )}
-
-          {generatedAds.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {generatedAds.map((ad) => (
-                <AdPreviewCard
-                  key={ad.id}
-                  ad={ad}
-                  onUpdateAd={(id, updates) => updateGeneratedAd(id, updates)}
-                  isConvertingToStory={convertingId === ad.id}
-                  onConvertToStory={
-                    ad.format === "square"
-                      ? () => handleConvertToStory(ad)
-                      : undefined
-                  }
-                  onRegenerate={async () => {
-                    const product = brandAnalysis.products.find(
-                      (p) => p.id === ad.productId
-                    );
-                    const offer = brandAnalysis.offers.find(
-                      (o) => o.id === ad.offerId
-                    );
-                    const image = uploadedImages.find(
-                      (i) => i.id === selectedImage
-                    );
-
-                    try {
-                      const res = await fetch("/api/generate-ad", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          brandAnalysis,
-                          product,
-                          offer: offer || null,
-                          productImageBase64: image?.base64,
-                          productImageMimeType: image?.mimeType,
-                          format: ad.format,
-                          concept: concepts.find((c) => c.adType === ad.conversionAngle),
-                        }),
-                      });
-
-                      if (res.ok) {
-                        const newAd = await res.json();
-                        addGeneratedAd(newAd);
-                      }
-                    } catch {
-                      // Silent fail
-                    }
-                  }}
-                />
+          {/* Image */}
+          <div>
+            <label className="block text-xs font-medium text-foreground mb-1">
+              Image produit
+            </label>
+            <div className="flex gap-1.5">
+              {uploadedImages.map((img) => (
+                <button
+                  key={img.id}
+                  onClick={() => setSelectedImage(img.id)}
+                  className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition-colors flex-shrink-0 ${
+                    selectedImage === img.id
+                      ? "border-primary"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                >
+                  <img src={img.previewUrl} alt={img.name} className="w-full h-full object-cover" />
+                </button>
               ))}
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <Sparkles className="w-12 h-12 text-border mb-4" />
-              <h3 className="text-lg font-medium text-foreground">
-                Prêt à générer
-              </h3>
-              <p className="text-sm text-muted mt-1 max-w-sm">
-                L&apos;IA va analyser votre produit, créer des concepts
-                stratégiques adaptés, puis générer chaque publicité.
-              </p>
-              <div className="flex items-center gap-6 mt-6 text-[11px] text-muted">
-                <div className="flex items-center gap-1.5">
-                  <Brain className="w-3.5 h-3.5 text-primary" />
-                  Analyse produit
-                </div>
-                <div className="text-border">→</div>
-                <div className="flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-primary" />
-                  Concepts ads
-                </div>
-                <div className="text-border">→</div>
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-primary" />
-                  Génération
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
+
+          {/* Variations */}
+          <div>
+            <label className="block text-xs font-medium text-foreground mb-1">
+              Concepts
+            </label>
+            <select
+              value={variations}
+              onChange={(e) => setVariations(Number(e.target.value))}
+              className="w-full px-3 py-2 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            >
+              {[2, 3, 4, 5, 6].map((n) => (
+                <option key={n} value={n}>{n} concepts</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Direction + Generate */}
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-foreground mb-1">
+              Direction créative
+            </label>
+            <input
+              type="text"
+              value={customDirection}
+              onChange={(e) => setCustomDirection(e.target.value)}
+              placeholder="Ex: comparaison VS serviette, femmes qui portent le produit, offre spéciale..."
+              className="w-full px-3 py-2 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted/50"
+            />
+          </div>
+          <button
+            onClick={handleGenerate}
+            disabled={generating || !selectedProduct}
+            className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            {generating ? (
+              phase === "concepts" ? (
+                <>
+                  <Brain className="w-4 h-4 animate-pulse" />
+                  Analyse...
+                </>
+              ) : (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {progress.current}/{progress.total}
+                </>
+              )
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                Générer
+              </>
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Error */}
+      {error && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+          <p className="text-sm text-amber-700">{error}</p>
+        </div>
+      )}
+
+      {/* Gallery */}
+      {generatedAds.length > 0 ? (
+        <>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted">
+              {generatedAds.length} publicité{generatedAds.length > 1 ? "s" : ""} générée{generatedAds.length > 1 ? "s" : ""}
+            </p>
+            <button
+              onClick={() => { clearAds(); setConcepts([]); }}
+              className="text-xs text-muted hover:text-foreground transition-colors"
+            >
+              Tout effacer
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {generatedAds.map((ad) => (
+              <AdPreviewCard
+                key={ad.id}
+                ad={ad}
+                onUpdateAd={(id, updates) => updateGeneratedAd(id, updates)}
+                isConvertingToStory={convertingId === ad.id}
+                onConvertToStory={
+                  ad.format === "square"
+                    ? () => handleConvertToStory(ad)
+                    : undefined
+                }
+                onRegenerate={async () => {
+                  const { product, offer, image } = getSelections();
+                  const matchingConcept = concepts.find((c) => c.adType === ad.conversionAngle);
+
+                  try {
+                    const res = await fetch("/api/generate-ad", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        brandAnalysis,
+                        product,
+                        offer,
+                        productImageBase64: image?.base64,
+                        productImageMimeType: image?.mimeType,
+                        format: ad.format,
+                        concept: matchingConcept || undefined,
+                      }),
+                    });
+
+                    if (res.ok) {
+                      const newAd = await res.json();
+                      addGeneratedAd(newAd);
+                    }
+                  } catch {
+                    // Silent fail
+                  }
+                }}
+              />
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <Sparkles className="w-10 h-10 text-border mb-3" />
+          <p className="text-sm text-muted max-w-sm">
+            Configurez vos paramètres et cliquez sur Générer.
+            L&apos;IA crée des concepts adaptés à votre produit.
+          </p>
+        </div>
+      )}
+
+      <button
+        onClick={() => router.push("/dashboard/images")}
+        className="flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Retour aux images
+      </button>
     </div>
   );
 }

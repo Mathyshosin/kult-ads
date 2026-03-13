@@ -58,35 +58,27 @@ export async function generateAdConcepts(
   offerTitle?: string,
   offerDescription?: string,
   count: number = 4,
-  customDirection?: string
+  customDirection?: string,
+  existingAdTypes?: string[]
 ): Promise<string> {
   const systemPrompt = `Tu es un directeur artistique expert en publicités statiques pour Instagram/Facebook/TikTok.
 
-CONTEXTE : L'IA d'image (Gemini) va recevoir la photo du produit en référence + un template de style. Elle doit créer une image publicitaire COMPLÈTE avec le produit intégré naturellement dans la scène. Le texte sera ajouté par-dessus en CSS.
-
-Tu dois créer des concepts d'ads avec un prompt de SCÈNE COMPLÈTE pour chaque ad.
+CONTEXTE : Gemini reçoit la photo du produit + un template de style. Il crée une image publicitaire COMPLÈTE avec le produit intégré. Le texte est ajouté en CSS par-dessus.
 
 RÈGLES :
-1. scenePrompt en ANGLAIS, COURT (2-3 phrases MAX — les prompts longs causent des erreurs)
-2. scenePrompt décrit la SCÈNE ENTIÈRE : comment le produit est présenté, le décor, l'ambiance
-3. Le produit est fourni en photo — Gemini doit l'intégrer TEL QUEL sans le modifier
-4. Chaque concept = un adType DIFFÉRENT et une scène DIFFÉRENTE
-5. Pense comme un media buyer expert : quels visuels CONVERTISSENT pour ce type de produit ?
-
-EXEMPLES DE SCÈNES PAR CATÉGORIE :
-- Culottes/lingerie → produit posé à plat sur du marbre blanc, ou tenu en main devant un miroir, ou plié dans un tiroir de lingerie, ou porté par une femme confiante
-- Cosmétiques → produit sur vanity table en marbre, ou tenu en main avec un beau teint, ou posé avec des fleurs et textures
-- Tech → produit sur bureau minimaliste, ou tenu en main dans un café, ou à côté d'un laptop
-- Alimentaire → produit sur table en bois avec ingrédients frais, ou dans une cuisine lumineuse
+1. scenePrompt en ANGLAIS, COURT (2-3 phrases MAX)
+2. Le produit est fourni en photo — Gemini l'intègre TEL QUEL
+3. Chaque concept = un adType DIFFÉRENT et une scène DIFFÉRENTE
+4. RÈGLE PERSONNES : Si une personne apparaît dans la scène, elle DOIT soit TENIR le produit en main, soit le PORTER sur elle. Jamais une personne à côté du produit sans interaction directe.
 
 TYPES D'ADS :
-- "offre" : promo, réduction (scène punchy et attirante)
-- "bénéfice" : avantage clé (scène clean et produit en héro)
-- "comparaison" : VS alternative (scène split/contrastée)
-- "témoignage" : preuve sociale (scène chaleureuse, authentique)
-- "lifestyle" : produit dans la vraie vie (scène naturelle)
-- "premium" : luxe, haut de gamme (scène élégante)
-- "urgence" : stock limité (scène dramatique)
+- "offre" : promo/réduction
+- "bénéfice" : avantage clé du produit
+- "comparaison" : VS alternative
+- "témoignage" : preuve sociale
+- "lifestyle" : produit dans la vraie vie
+- "premium" : luxe, haut de gamme
+- "urgence" : stock limité
 
 JSON UNIQUEMENT :
 {
@@ -94,8 +86,8 @@ JSON UNIQUEMENT :
     {
       "id": "concept-1",
       "adType": "string",
-      "scenePrompt": "string (ANGLAIS, 2-3 phrases, scène complète avec produit)",
-      "copyAngle": "string (direction copywriting, FRANÇAIS)"
+      "scenePrompt": "string (ANGLAIS, 2-3 phrases)",
+      "copyAngle": "string (FRANÇAIS)"
     }
   ]
 }`;
@@ -115,9 +107,10 @@ Produit : ${productName} — ${productDescription}
 Audience : ${targetAudience}
 Points forts : ${uniqueSellingPoints.join(", ")}
 ${offerTitle ? `Offre en cours : ${offerTitle} — ${offerDescription}` : "Pas d'offre spéciale."}
-${customDirection ? `\nDIRECTION CRÉATIVE DU CLIENT (PRIORITAIRE) :\n${customDirection}\nInspire-toi de ces demandes pour créer les concepts. C'est la priorité.` : ""}
+${customDirection ? `\nDIRECTION DU CLIENT (PRIORITAIRE) : ${customDirection}` : ""}
+${existingAdTypes && existingAdTypes.length > 0 ? `\nCONCEPTS DÉJÀ UTILISÉS (NE PAS RÉPÉTER) : ${existingAdTypes.join(", ")}` : ""}
 
-Génère ${count} concepts d'ads variés et adaptés à CE produit. Chaque concept doit être radicalement différent.`,
+Génère ${count} concepts DIFFÉRENTS pour ce produit.`,
       },
     ],
   });
