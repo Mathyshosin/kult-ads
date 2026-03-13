@@ -27,6 +27,7 @@ export default function GeneratePage() {
   const [variations, setVariations] = useState(2);
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [failedCount, setFailedCount] = useState(0);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -50,6 +51,7 @@ export default function GeneratePage() {
   async function handleGenerate() {
     setGenerating(true);
     setError("");
+    setFailedCount(0);
 
     const product = brandAnalysis!.products.find((p) => p.id === selectedProduct);
     const offer = brandAnalysis!.offers.find((o) => o.id === selectedOffer);
@@ -64,6 +66,7 @@ export default function GeneratePage() {
     setProgress({ current: 0, total: totalAds });
 
     let current = 0;
+    let failed = 0;
     let globalVariationIndex = 0;
 
     for (const format of selectedFormats) {
@@ -85,20 +88,32 @@ export default function GeneratePage() {
           globalVariationIndex++;
 
           if (!res.ok) {
-            const data = await res.json();
-            throw new Error(data.error);
+            // Ad failed — skip it silently and continue
+            failed++;
+            setFailedCount(failed);
+            current++;
+            setProgress({ current, total: totalAds });
+            continue;
           }
 
           const ad = await res.json();
           addGeneratedAd(ad);
           current++;
           setProgress({ current, total: totalAds });
-        } catch (err) {
-          setError(
-            err instanceof Error ? err.message : "Erreur lors de la génération"
-          );
+        } catch {
+          // Network error — skip and continue
+          failed++;
+          setFailedCount(failed);
+          current++;
+          setProgress({ current, total: totalAds });
         }
       }
+    }
+
+    if (failed > 0 && failed < totalAds) {
+      setError(`${totalAds - failed}/${totalAds} ads générées (${failed} ont échoué, ce n'est pas grave !)`);
+    } else if (failed === totalAds) {
+      setError("Toutes les générations ont échoué. Réessaie dans quelques secondes.");
     }
 
     setGenerating(false);
@@ -256,7 +271,8 @@ export default function GeneratePage() {
               {generating ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  {progress.current}/{progress.total} générées...
+                  {progress.current}/{progress.total} en cours...
+                  {failedCount > 0 && ` (${failedCount} échouée${failedCount > 1 ? "s" : ""})`}
                 </>
               ) : (
                 <>
@@ -288,9 +304,9 @@ export default function GeneratePage() {
         {/* Right: Gallery */}
         <div className="lg:col-span-2">
           {error && (
-            <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+              <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+              <p className="text-sm text-amber-700">{error}</p>
             </div>
           )}
 
