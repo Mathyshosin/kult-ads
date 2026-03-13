@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Globe, Loader2, AlertCircle } from "lucide-react";
+import {
+  Globe,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  ArrowRight,
+  RefreshCw,
+} from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 
 const phases = [
@@ -15,10 +22,18 @@ export default function AnalyzePage() {
   const [url, setUrl] = useState("");
   const [phase, setPhase] = useState(-1);
   const [error, setError] = useState("");
+  const brandAnalysis = useWizardStore((s) => s.brandAnalysis);
   const setBrandAnalysis = useWizardStore((s) => s.setBrandAnalysis);
   const router = useRouter();
 
   const isLoading = phase >= 0;
+  const hasExistingAnalysis = brandAnalysis !== null;
+
+  useEffect(() => {
+    if (brandAnalysis?.url) {
+      setUrl(brandAnalysis.url);
+    }
+  }, [brandAnalysis]);
 
   async function handleAnalyze(e: React.FormEvent) {
     e.preventDefault();
@@ -28,7 +43,6 @@ export default function AnalyzePage() {
     setPhase(0);
 
     try {
-      // Step 1: Scrape
       const scrapeRes = await fetch("/api/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -43,7 +57,6 @@ export default function AnalyzePage() {
       const scrapedData = await scrapeRes.json();
       setPhase(1);
 
-      // Step 2: Analyze with Claude
       const analyzeRes = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -58,10 +71,8 @@ export default function AnalyzePage() {
       const analysis = await analyzeRes.json();
       setPhase(2);
 
-      // Step 3: Store and navigate
       setBrandAnalysis({ ...analysis, url: url.trim() });
 
-      // Small delay for UX
       await new Promise((r) => setTimeout(r, 500));
       router.push("/dashboard/review");
     } catch (err) {
@@ -82,6 +93,51 @@ export default function AnalyzePage() {
         </p>
       </div>
 
+      {/* Existing analysis banner */}
+      {hasExistingAnalysis && !isLoading && (
+        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 mb-6">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-foreground">
+                Analyse déjà effectuée
+              </h3>
+              <p className="text-sm text-muted mt-1">
+                <span className="font-medium text-foreground">
+                  {brandAnalysis.brandName}
+                </span>{" "}
+                — {brandAnalysis.products.length} produit
+                {brandAnalysis.products.length > 1 ? "s" : ""},{" "}
+                {brandAnalysis.offers.length} offre
+                {brandAnalysis.offers.length > 1 ? "s" : ""} détectée
+                {brandAnalysis.offers.length > 1 ? "s" : ""}
+              </p>
+              <p className="text-xs text-muted mt-1">
+                {brandAnalysis.url}
+              </p>
+              <div className="flex items-center gap-3 mt-4">
+                <button
+                  onClick={() => router.push("/dashboard/review")}
+                  className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
+                >
+                  Continuer avec ces données
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    /* just scroll down to the form */
+                  }}
+                  className="flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Re-analyser
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-border p-8">
         <form onSubmit={handleAnalyze} className="space-y-6">
           <div>
@@ -89,7 +145,9 @@ export default function AnalyzePage() {
               htmlFor="url"
               className="block text-sm font-medium text-foreground mb-2"
             >
-              URL de votre site
+              {hasExistingAnalysis
+                ? "Analyser un autre site"
+                : "URL de votre site"}
             </label>
             <div className="relative">
               <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
@@ -146,7 +204,9 @@ export default function AnalyzePage() {
               type="submit"
               className="w-full bg-primary text-white py-3.5 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
             >
-              Analyser le site
+              {hasExistingAnalysis
+                ? "Re-analyser ce site"
+                : "Analyser le site"}
             </button>
           )}
         </form>
