@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, LogOut, LayoutGrid } from "lucide-react";
+import { Sparkles, LogOut } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
 import { useRouter } from "next/navigation";
 
@@ -19,13 +19,6 @@ export default function DashboardHeader() {
           <span className="text-lg font-bold text-foreground">Kult-ads</span>
         </Link>
         <div className="flex items-center gap-4">
-          <Link
-            href="/dashboard/templates"
-            className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground font-medium px-3 py-1.5 rounded-lg hover:bg-surface transition-colors"
-          >
-            <LayoutGrid className="w-3.5 h-3.5" />
-            Templates
-          </Link>
           <button
             onClick={() => {
               reset();

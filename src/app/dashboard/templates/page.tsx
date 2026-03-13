@@ -1,56 +1,84 @@
 "use client";
 
-import { useState } from "react";
-import { useTemplateStore } from "@/lib/store";
+import { useState, useEffect, useCallback } from "react";
 import ImageUploadZone from "@/components/image-upload-zone";
 import TemplateCard from "@/components/template-card";
+import type { AdTemplate } from "@/lib/types";
 import { Loader2, LayoutGrid, AlertCircle } from "lucide-react";
 
 export default function TemplatesPage() {
-  const templates = useTemplateStore((s) => s.templates);
-  const addTemplate = useTemplateStore((s) => s.addTemplate);
-  const removeTemplate = useTemplateStore((s) => s.removeTemplate);
-  const updateTemplate = useTemplateStore((s) => s.updateTemplate);
-
+  const [templates, setTemplates] = useState<AdTemplate[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filterFormat, setFilterFormat] = useState<"all" | "square" | "story">("all");
+  const [filterFormat, setFilterFormat] = useState<"all" | "square" | "story">(
+    "all"
+  );
+
+  const fetchTemplates = useCallback(async () => {
+    try {
+      const res = await fetch("/api/templates");
+      const data = await res.json();
+      setTemplates(data.templates || []);
+    } catch {
+      setError("Impossible de charger les templates");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
 
   async function handleUpload(files: File[]) {
     setUploading(true);
     setError("");
     try {
+      // First upload images to get base64
       const formData = new FormData();
       files.forEach((f) => formData.append("images", f));
 
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      if (!res.ok) {
-        const data = await res.json();
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!uploadRes.ok) {
+        const data = await uploadRes.json();
         throw new Error(data.error);
       }
 
-      const { images } = await res.json();
+      const { images } = await uploadRes.json();
+
+      // For each image, auto-detect format and save as template
       for (const img of images) {
-        // Auto-detect format from aspect ratio
-        const tempImg = new Image();
         const format = await new Promise<"square" | "story">((resolve) => {
+          const tempImg = new Image();
           tempImg.onload = () => {
-            resolve(tempImg.height > tempImg.width * 1.3 ? "story" : "square");
+            resolve(
+              tempImg.height > tempImg.width * 1.3 ? "story" : "square"
+            );
           };
           tempImg.onerror = () => resolve("square");
           tempImg.src = img.dataUrl;
         });
 
-        addTemplate({
-          id: `tpl-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-          name: img.name.replace(/\.[^.]+$/, ""),
-          format,
-          category: "promo",
-          imageBase64: img.base64,
-          mimeType: img.mimeType,
-          previewUrl: img.dataUrl,
+        await fetch("/api/templates", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "add",
+            name: img.name.replace(/\.[^.]+$/, ""),
+            format,
+            category: "promo",
+            imageBase64: img.base64,
+            mimeType: img.mimeType,
+          }),
         });
       }
+
+      // Refresh list
+      await fetchTemplates();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur upload");
     } finally {
@@ -58,20 +86,51 @@ export default function TemplatesPage() {
     }
   }
 
+  async function handleRemove(id: string) {
+    await fetch("/api/templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "remove", id }),
+    });
+    setTemplates((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  async function handleUpdate(id: string, partial: Partial<AdTemplate>) {
+    await fetch("/api/templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "update", id, ...partial }),
+    });
+    setTemplates((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...partial } : t))
+    );
+  }
+
   const filteredTemplates =
     filterFormat === "all"
       ? templates
       : templates.filter((t) => t.format === filterFormat);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto space-y-8 py-8 px-6">
       <div className="text-center">
+        <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-medium px-3 py-1 rounded-full mb-3">
+          🔒 Admin uniquement
+        </div>
         <h1 className="text-2xl font-bold text-foreground">
           Bibliothèque de templates
         </h1>
-        <p className="mt-2 text-muted">
-          Uploadez vos ads qui marchent. L&apos;IA les reproduira avec les infos
-          de chaque client.
+        <p className="mt-2 text-muted max-w-lg mx-auto">
+          Uploadez vos ads qui marchent. Le système les sélectionnera
+          automatiquement pour reproduire le style avec les produits des clients.
         </p>
       </div>
 
@@ -124,8 +183,8 @@ export default function TemplatesPage() {
                 key={tpl.id}
                 template={tpl}
                 editable
-                onRemove={() => removeTemplate(tpl.id)}
-                onUpdate={(partial) => updateTemplate(tpl.id, partial)}
+                onRemove={() => handleRemove(tpl.id)}
+                onUpdate={(partial) => handleUpdate(tpl.id, partial)}
               />
             ))}
           </div>
