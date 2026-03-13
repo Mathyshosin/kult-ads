@@ -3,46 +3,6 @@ import { generateAdCopy } from "@/lib/claude";
 import { generateImage } from "@/lib/gemini";
 import { getRandomTemplateWithImage } from "@/lib/template-store";
 
-// Each angle = a different BACKGROUND atmosphere/mood
-const CONVERSION_ANGLES = [
-  {
-    id: "fomo",
-    label: "Urgency",
-    scene: "Dramatic, urgent advertising backdrop. Dark moody atmosphere with bold accent lighting (red/orange glow). High contrast, cinematic tension. Think luxury flash-sale campaign.",
-    copy: "Utilise l'urgence et la rareté (stock limité, dernière chance, offre qui expire). Crée un sentiment de FOMO.",
-  },
-  {
-    id: "promo",
-    label: "Promo",
-    scene: "Festive, celebratory advertising backdrop. Bright clean background with confetti, sparkles, or geometric shapes. Premium sale atmosphere. Joyful and energetic colors.",
-    copy: "Mets en avant l'offre promo, le prix barré, le pourcentage de réduction. Rends l'offre irrésistible.",
-  },
-  {
-    id: "benefits",
-    label: "Benefits",
-    scene: "Clean, minimalist editorial backdrop. Pure white or soft neutral background with elegant lighting. Studio photography feel. Think Apple or Vogue ad — breathing room, luxury simplicity.",
-    copy: "Mets en avant les bénéfices concrets du produit. Qu'est-ce que le client gagne ? Sois spécifique sur la valeur.",
-  },
-  {
-    id: "social-proof",
-    label: "Social Proof",
-    scene: "Warm, inviting lifestyle backdrop. Cozy interior, beautiful table surface, or natural setting. Warm golden light, soft textures. Feels like home, trust, and comfort.",
-    copy: "Utilise la preuve sociale : avis clients, nombre de ventes, satisfaction. Montre que d'autres font confiance.",
-  },
-  {
-    id: "before-after",
-    label: "Transformation",
-    scene: "Split-tone dramatic backdrop. One side grey/muted/dull, the other side vibrant/colorful/alive. Strong visual contrast, like a before/after reveal. Transformation energy.",
-    copy: "Montre la transformation avant/après. Le problème sans le produit vs la solution avec. Contraste émotionnel fort.",
-  },
-  {
-    id: "lifestyle",
-    label: "Lifestyle",
-    scene: "Dreamy aspirational backdrop. Beautiful real-world setting — luxury interior, tropical nature, or travel destination. Golden hour lighting, soft bokeh, cinematic color grading. Makes you desire this life.",
-    copy: "Vends le lifestyle, pas le produit. Projette le client dans une vie meilleure. Émotionnel et aspirationnel.",
-  },
-];
-
 export async function POST(request: Request) {
   try {
     const {
@@ -52,7 +12,8 @@ export async function POST(request: Request) {
       productImageBase64,
       productImageMimeType,
       format,
-      variationIndex,
+      // Dynamic concept from Claude (new system)
+      concept,
     } = await request.json();
 
     if (!brandAnalysis || !product || !format) {
@@ -64,17 +25,18 @@ export async function POST(request: Request) {
 
     const aspectRatio = format === "square" ? "1:1" : "9:16";
 
-    // Pick a conversion angle
-    const angleIdx =
-      typeof variationIndex === "number"
-        ? variationIndex % CONVERSION_ANGLES.length
-        : Math.floor(Math.random() * CONVERSION_ANGLES.length);
-    const angle = CONVERSION_ANGLES[angleIdx];
+    // Use concept from Claude if provided, otherwise use a generic fallback
+    const backgroundPrompt = concept?.backgroundPrompt
+      || "Clean, minimal advertising background. Soft neutral tones, professional studio lighting. Elegant and modern.";
+    const copyAngle = concept?.copyAngle
+      || "Mets en avant le bénéfice principal du produit de manière percutante.";
+    const adType = concept?.adType || "bénéfice";
+    const layoutHint = concept?.layoutHint || "product-center";
 
     // Auto-pick a random template as style reference
     const template = getRandomTemplateWithImage(format);
 
-    // Reference images: ONLY the template (NO product image — it will be composited in CSS)
+    // Reference images: ONLY the template (NO product image — composited in CSS)
     const referenceImages: Array<{
       base64: string;
       mimeType: string;
@@ -89,22 +51,22 @@ export async function POST(request: Request) {
       });
     }
 
-    // Short, focused prompt — BACKGROUND ONLY, no product
+    // Short, focused prompt using the concept's background description
     const visualPrompt = `Create a premium advertising BACKGROUND image for the brand "${brandAnalysis.brandName}".
 
-A product will be composited on top later — DO NOT include any product, object, or item in this image.
+A product will be composited on top later — DO NOT include any product, object, or item.
 This is ONLY the background scene/atmosphere.
 
-Creative direction (${angle.label}): ${angle.scene}
+${backgroundPrompt}
 
 Brand colors: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "modern palette"}
 ${template ? "Use the STYLE REFERENCE for visual inspiration (colors, mood, style)." : ""}
 
 Rules:
 - Photorealistic, high-end advertising photography
-- NO text, letters, words, or numbers
+- NO text, letters, words, or numbers anywhere
 - NO products or objects — pure background/atmosphere
-- Leave clear central space where a product will be placed
+- Leave clear space where a product will be placed
 - Aspect ratio: ${aspectRatio}`;
 
     // Run copy and background generation in parallel
@@ -117,7 +79,7 @@ Rules:
         offer?.title,
         offer?.description,
         format,
-        angle.copy
+        copyAngle
       ),
       generateImage(visualPrompt, aspectRatio, referenceImages),
     ]);
@@ -144,22 +106,31 @@ Rules:
       );
     }
 
+    // Map layoutHint to default product position
+    const positionMap: Record<string, { preset: string; scale: number }> = {
+      "product-center": { preset: "center", scale: 45 },
+      "product-left": { preset: "center-left", scale: 40 },
+      "product-right": { preset: "center-right", scale: 40 },
+      "product-small-bottom": { preset: "bottom-center", scale: 30 },
+    };
+    const defaultPosition = positionMap[layoutHint] || positionMap["product-center"];
+
     return NextResponse.json({
       id: `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       format,
-      imageBase64: visualResult.imageBase64,     // Background only
+      imageBase64: visualResult.imageBase64,
       mimeType: visualResult.mimeType,
       headline: copy.headline,
       bodyText: copy.bodyText,
       callToAction: copy.callToAction,
       productId: product.id,
       offerId: offer?.id,
-      conversionAngle: angle.id,
+      conversionAngle: adType,
       timestamp: Date.now(),
-      // Passthrough product image for compositing in the frontend
+      // Passthrough product image for compositing
       productImageBase64: productImageBase64 || undefined,
       productImageMimeType: productImageMimeType || undefined,
-      productPosition: { preset: "center", scale: 45 },
+      productPosition: defaultPosition,
     });
   } catch (error) {
     console.error("[generate-ad] ERROR:", error);

@@ -9,7 +9,17 @@ import {
   Loader2,
   Sparkles,
   AlertCircle,
+  Brain,
+  Zap,
 } from "lucide-react";
+
+interface AdConcept {
+  id: string;
+  adType: string;
+  backgroundPrompt: string;
+  copyAngle: string;
+  layoutHint: string;
+}
 
 export default function GeneratePage() {
   const router = useRouter();
@@ -26,9 +36,11 @@ export default function GeneratePage() {
   const [formats, setFormats] = useState({ square: true, story: true });
   const [variations, setVariations] = useState(2);
   const [generating, setGenerating] = useState(false);
+  const [phase, setPhase] = useState<"idle" | "concepts" | "generating">("idle");
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [failedCount, setFailedCount] = useState(0);
   const [error, setError] = useState("");
+  const [concepts, setConcepts] = useState<AdConcept[]>([]);
 
   useEffect(() => {
     if (!brandAnalysis) {
@@ -52,6 +64,7 @@ export default function GeneratePage() {
     setGenerating(true);
     setError("");
     setFailedCount(0);
+    setConcepts([]);
 
     const product = brandAnalysis!.products.find((p) => p.id === selectedProduct);
     const offer = brandAnalysis!.offers.find((o) => o.id === selectedOffer);
@@ -62,15 +75,54 @@ export default function GeneratePage() {
       ...(formats.story ? (["story"] as const) : []),
     ];
 
-    const totalAds = selectedFormats.length * variations;
+    // ── PHASE 1: Generate smart concepts with Claude ──
+    setPhase("concepts");
+
+    let adConcepts: AdConcept[] = [];
+    try {
+      const conceptRes = await fetch("/api/ad-concepts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brandAnalysis,
+          product,
+          offer: offer || null,
+          count: variations, // One concept per variation
+        }),
+      });
+
+      if (!conceptRes.ok) {
+        throw new Error("Erreur lors de la génération des concepts");
+      }
+
+      const conceptData = await conceptRes.json();
+      adConcepts = conceptData.concepts || [];
+      setConcepts(adConcepts);
+    } catch (err) {
+      console.error("Concept generation failed:", err);
+      setError("Erreur lors de la génération des concepts. Réessaie.");
+      setGenerating(false);
+      setPhase("idle");
+      return;
+    }
+
+    if (adConcepts.length === 0) {
+      setError("Aucun concept généré. Réessaie.");
+      setGenerating(false);
+      setPhase("idle");
+      return;
+    }
+
+    // ── PHASE 2: Generate ads using concepts ──
+    setPhase("generating");
+    const totalAds = selectedFormats.length * adConcepts.length;
     setProgress({ current: 0, total: totalAds });
 
     let current = 0;
     let failed = 0;
-    let globalVariationIndex = 0;
 
     for (const format of selectedFormats) {
-      for (let i = 0; i < variations; i++) {
+      for (const concept of adConcepts) {
         try {
           const res = await fetch("/api/generate-ad", {
             method: "POST",
@@ -82,13 +134,11 @@ export default function GeneratePage() {
               productImageBase64: image?.base64,
               productImageMimeType: image?.mimeType,
               format,
-              variationIndex: globalVariationIndex,
+              concept, // Pass the smart concept
             }),
           });
-          globalVariationIndex++;
 
           if (!res.ok) {
-            // Ad failed — skip it silently and continue
             failed++;
             setFailedCount(failed);
             current++;
@@ -101,7 +151,6 @@ export default function GeneratePage() {
           current++;
           setProgress({ current, total: totalAds });
         } catch {
-          // Network error — skip and continue
           failed++;
           setFailedCount(failed);
           current++;
@@ -111,12 +160,13 @@ export default function GeneratePage() {
     }
 
     if (failed > 0 && failed < totalAds) {
-      setError(`${totalAds - failed}/${totalAds} ads générées (${failed} ont échoué, ce n'est pas grave !)`);
+      setError(`${totalAds - failed}/${totalAds} ads générées (${failed} ont échoué)`);
     } else if (failed === totalAds) {
       setError("Toutes les générations ont échoué. Réessaie dans quelques secondes.");
     }
 
     setGenerating(false);
+    setPhase("idle");
   }
 
   return (
@@ -126,7 +176,7 @@ export default function GeneratePage() {
           Générez vos publicités
         </h1>
         <p className="mt-2 text-muted">
-          Configurez vos paramètres et laissez l&apos;IA créer vos ads.
+          L&apos;IA analyse votre produit et crée des ads stratégiques et adaptées.
         </p>
       </div>
 
@@ -154,7 +204,7 @@ export default function GeneratePage() {
                     className="rounded border-border text-primary focus:ring-primary/20"
                   />
                   <span className="text-sm text-foreground">
-                    Carré (1080×1080)
+                    Carré (1080x1080)
                   </span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -167,7 +217,7 @@ export default function GeneratePage() {
                     className="rounded border-border text-primary focus:ring-primary/20"
                   />
                   <span className="text-sm text-foreground">
-                    Story (1080×1920)
+                    Story (1080x1920)
                   </span>
                 </label>
               </div>
@@ -243,19 +293,24 @@ export default function GeneratePage() {
             {/* Variations */}
             <div>
               <label className="block text-xs font-medium text-foreground mb-1.5">
-                Variations par format
+                Nombre de concepts
               </label>
               <select
                 value={variations}
                 onChange={(e) => setVariations(Number(e.target.value))}
                 className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               >
-                {[1, 2, 3, 4, 5].map((n) => (
+                {[2, 3, 4, 5, 6].map((n) => (
                   <option key={n} value={n}>
-                    {n} variation{n > 1 ? "s" : ""}
+                    {n} concepts
                   </option>
                 ))}
               </select>
+              <p className="text-[10px] text-muted mt-1">
+                L&apos;IA crée {variations} angles stratégiques différents, chacun en {
+                  [formats.square && "carré", formats.story && "story"].filter(Boolean).join(" + ") || "aucun format"
+                }
+              </p>
             </div>
 
             {/* Generate button */}
@@ -269,11 +324,18 @@ export default function GeneratePage() {
               className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {generating ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {progress.current}/{progress.total} en cours...
-                  {failedCount > 0 && ` (${failedCount} échouée${failedCount > 1 ? "s" : ""})`}
-                </>
+                phase === "concepts" ? (
+                  <>
+                    <Brain className="w-4 h-4 animate-pulse" />
+                    Analyse du produit...
+                  </>
+                ) : (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {progress.current}/{progress.total} en cours...
+                    {failedCount > 0 && ` (${failedCount} fail)`}
+                  </>
+                )
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
@@ -291,6 +353,31 @@ export default function GeneratePage() {
               </button>
             )}
           </div>
+
+          {/* Concepts display */}
+          {concepts.length > 0 && (
+            <div className="bg-white rounded-2xl border border-border p-4 space-y-3">
+              <h3 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-primary" />
+                Concepts générés
+              </h3>
+              <div className="space-y-2">
+                {concepts.map((c, i) => (
+                  <div
+                    key={c.id}
+                    className="text-[11px] p-2.5 rounded-lg bg-surface border border-border"
+                  >
+                    <span className="font-semibold text-primary">
+                      {i + 1}. {c.adType}
+                    </span>
+                    <p className="text-muted mt-0.5 leading-snug">
+                      {c.copyAngle}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button
             onClick={() => router.push("/dashboard/images")}
@@ -339,6 +426,8 @@ export default function GeneratePage() {
                           productImageBase64: image?.base64,
                           productImageMimeType: image?.mimeType,
                           format: ad.format,
+                          // Use a matching concept if available, or let the API use default
+                          concept: concepts.find((c) => c.adType === ad.conversionAngle),
                         }),
                       });
 
@@ -360,9 +449,26 @@ export default function GeneratePage() {
                 Prêt à générer
               </h3>
               <p className="text-sm text-muted mt-1 max-w-sm">
-                Configurez vos paramètres à gauche et cliquez sur
-                &ldquo;Générer&rdquo; pour créer vos publicités.
+                L&apos;IA va analyser votre produit, créer des concepts
+                stratégiques adaptés, puis générer chaque publicité avec un
+                fond et un texte optimisés pour la conversion.
               </p>
+              <div className="flex items-center gap-6 mt-6 text-[11px] text-muted">
+                <div className="flex items-center gap-1.5">
+                  <Brain className="w-3.5 h-3.5 text-primary" />
+                  Analyse produit
+                </div>
+                <div className="text-border">→</div>
+                <div className="flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-primary" />
+                  Concepts ads
+                </div>
+                <div className="text-border">→</div>
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  Génération
+                </div>
+              </div>
             </div>
           )}
         </div>
