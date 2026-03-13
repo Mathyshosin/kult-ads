@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Sparkles, Mail, Lock, User, ArrowRight } from "lucide-react";
 import { useState } from "react";
 
@@ -8,11 +9,11 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement registration
-    console.log("Signup:", { name, email, password });
+    router.push("/dashboard/analyze");
   };
 
   return (
