@@ -9,8 +9,9 @@ export async function POST() {
     const supabase = await createSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+      return NextResponse.json({ error: "Non authentifié", hint: "Connecte-toi d'abord" }, { status: 401 });
     }
+    console.log("[templates/seed] Authenticated as:", user.id, user.email);
 
     // Read templates.json (local file, always readable)
     const dataFile = path.join(process.cwd(), "src/data/templates.json");
@@ -37,20 +38,53 @@ export async function POST() {
       tags: t.tags || { industry: [], adType: [], productType: [] },
     }));
 
-    const { data, error } = await supabase
+    // First check if table already has data
+    const { data: existing, error: countErr } = await supabase
       .from("templates")
-      .upsert(rows, { onConflict: "id" })
-      .select();
+      .select("id");
 
-    if (error) {
-      console.error("[templates/seed] Upsert error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (countErr) {
+      return NextResponse.json({
+        error: countErr.message,
+        hint: countErr.hint,
+        details: countErr.details,
+        code: countErr.code,
+        userId: user?.id || "no user"
+      }, { status: 500 });
+    }
+
+    // If already seeded, skip
+    if (existing && existing.length >= templates.length) {
+      return NextResponse.json({
+        success: true,
+        seeded: 0,
+        total: templates.length,
+        message: "Already seeded",
+        existing: existing.length,
+      });
+    }
+
+    // Insert row by row to get precise errors
+    let inserted = 0;
+    const errors: string[] = [];
+
+    for (const row of rows) {
+      const { error: insertErr } = await supabase
+        .from("templates")
+        .upsert(row, { onConflict: "id" });
+
+      if (insertErr) {
+        errors.push(`${row.id}: ${insertErr.message} (${insertErr.code})`);
+      } else {
+        inserted++;
+      }
     }
 
     return NextResponse.json({
-      success: true,
-      seeded: data?.length || 0,
+      success: errors.length === 0,
+      seeded: inserted,
       total: templates.length,
+      errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
     console.error("[templates/seed] Error:", error);
