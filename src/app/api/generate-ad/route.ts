@@ -74,28 +74,28 @@ export async function POST(request: Request) {
       sceneDescription = "Product displayed on a clean minimal surface with soft professional studio lighting.";
     }
 
-    // ── Reference images ──
+    // ── Reference images (ORDER MATTERS: product first, then layout) ──
     const referenceImages: Array<{
       base64: string;
       mimeType: string;
       label: string;
     }> = [];
 
-    // ALWAYS add template as reference when available (this is the key change)
-    if (template) {
-      referenceImages.push({
-        base64: template.imageBase64,
-        mimeType: template.mimeType,
-        label: `LAYOUT REFERENCE (from a DIFFERENT brand — NOT "${brandAnalysis.brandName}"). Copy ONLY: background style, element positions, text arrangement, decorative shapes, composition. IGNORE ALL text, brand names, logos, and product images in this reference — they belong to another brand and must NOT appear in the output.`,
-      });
-    }
-
-    // Add product photo (skipped for text-only templates)
+    // Product photo FIRST so Gemini prioritizes it over the layout reference
     if (productImageBase64 && !isTextOnly) {
       referenceImages.push({
         base64: productImageBase64,
         mimeType: productImageMimeType || "image/png",
-        label: "PRODUCT — use this EXACT product in the image. Do NOT create variants, do NOT redesign it, do NOT change its appearance in any way.",
+        label: `THIS IS THE ONLY PRODUCT FOR "${brandAnalysis.brandName}". Show this EXACT product — same shape, colors, packaging. Do NOT use any other product. Any product visible in the layout reference below is from a DIFFERENT brand and must NOT appear.`,
+      });
+    }
+
+    // Layout reference SECOND (structural guide only)
+    if (template) {
+      referenceImages.push({
+        base64: template.imageBase64,
+        mimeType: template.mimeType,
+        label: `LAYOUT REFERENCE (from a DIFFERENT brand — NOT "${brandAnalysis.brandName}"). Copy ONLY the visual structure: background, element positions, text arrangement, decorative shapes. REPLACE all products with the PRODUCT reference above. IGNORE all text, brand names, logos, and products in this image.`,
       });
     }
 
