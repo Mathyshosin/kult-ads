@@ -3,9 +3,16 @@ import { generateAdCopy, describeTemplateScene } from "@/lib/claude";
 import type { TemplateAnalysis } from "@/lib/claude";
 import { generateImage } from "@/lib/gemini";
 import { getRandomTemplateWithImage, getTemplateByIdWithImage } from "@/lib/template-store";
+import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    }
+
     const {
       brandAnalysis,
       product,

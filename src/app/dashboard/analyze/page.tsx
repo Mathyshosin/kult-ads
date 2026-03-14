@@ -11,6 +11,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/auth-store";
 
 const phases = [
   "Chargement du site...",
@@ -24,6 +25,8 @@ export default function AnalyzePage() {
   const [error, setError] = useState("");
   const brandAnalysis = useWizardStore((s) => s.brandAnalysis);
   const setBrandAnalysis = useWizardStore((s) => s.setBrandAnalysis);
+  const syncBrandAnalysis = useWizardStore((s) => s.syncBrandAnalysis);
+  const currentUser = useAuthStore((s) => s.currentUser);
   const router = useRouter();
 
   const [forceReanalyze, setForceReanalyze] = useState(false);
@@ -95,7 +98,11 @@ export default function AnalyzePage() {
       setBrandAnalysis({ ...analysis, url: url.trim() });
       setForceReanalyze(false);
 
-      await new Promise((r) => setTimeout(r, 500));
+      // Sync to Supabase
+      if (currentUser) {
+        await syncBrandAnalysis(currentUser.id);
+      }
+
       router.push("/dashboard/review");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");

@@ -11,17 +11,20 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const signup = useAuthStore((s) => s.signup);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const result = signup(name, email, password);
+    setLoading(true);
+    const result = await signup(name, email, password);
     if (result.success) {
       router.push("/dashboard/analyze");
     } else {
       setError(result.error || "Erreur lors de la création du compte.");
+      setLoading(false);
     }
   };
 
@@ -189,9 +192,10 @@ export default function SignupPage() {
             </div>
             <button
               type="submit"
-              className="w-full bg-primary text-white py-3 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
+              disabled={loading}
+              className="w-full bg-primary text-white py-3 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
             >
-              Créer mon compte
+              {loading ? "Création..." : "Créer mon compte"}
             </button>
           </form>
 

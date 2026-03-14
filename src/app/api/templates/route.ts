@@ -5,6 +5,7 @@ import {
   removeTemplate,
   updateTemplate,
 } from "@/lib/template-store";
+import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 
 // GET — list all templates
 export async function GET() {
@@ -15,6 +16,12 @@ export async function GET() {
 // POST — add, remove, or update templates
 export async function POST(request: Request) {
   try {
+    const supabase = await createSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    }
+
     const body = await request.json();
 
     // Action: add new template

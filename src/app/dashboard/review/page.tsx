@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useWizardStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/auth-store";
 import EditableCard from "@/components/editable-card";
 import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import { useEffect } from "react";
@@ -17,6 +18,8 @@ export default function ReviewPage() {
   const removeOffer = useWizardStore((s) => s.removeOffer);
   const addOffer = useWizardStore((s) => s.addOffer);
   const setStep = useWizardStore((s) => s.setStep);
+  const syncBrandAnalysis = useWizardStore((s) => s.syncBrandAnalysis);
+  const currentUser = useAuthStore((s) => s.currentUser);
 
   useEffect(() => {
     if (!brandAnalysis) {
@@ -26,7 +29,11 @@ export default function ReviewPage() {
 
   if (!brandAnalysis) return null;
 
-  function handleContinue() {
+  async function handleContinue() {
+    // Sync edits to Supabase before moving on
+    if (currentUser) {
+      await syncBrandAnalysis(currentUser.id);
+    }
     setStep(3);
     router.push("/dashboard/images");
   }

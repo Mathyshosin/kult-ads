@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { analyzeWithClaude } from "@/lib/claude";
+import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    }
+
     const { scrapedData } = await request.json();
 
     if (!scrapedData) {

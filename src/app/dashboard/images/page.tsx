@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useWizardStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/auth-store";
 import ImageUploadZone from "@/components/image-upload-zone";
 import {
   ArrowLeft,
@@ -32,6 +33,9 @@ export default function ImagesPage() {
   const setStep = useWizardStore((s) => s.setStep);
   const brandLogo = useWizardStore((s) => s.brandLogo);
   const setBrandLogo = useWizardStore((s) => s.setBrandLogo);
+  const syncImage = useWizardStore((s) => s.syncImage);
+  const syncLogo = useWizardStore((s) => s.syncLogo);
+  const currentUser = useAuthStore((s) => s.currentUser);
 
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -118,14 +122,16 @@ export default function ImagesPage() {
 
       const { images } = await res.json();
       for (const img of images) {
-        addImage({
+        const newImage = {
           id: img.id,
           previewUrl: img.dataUrl,
           base64: img.base64,
           mimeType: img.mimeType,
           name: img.name,
           isAiGenerated: false,
-        });
+        };
+        addImage(newImage);
+        if (currentUser) syncImage(currentUser.id, newImage);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur upload");
@@ -147,11 +153,13 @@ export default function ImagesPage() {
       }
       const { images } = await res.json();
       if (images[0]) {
-        setBrandLogo({
+        const logo = {
           base64: images[0].base64,
           mimeType: images[0].mimeType,
           previewUrl: images[0].dataUrl,
-        });
+        };
+        setBrandLogo(logo);
+        if (currentUser) syncLogo(currentUser.id, logo);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur upload logo");

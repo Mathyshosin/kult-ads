@@ -1,27 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useAuthStore } from "@/lib/auth-store";
 import { Loader2 } from "lucide-react";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const currentUser = useAuthStore((s) => s.currentUser);
-  const router = useRouter();
-  const [isReady, setIsReady] = useState(false);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const initialize = useAuthStore((s) => s.initialize);
 
   useEffect(() => {
-    // Wait for hydration from localStorage
-    setIsReady(true);
-  }, []);
+    const unsubscribe = initialize();
+    return unsubscribe;
+  }, [initialize]);
 
-  useEffect(() => {
-    if (isReady && !currentUser) {
-      router.replace("/login");
-    }
-  }, [isReady, currentUser, router]);
-
-  if (!isReady || !currentUser) {
+  // Middleware handles redirects — we just show a loader while waiting
+  if (isLoading || !currentUser) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-primary" />

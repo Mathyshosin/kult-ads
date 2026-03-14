@@ -1,102 +1,109 @@
 "use client";
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
-
-interface UserAccount {
-  id: string;
-  name: string;
-  email: string;
-  passwordHash: string; // Simple hash for MVP — NOT production secure
-  createdAt: number;
-}
+import { createClient } from "@/lib/supabase/client";
 
 interface AuthState {
   currentUser: { id: string; name: string; email: string } | null;
-  accounts: UserAccount[];
+  isLoading: boolean;
 
-  signup: (name: string, email: string, password: string) => { success: boolean; error?: string };
-  login: (email: string, password: string) => { success: boolean; error?: string };
-  logout: () => void;
+  signup: (
+    name: string,
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  initialize: () => () => void; // returns unsubscribe function
 }
 
-// Simple hash function for MVP (NOT cryptographically secure — for demo only)
-function simpleHash(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  return `hash_${Math.abs(hash).toString(36)}`;
-}
+export const useAuthStore = create<AuthState>()((set) => ({
+  currentUser: null,
+  isLoading: true,
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      currentUser: null,
-      accounts: [],
+  signup: async (name, email, password) => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name } },
+    });
 
-      signup: (name, email, password) => {
-        const { accounts } = get();
-
-        // Check if email already exists
-        if (accounts.find((a) => a.email.toLowerCase() === email.toLowerCase())) {
-          return { success: false, error: "Un compte existe déjà avec cet email." };
-        }
-
-        if (password.length < 6) {
-          return { success: false, error: "Le mot de passe doit contenir au moins 6 caractères." };
-        }
-
-        const newUser: UserAccount = {
-          id: `user_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-          name,
-          email: email.toLowerCase(),
-          passwordHash: simpleHash(password),
-          createdAt: Date.now(),
-        };
-
-        set({
-          accounts: [...accounts, newUser],
-          currentUser: { id: newUser.id, name: newUser.name, email: newUser.email },
-        });
-
-        return { success: true };
-      },
-
-      login: (email, password) => {
-        const { accounts } = get();
-        const account = accounts.find(
-          (a) => a.email.toLowerCase() === email.toLowerCase()
-        );
-
-        if (!account) {
-          return { success: false, error: "Aucun compte trouvé avec cet email." };
-        }
-
-        if (account.passwordHash !== simpleHash(password)) {
-          return { success: false, error: "Mot de passe incorrect." };
-        }
-
-        set({
-          currentUser: { id: account.id, name: account.name, email: account.email },
-        });
-
-        return { success: true };
-      },
-
-      logout: () => {
-        set({ currentUser: null });
-      },
-    }),
-    {
-      name: "kult-ads-auth",
-      storage: createJSONStorage(() =>
-        typeof window !== "undefined"
-          ? localStorage
-          : { getItem: () => null, setItem: () => {}, removeItem: () => {} }
-      ),
+    if (error) {
+      const msg =
+        error.message === "User already registered"
+          ? "Un compte existe déjà avec cet email."
+          : error.message;
+      return { success: false, error: msg };
     }
-  )
-);
+
+    return { success: true };
+  },
+
+  login: async (email, password) => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      const msg =
+        error.message === "Invalid login credentials"
+          ? "Email ou mot de passe incorrect."
+          : error.message;
+      return { success: false, error: msg };
+    }
+
+    return { success: true };
+  },
+
+  logout: async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    set({ currentUser: null });
+  },
+
+  initialize: () => {
+    const supabase = createClient();
+
+    // Get initial session
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        set({
+          currentUser: {
+            id: user.id,
+            name: user.user_metadata?.name || "",
+            email: user.email || "",
+          },
+          isLoading: false,
+        });
+      } else {
+        set({ currentUser: null, isLoading: false });
+      }
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        set({
+          currentUser: {
+            id: session.user.id,
+            name: session.user.user_metadata?.name || "",
+            email: session.user.email || "",
+          },
+          isLoading: false,
+        });
+      } else {
+        set({ currentUser: null, isLoading: false });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  },
+}));

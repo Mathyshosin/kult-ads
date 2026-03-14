@@ -10,17 +10,20 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const result = login(email, password);
+    setLoading(true);
+    const result = await login(email, password);
     if (result.success) {
       router.push("/dashboard/analyze");
     } else {
       setError(result.error || "Erreur de connexion.");
+      setLoading(false);
     }
   };
 
@@ -173,9 +176,10 @@ export default function LoginPage() {
             </div>
             <button
               type="submit"
-              className="w-full bg-primary text-white py-3 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
+              disabled={loading}
+              className="w-full bg-primary text-white py-3 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
             >
-              Se connecter
+              {loading ? "Connexion..." : "Se connecter"}
             </button>
           </form>
 

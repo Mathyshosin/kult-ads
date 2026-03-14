@@ -1,8 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
-import { get as idbGet, set as idbSet, del as idbDel } from "idb-keyval";
 import type {
   BrandAnalysis,
   Product,
@@ -11,8 +9,18 @@ import type {
   GeneratedAd,
   WizardStep,
 } from "./types";
+import {
+  saveBrandAnalysis,
+  loadLatestBrandAnalysis,
+  uploadImage as syncUploadImage,
+  uploadBrandLogo as syncUploadBrandLogo,
+  deleteImage as syncDeleteImage,
+  loadUploadedImages,
+  saveGeneratedAd,
+  loadGeneratedAds,
+} from "./supabase/sync";
 
-interface BrandLogo {
+export interface BrandLogo {
   base64: string;
   mimeType: string;
   previewUrl: string;
@@ -22,10 +30,11 @@ interface WizardState {
   currentStep: WizardStep;
   isAnalyzing: boolean;
   brandAnalysis: BrandAnalysis | null;
+  brandAnalysisId: string | null;
   uploadedImages: UploadedImage[];
   generatedAds: GeneratedAd[];
   brandLogo: BrandLogo | null;
-  _hydratedIdb: boolean;
+  isHydrated: boolean;
 
   setStep: (step: WizardStep) => void;
   setAnalyzing: (v: boolean) => void;
@@ -44,183 +53,192 @@ interface WizardState {
   updateGeneratedAd: (id: string, updates: Partial<GeneratedAd>) => void;
   clearAds: () => void;
   reset: () => void;
+
+  // Supabase sync
+  syncBrandAnalysis: (userId: string) => Promise<void>;
+  syncImage: (userId: string, image: UploadedImage) => Promise<void>;
+  syncLogo: (userId: string, logo: BrandLogo) => Promise<void>;
+  syncGeneratedAd: (userId: string, ad: GeneratedAd) => Promise<void>;
+  hydrateFromSupabase: (userId: string) => Promise<void>;
 }
 
-// ── IndexedDB keys ──
-const IDB_IMAGES = "kult-ads-images";
-const IDB_LOGO = "kult-ads-logo";
+// ── Wizard store (Supabase is the source of truth) ──
+export const useWizardStore = create<WizardState>()((set, get) => ({
+  currentStep: 1,
+  isAnalyzing: false,
+  brandAnalysis: null,
+  brandAnalysisId: null,
+  uploadedImages: [],
+  generatedAds: [],
+  brandLogo: null,
+  isHydrated: false,
 
-// ── Sync helpers (fire-and-forget, never block UI) ──
-function syncImagesToIdb(images: UploadedImage[]) {
-  idbSet(IDB_IMAGES, images).catch(() => {});
-}
-function syncLogoToIdb(logo: BrandLogo | null) {
-  if (logo) {
-    idbSet(IDB_LOGO, logo).catch(() => {});
-  } else {
-    idbDel(IDB_LOGO).catch(() => {});
-  }
-}
-
-// ── Wizard store ──
-export const useWizardStore = create<WizardState>()(
-  persist(
-    (set, get) => ({
+  setStep: (step) => set({ currentStep: step }),
+  setAnalyzing: (v) => set({ isAnalyzing: v }),
+  setBrandAnalysis: (data) =>
+    set({ brandAnalysis: data, currentStep: 2 }),
+  updateBrandAnalysis: (partial) =>
+    set((state) => ({
+      brandAnalysis: state.brandAnalysis
+        ? { ...state.brandAnalysis, ...partial }
+        : null,
+    })),
+  updateProduct: (id, product) =>
+    set((state) => ({
+      brandAnalysis: state.brandAnalysis
+        ? {
+            ...state.brandAnalysis,
+            products: state.brandAnalysis.products.map((p) =>
+              p.id === id ? { ...p, ...product } : p
+            ),
+          }
+        : null,
+    })),
+  removeProduct: (id) =>
+    set((state) => ({
+      brandAnalysis: state.brandAnalysis
+        ? {
+            ...state.brandAnalysis,
+            products: state.brandAnalysis.products.filter((p) => p.id !== id),
+          }
+        : null,
+    })),
+  addProduct: (product) =>
+    set((state) => ({
+      brandAnalysis: state.brandAnalysis
+        ? {
+            ...state.brandAnalysis,
+            products: [...state.brandAnalysis.products, product],
+          }
+        : null,
+    })),
+  updateOffer: (id, offer) =>
+    set((state) => ({
+      brandAnalysis: state.brandAnalysis
+        ? {
+            ...state.brandAnalysis,
+            offers: state.brandAnalysis.offers.map((o) =>
+              o.id === id ? { ...o, ...offer } : o
+            ),
+          }
+        : null,
+    })),
+  removeOffer: (id) =>
+    set((state) => ({
+      brandAnalysis: state.brandAnalysis
+        ? {
+            ...state.brandAnalysis,
+            offers: state.brandAnalysis.offers.filter((o) => o.id !== id),
+          }
+        : null,
+    })),
+  addOffer: (offer) =>
+    set((state) => ({
+      brandAnalysis: state.brandAnalysis
+        ? {
+            ...state.brandAnalysis,
+            offers: [...state.brandAnalysis.offers, offer],
+          }
+        : null,
+    })),
+  addImage: (image) =>
+    set((state) => ({
+      uploadedImages: [...state.uploadedImages, image],
+    })),
+  removeImage: (id) =>
+    set((state) => ({
+      uploadedImages: state.uploadedImages.filter((i) => i.id !== id),
+    })),
+  setBrandLogo: (logo) => set({ brandLogo: logo }),
+  addGeneratedAd: (ad) =>
+    set((state) => ({
+      generatedAds: [...state.generatedAds, ad],
+    })),
+  updateGeneratedAd: (id, updates) =>
+    set((state) => ({
+      generatedAds: state.generatedAds.map((ad) =>
+        ad.id === id ? { ...ad, ...updates } : ad
+      ),
+    })),
+  clearAds: () => set({ generatedAds: [] }),
+  reset: () =>
+    set({
       currentStep: 1,
       isAnalyzing: false,
       brandAnalysis: null,
+      brandAnalysisId: null,
       uploadedImages: [],
       generatedAds: [],
       brandLogo: null,
-      _hydratedIdb: false,
-
-      setStep: (step) => set({ currentStep: step }),
-      setAnalyzing: (v) => set({ isAnalyzing: v }),
-      setBrandAnalysis: (data) =>
-        set({ brandAnalysis: data, currentStep: 2 }),
-      updateBrandAnalysis: (partial) =>
-        set((state) => ({
-          brandAnalysis: state.brandAnalysis
-            ? { ...state.brandAnalysis, ...partial }
-            : null,
-        })),
-      updateProduct: (id, product) =>
-        set((state) => ({
-          brandAnalysis: state.brandAnalysis
-            ? {
-                ...state.brandAnalysis,
-                products: state.brandAnalysis.products.map((p) =>
-                  p.id === id ? { ...p, ...product } : p
-                ),
-              }
-            : null,
-        })),
-      removeProduct: (id) =>
-        set((state) => ({
-          brandAnalysis: state.brandAnalysis
-            ? {
-                ...state.brandAnalysis,
-                products: state.brandAnalysis.products.filter(
-                  (p) => p.id !== id
-                ),
-              }
-            : null,
-        })),
-      addProduct: (product) =>
-        set((state) => ({
-          brandAnalysis: state.brandAnalysis
-            ? {
-                ...state.brandAnalysis,
-                products: [...state.brandAnalysis.products, product],
-              }
-            : null,
-        })),
-      updateOffer: (id, offer) =>
-        set((state) => ({
-          brandAnalysis: state.brandAnalysis
-            ? {
-                ...state.brandAnalysis,
-                offers: state.brandAnalysis.offers.map((o) =>
-                  o.id === id ? { ...o, ...offer } : o
-                ),
-              }
-            : null,
-        })),
-      removeOffer: (id) =>
-        set((state) => ({
-          brandAnalysis: state.brandAnalysis
-            ? {
-                ...state.brandAnalysis,
-                offers: state.brandAnalysis.offers.filter((o) => o.id !== id),
-              }
-            : null,
-        })),
-      addOffer: (offer) =>
-        set((state) => ({
-          brandAnalysis: state.brandAnalysis
-            ? {
-                ...state.brandAnalysis,
-                offers: [...state.brandAnalysis.offers, offer],
-              }
-            : null,
-        })),
-      addImage: (image) => {
-        set((state) => {
-          const updated = [...state.uploadedImages, image];
-          syncImagesToIdb(updated);
-          return { uploadedImages: updated };
-        });
-      },
-      removeImage: (id) => {
-        set((state) => {
-          const updated = state.uploadedImages.filter((i) => i.id !== id);
-          syncImagesToIdb(updated);
-          return { uploadedImages: updated };
-        });
-      },
-      setBrandLogo: (logo) => {
-        syncLogoToIdb(logo);
-        set({ brandLogo: logo });
-      },
-      addGeneratedAd: (ad) =>
-        set((state) => ({
-          generatedAds: [...state.generatedAds, ad],
-        })),
-      updateGeneratedAd: (id, updates) =>
-        set((state) => ({
-          generatedAds: state.generatedAds.map((ad) =>
-            ad.id === id ? { ...ad, ...updates } : ad
-          ),
-        })),
-      clearAds: () => set({ generatedAds: [] }),
-      reset: () => {
-        // Clear IndexedDB too
-        idbDel(IDB_IMAGES).catch(() => {});
-        idbDel(IDB_LOGO).catch(() => {});
-        set({
-          currentStep: 1,
-          isAnalyzing: false,
-          brandAnalysis: null,
-          uploadedImages: [],
-          generatedAds: [],
-          brandLogo: null,
-        });
-      },
     }),
-    {
-      name: "kult-ads-wizard",
-      storage: createJSONStorage(() =>
-        typeof window !== "undefined"
-          ? localStorage
-          : {
-              getItem: () => null,
-              setItem: () => {},
-              removeItem: () => {},
-            }
-      ),
-      partialize: (state) => ({
-        currentStep: state.currentStep,
-        brandAnalysis: state.brandAnalysis,
-        // Images & logo persisted in IndexedDB (no localStorage quota issues)
-      }),
-      onRehydrateStorage: () => {
-        // After localStorage hydration, load images & logo from IndexedDB
-        return () => {
-          if (typeof window === "undefined") return;
-          Promise.all([
-            idbGet<UploadedImage[]>(IDB_IMAGES),
-            idbGet<BrandLogo>(IDB_LOGO),
-          ]).then(([images, logo]) => {
-            useWizardStore.setState({
-              uploadedImages: images || [],
-              brandLogo: logo || null,
-              _hydratedIdb: true,
-            });
-          }).catch(() => {
-            useWizardStore.setState({ _hydratedIdb: true });
-          });
-        };
-      },
+
+  // ── Supabase sync methods ──
+
+  syncBrandAnalysis: async (userId) => {
+    const { brandAnalysis, brandAnalysisId } = get();
+    if (!brandAnalysis) return;
+    try {
+      const id = await saveBrandAnalysis(userId, brandAnalysis, brandAnalysisId || undefined);
+      set({ brandAnalysisId: id });
+    } catch (err) {
+      console.error("[sync] Error saving brand analysis:", err);
     }
-  )
-);
+  },
+
+  syncImage: async (userId, image) => {
+    const { brandAnalysisId } = get();
+    if (!brandAnalysisId) return;
+    try {
+      await syncUploadImage(userId, brandAnalysisId, image.base64, image.mimeType, image.name, image.productId);
+    } catch (err) {
+      console.error("[sync] Error uploading image:", err);
+    }
+  },
+
+  syncLogo: async (userId, logo) => {
+    const { brandAnalysisId } = get();
+    if (!brandAnalysisId) return;
+    try {
+      await syncUploadBrandLogo(userId, brandAnalysisId, logo.base64, logo.mimeType);
+    } catch (err) {
+      console.error("[sync] Error uploading logo:", err);
+    }
+  },
+
+  syncGeneratedAd: async (userId, ad) => {
+    const { brandAnalysisId } = get();
+    if (!brandAnalysisId) return;
+    try {
+      await saveGeneratedAd(userId, brandAnalysisId, ad);
+    } catch (err) {
+      console.error("[sync] Error saving generated ad:", err);
+    }
+  },
+
+  hydrateFromSupabase: async (userId) => {
+    try {
+      const result = await loadLatestBrandAnalysis(userId);
+      if (result) {
+        set({
+          brandAnalysis: result.analysis,
+          brandAnalysisId: result.id,
+          currentStep: 2,
+        });
+
+        const { images, logo } = await loadUploadedImages(userId, result.id);
+        set({ uploadedImages: images, brandLogo: logo });
+
+        const ads = await loadGeneratedAds(userId, result.id);
+        if (ads.length > 0) {
+          set({ generatedAds: ads, currentStep: 4 });
+        } else if (images.length > 0) {
+          set({ currentStep: 3 });
+        }
+      }
+    } catch (err) {
+      console.error("[sync] Error hydrating from Supabase:", err);
+    } finally {
+      set({ isHydrated: true });
+    }
+  },
+}));

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useWizardStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/auth-store";
 import AdPreviewCard from "@/components/ad-preview-card";
 import {
   ArrowLeft,
@@ -34,6 +35,8 @@ export default function GeneratePage() {
   const updateGeneratedAd = useWizardStore((s) => s.updateGeneratedAd);
   const clearAds = useWizardStore((s) => s.clearAds);
   const brandLogo = useWizardStore((s) => s.brandLogo);
+  const syncGeneratedAd = useWizardStore((s) => s.syncGeneratedAd);
+  const currentUser = useAuthStore((s) => s.currentUser);
 
   // Mode
   const [mode, setMode] = useState<Mode>("library");
@@ -164,6 +167,7 @@ export default function GeneratePage() {
           } else {
             const ad = await res.json();
             addGeneratedAd(ad);
+            if (currentUser) syncGeneratedAd(currentUser.id, ad);
           }
         } catch {
           failed++;
@@ -215,6 +219,7 @@ export default function GeneratePage() {
           } else {
             const ad = await res.json();
             addGeneratedAd(ad);
+            if (currentUser) syncGeneratedAd(currentUser.id, ad);
           }
         } catch {
           failed++;
@@ -258,6 +263,7 @@ export default function GeneratePage() {
       if (res.ok) {
         const newAd = await res.json();
         addGeneratedAd(newAd);
+        if (currentUser) syncGeneratedAd(currentUser.id, newAd);
       }
     } catch {
       // Silent fail
@@ -551,6 +557,7 @@ export default function GeneratePage() {
                     if (res.ok) {
                       const newAd = await res.json();
                       addGeneratedAd(newAd);
+        if (currentUser) syncGeneratedAd(currentUser.id, newAd);
                     }
                   } catch {
                     // Silent fail

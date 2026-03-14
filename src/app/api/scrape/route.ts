@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { scrapeUrl } from "@/lib/scraper";
+import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    }
+
     const { url } = await request.json();
 
     if (!url || typeof url !== "string") {
