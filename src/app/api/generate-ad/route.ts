@@ -116,43 +116,41 @@ export async function POST(request: Request) {
         product.features?.length ? `— ${product.features.slice(0, 3).join(", ")}` : "",
       ].filter(Boolean).join(" ");
 
-      visualPrompt = `${aspectRatio} — Create a professional advertising image for "${brandAnalysis.brandName}".
+      visualPrompt = `${aspectRatio} — Create an advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
 
-WHAT THIS AD IS ABOUT:
-- Brand: "${brandAnalysis.brandName}"
-- Product: ${productDesc}
-${offer ? `- Offer: ${offer.title}` : ""}
+STEP 1 — ERASE FROM THE LAYOUT REFERENCE:
+Look at the LAYOUT REFERENCE image. It contains products, packaging, bottles, boxes, or objects from a DIFFERENT brand.
+You must COMPLETELY ERASE AND DELETE every single product, box, bottle, can, jar, packaging, and physical object visible in the LAYOUT REFERENCE.
+Replace the area where those products were with the background color/style.
 
-THE LAYOUT REFERENCE IMAGE IS FROM A COMPLETELY DIFFERENT BRAND AND PRODUCT CATEGORY.
-It is ONLY a guide for the visual LAYOUT (where things are positioned). You must NOT reproduce its products, packaging, text, or brand.
+STEP 2 — PLACE THE CORRECT PRODUCT:
+Now look at the PRODUCT reference image. This is "${product.name}" — ${productDesc}.
+Place this product (exactly as shown in the PRODUCT reference) in the area where the layout reference had its products.
+${product.features?.length ? `This product is: ${product.features.slice(0, 3).join(", ")}.` : ""}
+Show ONLY this product. If the layout had multiple items, show 2-3 copies or angles of THIS product instead.
 
-${!isTextOnly && productImageBase64 ? `PRODUCT TO SHOW: Look at the PRODUCT reference image. This is "${product.name}" by "${brandAnalysis.brandName}".
-Place this product (and ONLY this product) where products appear in the layout.
-The product in the LAYOUT REFERENCE is a DIFFERENT product from a DIFFERENT brand — do NOT reproduce it.
-If the layout shows multiple products, show multiple angles or copies of "${product.name}" instead.` : ""}
-${isTextOnly ? "This is a TEXT-ONLY ad — NO product photos, NO physical objects, NO people. Only typography and graphic elements." : ""}
-
-LAYOUT TO FOLLOW (positions and style only, from LAYOUT REFERENCE):
+STEP 3 — APPLY THE LAYOUT STRUCTURE:
 - Background: ${layout.backgroundStyle}
 - Decorative elements: ${layout.decorativeElements}
 - Text placement: ${layout.textPosition}
 - Typography: ${layout.typographyStyle}
 - CTA: ${layout.ctaStyle} at ${layout.ctaPosition}
 - Brand name: ${layout.brandLogoPosition}
-${!isTextOnly ? `- Product area: ${layout.productPosition}` : ""}
 
-TEXT ON THE IMAGE (in French):
+STEP 4 — ADD TEXT (in French):
 ${imageText ? `"${imageText}"` : `Write compelling French ad text for "${brandAnalysis.brandName}" — "${product.name}".`}
 Brand name EXACTLY: "${brandAnalysis.brandName}"
 
+${isTextOnly ? "This is a TEXT-ONLY ad — NO product photos, NO physical objects, NO people. Only typography and graphic elements." : ""}
+
 SCENE: ${sceneDescription}
 
-RULES:
-1. Follow the LAYOUT REFERENCE for positions, spacing, background, and decorative elements.
-2. Brand colors: ${colors}.
-3. ALL products must be "${product.name}" from the PRODUCT reference — NOT the layout reference's products.
-4. ALL text must be about "${brandAnalysis.brandName}" — ZERO text from the layout reference.
-${offer ? `5. DISCOUNT: Replace any percentage with ONLY "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "5. No discount. Replace any percentage with a key benefit."}`;
+ABSOLUTE RULES:
+1. ZERO products, boxes, bottles, cans, or packaging from the LAYOUT REFERENCE may appear. They must ALL be erased.
+2. The ONLY product allowed is "${product.name}" from the PRODUCT reference image.
+3. The ONLY brand name allowed is "${brandAnalysis.brandName}".
+4. Brand colors: ${colors}.
+${offer ? `5. DISCOUNT: Replace any percentage with "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "5. No discount. Replace any percentage with a key benefit."}`;
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
