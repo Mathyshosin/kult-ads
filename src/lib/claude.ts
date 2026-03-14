@@ -145,9 +145,10 @@ ${brandContext.uniqueSellingPoints?.length ? `- USPs: ${brandContext.uniqueSelli
 - Brand name EXACTLY: "${brandContext.brandName}"
 
 CRITICAL RULE FOR DISCOUNTS/PERCENTAGES:
-- If the template shows a percentage (e.g. "-10%", "-20%"), you MUST replace it with the REAL offer value from the brand.
-${brandContext.offerTitle ? `- The REAL discount is: "${brandContext.offerTitle}". Use this EXACT value, not the template's percentage.` : "- There is NO discount/offer. Remove any percentage from the text and replace with a key selling point."}
+- If the template shows a large percentage number (e.g. "-10%", "-20%"), replace it with ONLY the numeric discount value: just the number and % sign (e.g. "-60%"), NOT the offer name/title.
+${brandContext.offerTitle ? `- The REAL discount value is: "${brandContext.offerTitle}". Extract ONLY the percentage or numeric value from this. For example if the offer is "Vente privée -60%", write ONLY "-60%" on the image where the template had its percentage — NOT "Vente privée -60%".` : "- There is NO discount/offer. Remove any percentage from the text and replace with a key selling point."}
 - NEVER keep the template's original percentage — it belongs to a different brand.
+- The offer NAME (e.g. "Vente privée", "Soldes") can appear elsewhere in smaller text, but the BIG number must be ONLY the percentage.
 
 RULES:
 - NEVER copy text from the template
