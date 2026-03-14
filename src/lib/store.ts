@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { get as idbGet, set as idbSet, del as idbDel } from "idb-keyval";
 import type {
   BrandAnalysis,
   Product,
@@ -24,6 +25,7 @@ interface WizardState {
   uploadedImages: UploadedImage[];
   generatedAds: GeneratedAd[];
   brandLogo: BrandLogo | null;
+  _hydratedIdb: boolean;
 
   setStep: (step: WizardStep) => void;
   setAnalyzing: (v: boolean) => void;
@@ -44,16 +46,33 @@ interface WizardState {
   reset: () => void;
 }
 
+// ── IndexedDB keys ──
+const IDB_IMAGES = "kult-ads-images";
+const IDB_LOGO = "kult-ads-logo";
+
+// ── Sync helpers (fire-and-forget, never block UI) ──
+function syncImagesToIdb(images: UploadedImage[]) {
+  idbSet(IDB_IMAGES, images).catch(() => {});
+}
+function syncLogoToIdb(logo: BrandLogo | null) {
+  if (logo) {
+    idbSet(IDB_LOGO, logo).catch(() => {});
+  } else {
+    idbDel(IDB_LOGO).catch(() => {});
+  }
+}
+
 // ── Wizard store ──
 export const useWizardStore = create<WizardState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       currentStep: 1,
       isAnalyzing: false,
       brandAnalysis: null,
       uploadedImages: [],
       generatedAds: [],
       brandLogo: null,
+      _hydratedIdb: false,
 
       setStep: (step) => set({ currentStep: step }),
       setAnalyzing: (v) => set({ isAnalyzing: v }),
@@ -125,15 +144,24 @@ export const useWizardStore = create<WizardState>()(
               }
             : null,
         })),
-      addImage: (image) =>
-        set((state) => ({
-          uploadedImages: [...state.uploadedImages, image],
-        })),
-      removeImage: (id) =>
-        set((state) => ({
-          uploadedImages: state.uploadedImages.filter((i) => i.id !== id),
-        })),
-      setBrandLogo: (logo) => set({ brandLogo: logo }),
+      addImage: (image) => {
+        set((state) => {
+          const updated = [...state.uploadedImages, image];
+          syncImagesToIdb(updated);
+          return { uploadedImages: updated };
+        });
+      },
+      removeImage: (id) => {
+        set((state) => {
+          const updated = state.uploadedImages.filter((i) => i.id !== id);
+          syncImagesToIdb(updated);
+          return { uploadedImages: updated };
+        });
+      },
+      setBrandLogo: (logo) => {
+        syncLogoToIdb(logo);
+        set({ brandLogo: logo });
+      },
       addGeneratedAd: (ad) =>
         set((state) => ({
           generatedAds: [...state.generatedAds, ad],
@@ -145,7 +173,10 @@ export const useWizardStore = create<WizardState>()(
           ),
         })),
       clearAds: () => set({ generatedAds: [] }),
-      reset: () =>
+      reset: () => {
+        // Clear IndexedDB too
+        idbDel(IDB_IMAGES).catch(() => {});
+        idbDel(IDB_LOGO).catch(() => {});
         set({
           currentStep: 1,
           isAnalyzing: false,
@@ -153,7 +184,8 @@ export const useWizardStore = create<WizardState>()(
           uploadedImages: [],
           generatedAds: [],
           brandLogo: null,
-        }),
+        });
+      },
     }),
     {
       name: "kult-ads-wizard",
@@ -169,9 +201,26 @@ export const useWizardStore = create<WizardState>()(
       partialize: (state) => ({
         currentStep: state.currentStep,
         brandAnalysis: state.brandAnalysis,
-        // uploadedImages, brandLogo, generatedAds NOT persisted — base64 data
-        // blows past the ~5 MB localStorage quota.
+        // Images & logo persisted in IndexedDB (no localStorage quota issues)
       }),
+      onRehydrateStorage: () => {
+        // After localStorage hydration, load images & logo from IndexedDB
+        return () => {
+          if (typeof window === "undefined") return;
+          Promise.all([
+            idbGet<UploadedImage[]>(IDB_IMAGES),
+            idbGet<BrandLogo>(IDB_LOGO),
+          ]).then(([images, logo]) => {
+            useWizardStore.setState({
+              uploadedImages: images || [],
+              brandLogo: logo || null,
+              _hydratedIdb: true,
+            });
+          }).catch(() => {
+            useWizardStore.setState({ _hydratedIdb: true });
+          });
+        };
+      },
     }
   )
 );
