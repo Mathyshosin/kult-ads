@@ -26,6 +26,7 @@ export default function AnalyzePage() {
   const setBrandAnalysis = useWizardStore((s) => s.setBrandAnalysis);
   const router = useRouter();
 
+  const [forceReanalyze, setForceReanalyze] = useState(false);
   const isLoading = phase >= 0;
   const hasExistingAnalysis = brandAnalysis !== null;
 
@@ -53,8 +54,8 @@ export default function AnalyzePage() {
     e.preventDefault();
     if (!url.trim()) return;
 
-    // If same URL already analyzed, skip API calls and go straight to review
-    if (isSameUrl) {
+    // If same URL already analyzed and not forcing re-analysis, skip
+    if (isSameUrl && !forceReanalyze) {
       router.push("/dashboard/review");
       return;
     }
@@ -92,12 +93,14 @@ export default function AnalyzePage() {
       setPhase(2);
 
       setBrandAnalysis({ ...analysis, url: url.trim() });
+      setForceReanalyze(false);
 
       await new Promise((r) => setTimeout(r, 500));
       router.push("/dashboard/review");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
       setPhase(-1);
+      setForceReanalyze(false);
     }
   }
 
@@ -145,7 +148,10 @@ export default function AnalyzePage() {
                 </button>
                 <button
                   onClick={() => {
-                    /* just scroll down to the form */
+                    setForceReanalyze(true);
+                    // Scroll to form
+                    document.getElementById("url")?.scrollIntoView({ behavior: "smooth" });
+                    document.getElementById("url")?.focus();
                   }}
                   className="flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors"
                 >
@@ -224,7 +230,9 @@ export default function AnalyzePage() {
               type="submit"
               className="w-full bg-primary text-white py-3.5 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
             >
-              {isSameUrl
+              {isSameUrl && forceReanalyze
+                ? "Re-analyser le site"
+                : isSameUrl
                 ? "Continuer avec les données existantes"
                 : hasExistingAnalysis
                 ? "Analyser ce nouveau site"
