@@ -1,6 +1,4 @@
-import { createClient } from "./client";
-
-const supabase = () => createClient();
+import { createClient } from "./server";
 
 export interface TemplateRow {
   id: string;
@@ -21,7 +19,8 @@ export interface TemplateRow {
 
 // ── List all templates ──
 export async function getTemplatesFromDb(): Promise<TemplateRow[]> {
-  const { data, error } = await supabase()
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .from("templates")
     .select("*")
     .order("created_at", { ascending: true });
@@ -37,7 +36,8 @@ export async function getTemplatesFromDb(): Promise<TemplateRow[]> {
 export async function getTemplateFromDb(
   id: string
 ): Promise<TemplateRow | null> {
-  const { data, error } = await supabase()
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .from("templates")
     .select("*")
     .eq("id", id)
@@ -58,7 +58,8 @@ export async function addTemplateToDb(template: {
   imageSource: "local" | "supabase";
   tags?: { industry: string[]; adType: string[]; productType: string[] };
 }): Promise<TemplateRow | null> {
-  const { data, error } = await supabase()
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .from("templates")
     .insert({
       id: template.id,
@@ -90,6 +91,7 @@ export async function updateTemplateInDb(
     tags?: { industry: string[]; adType: string[]; productType: string[] };
   }
 ): Promise<boolean> {
+  const supabase = await createClient();
   const updateData: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
   };
@@ -98,7 +100,7 @@ export async function updateTemplateInDb(
   if (partial.category !== undefined) updateData.category = partial.category;
   if (partial.tags !== undefined) updateData.tags = partial.tags;
 
-  const { error } = await supabase()
+  const { error } = await supabase
     .from("templates")
     .update(updateData)
     .eq("id", id);
@@ -112,13 +114,15 @@ export async function updateTemplateInDb(
 
 // ── Remove a template ──
 export async function removeTemplateFromDb(id: string): Promise<boolean> {
+  const supabase = await createClient();
+
   // First get the template to check image_source
   const template = await getTemplateFromDb(id);
   if (!template) return false;
 
   // Delete image from Supabase Storage if it was uploaded there
   if (template.image_source === "supabase") {
-    const { error: storageError } = await supabase()
+    const { error: storageError } = await supabase
       .storage
       .from("templates")
       .remove([template.filename]);
@@ -129,7 +133,7 @@ export async function removeTemplateFromDb(id: string): Promise<boolean> {
   }
 
   // Delete the row
-  const { error } = await supabase()
+  const { error } = await supabase
     .from("templates")
     .delete()
     .eq("id", id);
@@ -147,9 +151,10 @@ export async function uploadTemplateImage(
   imageBase64: string,
   mimeType: string
 ): Promise<string | null> {
-  const buffer = Uint8Array.from(atob(imageBase64), (c) => c.charCodeAt(0));
+  const supabase = await createClient();
+  const buffer = Buffer.from(imageBase64, "base64");
 
-  const { error } = await supabase()
+  const { error } = await supabase
     .storage
     .from("templates")
     .upload(filename, buffer, {
@@ -163,7 +168,7 @@ export async function uploadTemplateImage(
   }
 
   // Return public URL
-  const { data } = supabase()
+  const { data } = supabase
     .storage
     .from("templates")
     .getPublicUrl(filename);
@@ -175,7 +180,8 @@ export async function uploadTemplateImage(
 export async function getTemplateImageFromStorage(
   filename: string
 ): Promise<{ imageBase64: string; mimeType: string } | null> {
-  const { data, error } = await supabase()
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .storage
     .from("templates")
     .download(filename);
@@ -190,39 +196,4 @@ export async function getTemplateImageFromStorage(
   const mimeType = data.type || "image/png";
 
   return { imageBase64: base64, mimeType };
-}
-
-// ── Batch insert templates (for seeding) ──
-export async function seedTemplatesToDb(
-  templates: Array<{
-    id: string;
-    name: string;
-    format: "square" | "story";
-    category: string;
-    filename: string;
-    mimeType: string;
-    tags?: { industry: string[]; adType: string[]; productType: string[] };
-  }>
-): Promise<number> {
-  const rows = templates.map((t) => ({
-    id: t.id,
-    name: t.name,
-    format: t.format,
-    category: t.category,
-    filename: t.filename,
-    mime_type: t.mimeType,
-    image_source: "local" as const,
-    tags: t.tags || { industry: [], adType: [], productType: [] },
-  }));
-
-  const { data, error } = await supabase()
-    .from("templates")
-    .upsert(rows, { onConflict: "id" })
-    .select();
-
-  if (error) {
-    console.error("[supabase/templates] Seed error:", error);
-    return 0;
-  }
-  return data?.length || 0;
 }
