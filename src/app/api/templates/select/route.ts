@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    const { brandAnalysis, offer, format, count } = await request.json();
+    const { brandAnalysis, offer, format, count, adStyle } = await request.json();
 
     if (!brandAnalysis) {
       return NextResponse.json({ error: "Brand analysis manquante" }, { status: 400 });
@@ -58,9 +58,22 @@ export async function POST(request: Request) {
         }
       : null;
 
+    // If adStyle filter is provided, boost templates that have that adType tag
+    // We do this by pre-filtering: prefer templates with the tag, fallback to all
+    let candidateTemplates = formatTemplates;
+    if (adStyle) {
+      const withTag = formatTemplates.filter(
+        (t) => t.tags?.adType?.includes(adStyle)
+      );
+      if (withTag.length > 0) {
+        candidateTemplates = withTag;
+      }
+      // If no templates have the tag, fall back to all templates
+    }
+
     // Run scoring algorithm
     const { selected, scores } = selectBestTemplates(
-      formatTemplates,
+      candidateTemplates,
       analyses,
       brandInfo,
       offerInfo,
