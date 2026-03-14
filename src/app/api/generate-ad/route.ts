@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: "LAYOUT REFERENCE — Copy ONLY the visual structure: background colors/gradients, element positioning, text arrangement, decorative shapes, and overall composition. DO NOT copy any text, brand names, logos, product images, or specific content from this reference. All text and products must come from the instructions below.",
+        label: `LAYOUT REFERENCE (from a DIFFERENT brand — NOT "${brandAnalysis.brandName}"). Copy ONLY: background style, element positions, text arrangement, decorative shapes, composition. IGNORE ALL text, brand names, logos, and product images in this reference — they belong to another brand and must NOT appear in the output.`,
       });
     }
 
@@ -109,11 +109,15 @@ export async function POST(request: Request) {
         ? `\nEXACT TEXT TO DISPLAY (in French, with line breaks as shown):\n"${imageText}"\nSpell the brand name "${brandAnalysis.brandName}" EXACTLY.`
         : "";
 
-      visualPrompt = `${aspectRatio} — Create a NEW advertising image for "${brandAnalysis.brandName}" using the LAYOUT REFERENCE as a structural guide.
+      visualPrompt = `${aspectRatio} — Create a NEW advertising image for the brand "${brandAnalysis.brandName}".
 
-The LAYOUT REFERENCE shows the STRUCTURE to follow. DO NOT copy its text, brand, logos, or products — only its visual layout.
+⚠️ IMPORTANT: The LAYOUT REFERENCE image is from a DIFFERENT brand. It is ONLY a structural guide for positioning and visual style. You MUST IGNORE all text, brand names, product names, logos, and product images visible in the LAYOUT REFERENCE. They are NOT for "${brandAnalysis.brandName}".
 
-COPY FROM LAYOUT REFERENCE (structure only):
+THE ONLY BRAND IN THIS AD IS: "${brandAnalysis.brandName}"
+THE ONLY PRODUCT IN THIS AD IS: "${product.name}"
+Any other brand name or product you see in the LAYOUT REFERENCE must be completely replaced.
+
+VISUAL STRUCTURE TO REPRODUCE (from LAYOUT REFERENCE):
 - Background style: ${layout.backgroundStyle}
 - Decorative elements: ${layout.decorativeElements}
 - Text placement: ${layout.textPosition}
@@ -122,19 +126,20 @@ COPY FROM LAYOUT REFERENCE (structure only):
 - Brand name placement: ${layout.brandLogoPosition}
 ${!isTextOnly ? `- Product placement: ${layout.productPosition}` : "- NO product photo — this is a pure typographic/graphic design"}
 
-NEW CONTENT FOR "${brandAnalysis.brandName}" (replace ALL text from the layout reference):
-${textContent}
+TEXT TO DISPLAY ON THE IMAGE (in French — this is the ONLY text allowed):
+${imageText ? `"${imageText}"` : `Write compelling French ad text for "${brandAnalysis.brandName}" — "${product.name}".`}
+Brand name spelled EXACTLY: "${brandAnalysis.brandName}"
+
+${!isTextOnly && productImageBase64 ? `PRODUCT: Use ONLY the PRODUCT reference image — "${product.name}". Place it at: ${layout.productPosition}. Do NOT use any product from the LAYOUT REFERENCE.` : ""}
+${isTextOnly ? "NO product photos, NO physical objects, NO people. Only typography and graphic elements." : ""}
 
 SCENE: ${sceneDescription}
 
-CRITICAL RULES:
-1. The visual structure (positions, spacing, proportions) must match the LAYOUT REFERENCE.
-2. ALL text must be NEW — about "${brandAnalysis.brandName}" ONLY. Zero text from the layout reference.
-3. ALL products shown must be "${product.name}" from the PRODUCT reference — zero products from the layout reference.
-4. Brand colors: ${colors}.
-${!isTextOnly && productImageBase64 ? `5. Use the PRODUCT reference image as-is — same shape, colors, packaging. Place it at: ${layout.productPosition}.` : ""}
-${isTextOnly ? "5. NO product photos, NO physical objects, NO people. Only typography and graphic elements." : ""}
-6. DISCOUNT/PERCENTAGE: ${offer ? `If the layout reference shows a percentage number, replace it with ONLY "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}". Display ONLY the number+symbol, NOT the offer name. The offer name "${offer.title}" can appear in smaller text elsewhere.` : "There is NO discount for this brand. If the layout reference shows a percentage, REMOVE it and replace with a key benefit text."}`;
+RULES:
+1. Reproduce the visual structure (positions, spacing, proportions, background, decorative shapes) from the LAYOUT REFERENCE.
+2. Brand colors: ${colors}.
+3. ZERO content from the LAYOUT REFERENCE — all text, brand names, and products must be for "${brandAnalysis.brandName}" only.
+${offer ? `4. DISCOUNT: If the layout reference shows a percentage number, replace it with ONLY "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}". Display ONLY the number+symbol, NOT the offer name.` : "4. There is NO discount. If the layout reference shows a percentage, replace with a key benefit."}`;
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
