@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: "STYLE REFERENCE — replicate this exact ad style, composition and professional quality",
+        label: "STYLE INSPIRATION — use this ad as inspiration for the overall layout, composition style, and visual mood. Do NOT copy it. Create a completely NEW image from scratch.",
       });
     }
 
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: productImageBase64,
         mimeType: productImageMimeType || "image/png",
-        label: "PRODUCT — this is the exact product to feature. Do NOT modify it.",
+        label: "PRODUCT — this is the exact product to feature in the new ad. Do NOT modify it.",
       });
     }
 
@@ -61,28 +61,32 @@ export async function POST(request: Request) {
 
     if (customPrompt) {
       // Custom mode: user's own prompt, with safety rails
-      visualPrompt = `High-end ${aspectRatio} advertising photo for "${brandAnalysis.brandName}".
+      visualPrompt = `Create a brand new ${aspectRatio} advertising photo from scratch for "${brandAnalysis.brandName}".
 
 ${customPrompt}
 
 Rules:
-- The PRODUCT is the hero. Feature it prominently, it must be the clear focal point.
+- Create a COMPLETELY NEW image. Do NOT edit or modify any reference image.
+- The PRODUCT from the reference must be the hero — feature it prominently as the clear focal point.
 - Keep the product IDENTICAL to the PRODUCT reference — same packaging, colors, shape. Do NOT redesign, add ribbons, change labels, or alter it.
 - If a person appears in the scene, they MUST be holding or wearing the product. Never a person next to the product without direct interaction.
 - Photorealistic, shot on professional camera, shallow depth of field on background.
 - Leave breathing room in the image (top or bottom third) for text overlay later.
 - Absolutely NO text, words, letters, numbers, watermarks, or UI elements.`;
     } else {
-      // Library mode: replicate the template style
-      visualPrompt = `High-end ${aspectRatio} advertising photo for "${brandAnalysis.brandName}".
+      // Library mode: create NEW ad inspired by template style
+      visualPrompt = `Create a brand new ${aspectRatio} advertising photo from scratch for "${brandAnalysis.brandName}".
 
-Replicate the STYLE REFERENCE exactly — same composition, layout, lighting, and professional quality — but adapted for this brand and product.
+Look at the STYLE INSPIRATION image and understand its visual approach: the type of composition, the mood, the lighting style, and the overall aesthetic. Then create a COMPLETELY NEW and DIFFERENT image that captures a similar vibe but features the PRODUCT from the reference photo.
+
+CRITICAL: Do NOT copy, edit, or overlay the inspiration image. Generate an entirely new photograph from scratch. The only thing you take from the inspiration is the general aesthetic direction.
 
 Rules:
-- The PRODUCT is the hero. Feature it prominently, it must be the clear focal point.
-- Keep the product IDENTICAL to the PRODUCT reference — same packaging, colors, shape. Do NOT redesign, add ribbons, change labels, or alter it.
-- Copy the STYLE REFERENCE composition, lighting style, and professional quality as closely as possible.
-- If a person appears in the scene, they MUST be holding or wearing the product. Never a person next to the product without direct interaction.
+- Create a COMPLETELY NEW image — do NOT paste the product onto the inspiration image.
+- The PRODUCT from the reference must be the hero — feature it prominently as the clear focal point.
+- Keep the product IDENTICAL to the PRODUCT reference — same packaging, colors, shape. Do NOT redesign it.
+- Be inspired by the STYLE INSPIRATION's mood and composition type, but create a fresh, unique scene.
+- If a person appears in the scene, they MUST be holding or wearing the product directly.
 - Leave breathing room in the image (top or bottom third) for text overlay later.
 - Color palette: ${brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "modern, clean"}.
 - Photorealistic, shot on professional camera, shallow depth of field on background.

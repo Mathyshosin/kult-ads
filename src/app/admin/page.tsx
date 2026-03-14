@@ -88,21 +88,24 @@ Génère le texte publicitaire en français.`,
     title: "Gemini — Mode Bibliothèque",
     model: "Gemini 2.5 Flash Image (gemini-2.5-flash-image)",
     icon: <Image className="w-4 h-4" />,
-    description: "L'utilisateur choisit un template de la bibliothèque. Gemini réplique le style du template en intégrant le produit et les couleurs de la marque.",
+    description: "L'utilisateur choisit un template de la bibliothèque. Gemini crée une NOUVELLE image de zéro en s'inspirant du style/mood du template, avec le produit de la marque.",
     systemPrompt: `(Pas de system prompt — Gemini utilise un prompt direct avec images de référence)
 
 Images de référence envoyées :
-1. [STYLE REFERENCE] — "replicate this exact ad style, composition and professional quality"
-2. [PRODUCT] — "this is the exact product to feature. Do NOT modify it."`,
-    userPromptTemplate: `High-end {aspectRatio} advertising photo for "{brandName}".
+1. [STYLE INSPIRATION] — "use this ad as inspiration for the overall layout, composition style, and visual mood. Do NOT copy it. Create a completely NEW image from scratch."
+2. [PRODUCT] — "this is the exact product to feature in the new ad. Do NOT modify it."`,
+    userPromptTemplate: `Create a brand new {aspectRatio} advertising photo from scratch for "{brandName}".
 
-Replicate the STYLE REFERENCE exactly — same composition, layout, lighting, and professional quality — but adapted for this brand and product.
+Look at the STYLE INSPIRATION image and understand its visual approach: the type of composition, the mood, the lighting style, and the overall aesthetic. Then create a COMPLETELY NEW and DIFFERENT image that captures a similar vibe but features the PRODUCT from the reference photo.
+
+CRITICAL: Do NOT copy, edit, or overlay the inspiration image. Generate an entirely new photograph from scratch. The only thing you take from the inspiration is the general aesthetic direction.
 
 Rules:
-- The PRODUCT is the hero. Feature it prominently, it must be the clear focal point.
-- Keep the product IDENTICAL to the PRODUCT reference — same packaging, colors, shape. Do NOT redesign, add ribbons, change labels, or alter it.
-- Copy the STYLE REFERENCE composition, lighting style, and professional quality as closely as possible.
-- If a person appears in the scene, they MUST be holding or wearing the product. Never a person next to the product without direct interaction.
+- Create a COMPLETELY NEW image — do NOT paste the product onto the inspiration image.
+- The PRODUCT from the reference must be the hero — feature it prominently as the clear focal point.
+- Keep the product IDENTICAL to the PRODUCT reference — same packaging, colors, shape. Do NOT redesign it.
+- Be inspired by the STYLE INSPIRATION's mood and composition type, but create a fresh, unique scene.
+- If a person appears in the scene, they MUST be holding or wearing the product directly.
 - Leave breathing room in the image (top or bottom third) for text overlay later.
 - Color palette: {colors}.
 - Photorealistic, shot on professional camera, shallow depth of field on background.
@@ -113,12 +116,12 @@ Rules:
     title: "Gemini — Mode Personnalisé",
     model: "Gemini 2.5 Flash Image (gemini-2.5-flash-image)",
     icon: <Image className="w-4 h-4" />,
-    description: "L'utilisateur écrit sa propre description de scène. Gemini génère l'image à partir de cette description en intégrant le produit.",
+    description: "L'utilisateur écrit sa propre description de scène. Gemini crée une NOUVELLE image de zéro à partir de cette description en intégrant le produit.",
     systemPrompt: `(Pas de system prompt — Gemini utilise un prompt direct avec image produit)
 
 Image de référence envoyée :
-1. [PRODUCT] — "this is the exact product to feature. Do NOT modify it."`,
-    userPromptTemplate: `High-end {aspectRatio} advertising photo for "{brandName}".
+1. [PRODUCT] — "this is the exact product to feature in the new ad. Do NOT modify it."`,
+    userPromptTemplate: `Create a brand new {aspectRatio} advertising photo from scratch for "{brandName}".
 
 {customPrompt}
 
