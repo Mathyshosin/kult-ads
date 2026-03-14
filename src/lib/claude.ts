@@ -161,6 +161,12 @@ ${brandContext.offerTitle ? `- Current offer: "${brandContext.offerTitle}"${bran
 ${brandContext.uniqueSellingPoints?.length ? `- USPs: ${brandContext.uniqueSellingPoints.join(", ")}` : ""}
 - Brand name EXACTLY: "${brandContext.brandName}"
 
+CRITICAL CONTENT RULES:
+1. MATCH THE TEMPLATE'S TEXT DENSITY: If the template has only a headline + brand name + CTA, write ONLY a headline + brand name + CTA. Do NOT add extra text, bullet points, feature lists, or descriptions that the template doesn't have.
+2. NEVER add prices unless the template VISUALLY shows a price area. If the template has no price displayed, do NOT add any price.
+3. NEVER list product features/benefits as bullet points unless the template explicitly has a bullet point section.
+4. Keep the text SHORT and IMPACTFUL — match the exact amount of text visible on the template, no more.
+
 CRITICAL RULE FOR DISCOUNTS/PERCENTAGES:
 - If the template shows a large percentage number (e.g. "-10%", "-20%"), replace it with ONLY the numeric discount value: just the number and % sign (e.g. "-60%"), NOT the offer name/title.
 ${brandContext.offerTitle ? `- The REAL discount value is: "${brandContext.offerTitle}". Extract ONLY the percentage or numeric value from this. For example if the offer is "Vente privée -60%", write ONLY "-60%" on the image where the template had its percentage — NOT "Vente privée -60%".` : "- There is NO discount/offer. Remove any percentage from the text and replace with a key selling point."}
@@ -171,7 +177,8 @@ RULES:
 - NEVER copy text from the template
 - NEVER mention the template's original brand or products
 - Keep the SAME text structure (if template has 3 question lines + subtext + CTA, create 3 question lines + subtext + CTA)
-- If the template shows prices (original/sale price), use ONLY the REAL prices from the brand context above. NEVER invent or estimate prices. If no price is available, omit prices entirely.
+- If the template shows prices (original/sale price), use ONLY the REAL prices from the brand context above. NEVER invent or estimate prices. If no price is available, DO NOT show any price at all — leave it out completely.
+- NEVER add more text than what the template shows. Count the text elements on the template and produce the SAME number.
 
 ━━━ STEP 4: SCENE DESCRIPTION ━━━
 Write a scene description that uses the template's VISUAL STYLE (background, colors, typography, decorative elements) for "${brandContext.brandName}".
