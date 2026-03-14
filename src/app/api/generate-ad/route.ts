@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: productImageBase64,
         mimeType: productImageMimeType || "image/png",
-        label: `THIS IS THE ONLY PRODUCT FOR "${brandAnalysis.brandName}". Show this EXACT product — same shape, colors, packaging. Do NOT use any other product. NEVER add labels, stickers, tags, text, or any overlay ON the product itself — show it exactly as-is in the photo. Any product visible in the layout reference below is from a DIFFERENT brand and must NOT appear.`,
+        label: `THIS IS THE ONLY PRODUCT FOR "${brandAnalysis.brandName}". Show this EXACT product — same shape, colors, packaging. Do NOT use any other product. NEVER add labels, stickers, tags, text, or any overlay ON the product itself — show it exactly as-is in the photo. NEVER create, invent, or redesign the product packaging — use ONLY the packaging visible in this reference photo. Do NOT add boxes, bottles, containers, or any packaging that is not in this image. Any product visible in the layout reference below is from a DIFFERENT brand and must NOT appear.`,
       });
     }
 
