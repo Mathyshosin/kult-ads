@@ -144,6 +144,7 @@ PRODUCT: Look at the PRODUCT reference image. This is "${product.name}" — ${pr
 ${product.features?.length ? `Features: ${product.features.slice(0, 3).join(", ")}.` : ""}
 Show this EXACT product faithfully — same shape, colors, packaging. Do NOT redesign it.
 Display ONLY 1 or 2 units of this product, clean and simple. Do NOT create stacks, pyramids, or grids of products.
+The product MUST be FULLY VISIBLE — never cropped, cut off, or extending beyond the image edges. Leave comfortable margins around the product.
 
 VISUAL STYLE:
 - Background: ${layout.backgroundStyle}
@@ -163,9 +164,10 @@ SCENE: ${sceneDescription}
 RULES:
 1. Show ONLY "${product.name}" from the PRODUCT reference — 1 or 2 units max, elegantly displayed.
 2. Do NOT create boxes, packaging, stacks, or multiple product arrangements. Keep it CLEAN and SIMPLE.
-3. The ONLY brand name is "${brandAnalysis.brandName}".
-4. Brand colors: ${colors}.
-5. Photorealistic product, professional lighting, high-end advertising quality.
+3. The product must be FULLY VISIBLE and well-positioned — NEVER cropped, cut off, or bleeding past image edges. Leave clear margins.
+4. The ONLY brand name is "${brandAnalysis.brandName}".
+5. Brand colors: ${colors}.
+6. Photorealistic product, professional lighting, high-end advertising quality.
 ${offer ? `6. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "6. No discount. Highlight the strongest product benefit."}`;
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
@@ -199,6 +201,7 @@ Scene: ${sceneDescription}
 RULES:
 - The ONLY product allowed in this image is "${product.name}" from the PRODUCT reference. No other brand's products.
 - Keep the product IDENTICAL to the PRODUCT reference — same shape, colors, packaging. Do NOT redesign it.
+- The product must be FULLY VISIBLE and well-positioned — NEVER cropped, cut off, or bleeding past image edges. Leave clear margins.
 - Colors: ${colors}. Photorealistic, professional camera, high-end lighting.
 ${textInstruction}`;
     }
