@@ -181,10 +181,13 @@ DISCOUNT RULES:
 ${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If the template shows a big percentage, write ONLY the number+% (e.g. "-60%"). The offer name can appear as small text IF the template has small text, but the BIG visible number must be ONLY the percentage.` : "- No offer. Replace any discount area with the brand's strongest selling point in 2-4 words."}
 - NEVER use "---" or multiple dashes before a number. Write exactly "-60%" not "---60%".
 
-PRICE RULES:
-- ONLY include prices if the template VISUALLY shows a price area AND real prices exist.
-${brandContext.productOriginalPrice && brandContext.productSalePrice ? `- Real prices: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}` : brandContext.productPrice ? `- Real price: ${brandContext.productPrice}` : "- No prices available. If template has a price area, REMOVE it — leave that space empty or use a short benefit text instead."}
-- NEVER invent prices.
+PRICE RULES — THIS IS CRITICAL:
+- NEVER include any price, monetary amount, € symbol, "Price:", or number followed by € in imageText UNLESS the template VISUALLY shows a dedicated price area (e.g. "29,99€" or "Prix: XX€").
+- If templateHasPrices is false → ZERO prices in imageText. No exceptions.
+- Even if templateHasPrices is true, ONLY use real prices if available:
+${brandContext.productOriginalPrice && brandContext.productSalePrice ? `  Real prices: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}` : brandContext.productPrice ? `  Real price: ${brandContext.productPrice}` : "  No prices available → do NOT show any price. Replace that space with a short benefit or leave empty."}
+- NEVER invent prices. NEVER write "Price: XX" or "XX€" with made-up numbers.
+- The word "Price" or "Prix" should NEVER appear in imageText unless real prices exist AND templateHasPrices is true.
 
 BRAND & PRODUCT:
 - Brand name EXACTLY: "${brandContext.brandName}"

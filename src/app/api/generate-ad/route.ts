@@ -79,9 +79,22 @@ export async function POST(request: Request) {
       sceneDescription = templateAnalysis.scene;
       imageText = templateAnalysis.imageText;
       isTextOnly = templateAnalysis.isTextOnly;
+
+      // ── Safety filter: strip prices from imageText if template has no price area ──
+      if (imageText && !templateAnalysis.templateHasPrices) {
+        // Remove lines containing price patterns: "Price: XX", "Prix: XX", "XX€", "XX,XX€"
+        imageText = imageText
+          .split("\n")
+          .filter((line) => !/(?:price|prix)\s*[:：]/i.test(line) && !/\d+[.,]?\d*\s*€/.test(line))
+          .join("\n");
+        console.log("[generate-ad] Stripped prices from imageText (template has no prices)");
+      }
+
       console.log("[generate-ad] Scene:", sceneDescription);
       console.log("[generate-ad] Image text:", imageText);
       console.log("[generate-ad] Text-only template:", isTextOnly);
+      console.log("[generate-ad] Template has prices:", templateAnalysis.templateHasPrices);
+      console.log("[generate-ad] Template text count:", templateAnalysis.templateTextCount);
       console.log("[generate-ad] Template type:", templateAnalysis.templateType);
       console.log("[generate-ad] Layout:", JSON.stringify(templateAnalysis.layout));
     } else {
