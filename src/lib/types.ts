@@ -49,6 +49,7 @@ export interface GeneratedAd {
   productId?: string;
   offerId?: string;
   conversionAngle?: string;
+  templateId?: string;          // Template used for this ad (library mode)
   timestamp: number;
 }
 

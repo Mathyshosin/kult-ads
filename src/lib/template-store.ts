@@ -64,6 +64,28 @@ export function getRandomTemplateWithImage(
   }
 }
 
+// ── Public: get a specific template by ID with base64 image ──
+export function getTemplateByIdWithImage(
+  id: string
+): { imageBase64: string; mimeType: string } | null {
+  const templates = readMeta();
+  const template = templates.find((t) => t.id === id);
+  if (!template) return null;
+
+  const imagePath = path.join(IMAGES_DIR, template.filename);
+
+  try {
+    const buffer = fs.readFileSync(imagePath);
+    return {
+      imageBase64: buffer.toString("base64"),
+      mimeType: template.mimeType,
+    };
+  } catch {
+    console.error(`Template image not found: ${imagePath}`);
+    return null;
+  }
+}
+
 // ── Public: add a new template (dev mode only) ──
 export function addTemplate(
   name: string,

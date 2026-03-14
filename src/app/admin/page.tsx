@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Bot, Sparkles, Image, FileText, Cpu } from "lucide-react";
+import { ChevronDown, ChevronRight, Bot, Image, FileText, Cpu } from "lucide-react";
 
 interface PromptSection {
   id: string;
@@ -48,55 +48,6 @@ Règles:
 {scrapedData}`,
   },
   {
-    id: "concepts",
-    title: "Génération de concepts d'ads",
-    model: "Claude Sonnet 4 (claude-sonnet-4-20250514)",
-    icon: <Sparkles className="w-4 h-4" />,
-    description: "Génère des concepts publicitaires stratégiques adaptés au produit. Chaque concept inclut un type d'ad, un prompt de scène pour Gemini, et un angle de copywriting.",
-    systemPrompt: `Tu es un directeur artistique expert en publicités statiques pour Instagram/Facebook/TikTok.
-
-CONTEXTE : Gemini reçoit la photo du produit + un template de style. Il crée une image publicitaire COMPLÈTE avec le produit intégré. Le texte est ajouté en CSS par-dessus.
-
-RÈGLES :
-1. scenePrompt en ANGLAIS, COURT (2-3 phrases MAX)
-2. Le produit est fourni en photo — Gemini l'intègre TEL QUEL
-3. Chaque concept = un adType DIFFÉRENT et une scène DIFFÉRENTE
-4. RÈGLE PERSONNES : Si une personne apparaît dans la scène, elle DOIT soit TENIR le produit en main, soit le PORTER sur elle. Jamais une personne à côté du produit sans interaction directe.
-
-TYPES D'ADS :
-- "offre" : promo/réduction
-- "bénéfice" : avantage clé du produit
-- "comparaison" : VS alternative
-- "témoignage" : preuve sociale
-- "lifestyle" : produit dans la vraie vie
-- "premium" : luxe, haut de gamme
-- "urgence" : stock limité
-
-JSON UNIQUEMENT :
-{
-  "concepts": [
-    {
-      "id": "concept-1",
-      "adType": "string",
-      "scenePrompt": "string (ANGLAIS, 2-3 phrases)",
-      "copyAngle": "string (FRANÇAIS)"
-    }
-  ]
-}`,
-    userPromptTemplate: `Marque : {brandName}
-Description : {brandDescription}
-Ton : {tone}
-Couleurs : {colors}
-Produit : {productName} — {productDescription}
-Audience : {targetAudience}
-Points forts : {uniqueSellingPoints}
-{offer}
-{customDirection}
-{existingAdTypes}
-
-Génère {count} concepts DIFFÉRENTS pour ce produit.`,
-  },
-  {
     id: "copy",
     title: "Copywriting publicitaire",
     model: "Claude Sonnet 4 (claude-sonnet-4-20250514)",
@@ -133,11 +84,11 @@ IMPORTANT: Le texte doit être DIFFÉRENT et UNIQUE. Pas de formules générique
 Génère le texte publicitaire en français.`,
   },
   {
-    id: "gemini",
-    title: "Génération d'image (scène complète)",
+    id: "gemini-library",
+    title: "Gemini — Mode Bibliothèque",
     model: "Gemini 2.5 Flash Image (gemini-2.5-flash-image)",
     icon: <Image className="w-4 h-4" />,
-    description: "Génère l'image publicitaire complète. Reçoit la photo produit + un template de style en référence. Crée une scène photorealistic avec le produit intégré.",
+    description: "L'utilisateur choisit un template de la bibliothèque. Gemini réplique le style du template en intégrant le produit et les couleurs de la marque.",
     systemPrompt: `(Pas de system prompt — Gemini utilise un prompt direct avec images de référence)
 
 Images de référence envoyées :
@@ -145,15 +96,38 @@ Images de référence envoyées :
 2. [PRODUCT] — "this is the exact product to feature. Do NOT modify it."`,
     userPromptTemplate: `High-end {aspectRatio} advertising photo for "{brandName}".
 
-Scene: {scenePrompt}
+Replicate the STYLE REFERENCE exactly — same composition, layout, lighting, and professional quality — but adapted for this brand and product.
 
 Rules:
 - The PRODUCT is the hero. Feature it prominently, it must be the clear focal point.
 - Keep the product IDENTICAL to the PRODUCT reference — same packaging, colors, shape. Do NOT redesign, add ribbons, change labels, or alter it.
-- Copy the STYLE REFERENCE composition, lighting style, and professional quality.
+- Copy the STYLE REFERENCE composition, lighting style, and professional quality as closely as possible.
+- If a person appears in the scene, they MUST be holding or wearing the product. Never a person next to the product without direct interaction.
 - Leave breathing room in the image (top or bottom third) for text overlay later.
 - Color palette: {colors}.
 - Photorealistic, shot on professional camera, shallow depth of field on background.
+- Absolutely NO text, words, letters, numbers, watermarks, or UI elements.`,
+  },
+  {
+    id: "gemini-custom",
+    title: "Gemini — Mode Personnalisé",
+    model: "Gemini 2.5 Flash Image (gemini-2.5-flash-image)",
+    icon: <Image className="w-4 h-4" />,
+    description: "L'utilisateur écrit sa propre description de scène. Gemini génère l'image à partir de cette description en intégrant le produit.",
+    systemPrompt: `(Pas de system prompt — Gemini utilise un prompt direct avec image produit)
+
+Image de référence envoyée :
+1. [PRODUCT] — "this is the exact product to feature. Do NOT modify it."`,
+    userPromptTemplate: `High-end {aspectRatio} advertising photo for "{brandName}".
+
+{customPrompt}
+
+Rules:
+- The PRODUCT is the hero. Feature it prominently, it must be the clear focal point.
+- Keep the product IDENTICAL to the PRODUCT reference — same packaging, colors, shape. Do NOT redesign, add ribbons, change labels, or alter it.
+- If a person appears in the scene, they MUST be holding or wearing the product. Never a person next to the product without direct interaction.
+- Photorealistic, shot on professional camera, shallow depth of field on background.
+- Leave breathing room in the image (top or bottom third) for text overlay later.
 - Absolutely NO text, words, letters, numbers, watermarks, or UI elements.`,
   },
   {
@@ -169,7 +143,7 @@ Backoff : exponentiel (1s, 2s, 3s)
 
 L'image est envoyée en tant que inlineData (base64) dans le champ contents.
 Les images de référence sont ajoutées avec un label textuel avant chaque image.`,
-    userPromptTemplate: `(Voir le prompt de génération d'image ci-dessus)`,
+    userPromptTemplate: `(Voir les prompts de génération d'image ci-dessus)`,
   },
 ];
 
@@ -259,7 +233,7 @@ export default function AdminPage() {
               </div>
               <span className="text-xs font-semibold text-foreground">Claude Sonnet 4</span>
             </div>
-            <p className="text-[11px] text-muted">3 prompts : analyse de marque, concepts d&apos;ads, copywriting</p>
+            <p className="text-[11px] text-muted">2 prompts : analyse de marque, copywriting</p>
           </div>
           <div className="bg-white rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -268,7 +242,7 @@ export default function AdminPage() {
               </div>
               <span className="text-xs font-semibold text-foreground">Gemini 2.5 Flash</span>
             </div>
-            <p className="text-[11px] text-muted">1 prompt : génération d&apos;image avec photo produit + template</p>
+            <p className="text-[11px] text-muted">2 modes : bibliothèque (template) ou personnalisé (prompt libre)</p>
           </div>
         </div>
 
