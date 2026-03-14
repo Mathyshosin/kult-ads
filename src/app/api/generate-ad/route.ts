@@ -89,12 +89,13 @@ export async function POST(request: Request) {
       : `Do NOT include any text, words, letters, logos, or numbers in the image.`;
 
     const visualPrompt = `${aspectRatio} professional advertising photo for "${brandAnalysis.brandName}".
-Product: ${product.name}
 
 Scene: ${sceneDescription}
 
-IMPORTANT: Use the EXACT product from the PRODUCT reference image. Do NOT create a different version, variant, or redesign. The product must look identical to the reference photo and appear naturally in the scene.
-Colors: ${colors}. Photorealistic, professional lighting.
+RULES:
+- The ONLY product allowed in this image is "${product.name}" from the PRODUCT reference. No other brand's products.
+- Keep the product IDENTICAL to the PRODUCT reference — same shape, colors, packaging. Do NOT redesign it.
+- Colors: ${colors}. Photorealistic, professional camera, high-end lighting.
 ${textInstruction}`;
 
     // ── SEQUENTIAL: Image first, then copy ──

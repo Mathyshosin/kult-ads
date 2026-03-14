@@ -99,38 +99,41 @@ export async function describeTemplateScene(
           },
           {
             type: "text",
-            text: `You are a senior creative director at a top advertising agency. Analyze this ad template and create instructions to produce a SIMILAR but ADAPTED ad for a completely different brand and product.
+            text: `You are a creative director. Look at this ad template and extract ONLY its abstract structure, then create a NEW ad concept for a completely different brand.
 
-BRAND & PRODUCT CONTEXT:
+TARGET BRAND:
 ${context}
 
-YOUR TASKS:
+STEP 1 — EXTRACT ABSTRACT STRUCTURE ONLY:
+What is the LAYOUT TYPE? (split screen, centered product, full-bleed, flat lay, grid, etc.)
+What is the CONCEPT TYPE? (VS/comparison, offer/promo, benefit, lifestyle, showcase, social proof)
+What is the BACKGROUND TYPE? (solid color, gradient, photo, texture)
+What is the MOOD? (energetic, minimal, luxurious, playful, professional)
 
-1. UNDERSTAND THE TEMPLATE'S CONCEPT — what TYPE of ad is this?
-   - Is it a VS/comparison ad? (product vs competitor)
-   - Is it a lifestyle shot? (product in real life)
-   - Is it an offer/promo ad? (discount, free shipping)
-   - Is it a benefit-focused ad? (highlighting a feature)
-   - Is it a social proof ad? (testimonials, numbers)
-   - Is it a product showcase? (flat lay, studio shot)
+ABSOLUTE RULES — NEVER VIOLATE:
+- NEVER mention ANY product, brand, logo, jar, bottle, box, or object visible in the template
+- NEVER copy ANY text, slogan, number, or claim from the template
+- NEVER describe specific props from the template (no jars, no bottles, no boxes from other brands)
+- Your scene must contain ONLY "${brandContext.productName}" by "${brandContext.brandName}" — NOTHING from the template's brand
 
-2. ADAPT THE CONCEPT INTELLIGENTLY for "${brandContext.productName}":
-   - VS/comparison: pick a REAL competing product that makes sense. E.g. for menstrual underwear → "culotte menstruelle VS serviette hygiénique". For reusable water bottle → "gourde VS bouteille plastique". The competitor must be an actual alternative people use.
-   - Lifestyle: show the product being used naturally by the target audience (${brandContext.targetAudience || "the customer"}).
-   - Offer/promo: if there's an offer, use it. Otherwise use the strongest selling point.
-   - Benefit: pick the most compelling feature from: ${brandContext.uniqueSellingPoints?.join(", ") || brandContext.productDescription}
-   - Social proof: use real-sounding numbers and claims based on the brand.
+STEP 2 — BUILD A 100% NEW SCENE for "${brandContext.productName}":
+Using the abstract structure from Step 1, describe a completely new scene.
+- VS/comparison → "${brandContext.productName}" on the left VS a generic competing product that people actually use as an alternative (describe the competitor generically, e.g. "disposable pads" not a specific brand)
+- Offer/promo → "${brandContext.productName}" showcased prominently ${brandContext.offerTitle ? `with the offer "${brandContext.offerTitle}"` : "with its key benefit"}
+- Lifestyle → "${brandContext.productName}" used naturally by ${brandContext.targetAudience || "a customer"}
+- Showcase → "${brandContext.productName}" in a clean, professional product photo
+- All accessories and props must be relevant to "${brandContext.productName}" — NOT copied from the template
 
-3. TEXT ON THE IMAGE:
-   - If the template has prominent text, create adapted French text for "${brandContext.brandName}".
-   - The brand name must be spelled EXACTLY: "${brandContext.brandName}" (no modifications).
-   - Use the REAL offer, features, or selling points — not generic marketing fluff.
-   ${brandContext.offerTitle ? `- Use this real offer: "${brandContext.offerTitle}"` : "- No offer available. Use the strongest selling point."}
+STEP 3 — TEXT (if the template has text):
+Create NEW French text using ONLY these real facts about "${brandContext.brandName}":
+${brandContext.offerTitle ? `- Offer: "${brandContext.offerTitle}"` : "- No offer. Use strongest selling point."}
+${brandContext.uniqueSellingPoints?.length ? `- USPs: ${brandContext.uniqueSellingPoints.join(", ")}` : ""}
+Brand name spelled EXACTLY: "${brandContext.brandName}"
 
-Respond in JSON ONLY (no markdown, no backticks):
+JSON ONLY (no markdown):
 {
-  "scene": "2-3 sentences in ENGLISH. Describe the adapted scene for an image generator. Be very specific about: background, lighting, product placement, props, composition. The scene must make total sense for ${brandContext.productName}.",
-  "imageText": "French text for ON the image (max 8 words). Use brand name exactly as '${brandContext.brandName}'. null if template has no text."
+  "scene": "2-3 sentences in ENGLISH. New scene using ONLY ${brandContext.productName}. No elements from the template's brand.",
+  "imageText": "French headline for the image (max 6 words) using real brand facts. null if template has no text."
 }`,
           },
         ],
