@@ -67,6 +67,11 @@ export interface AdTemplate {
   imageBase64: string;
   mimeType: string;
   previewUrl: string;
+  tags?: {
+    industry: string[];
+    adType: string[];
+    productType: string[];
+  };
 }
 
 export type WizardStep = 1 | 2 | 3 | 4;

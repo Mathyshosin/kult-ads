@@ -13,7 +13,7 @@ import {
   LayoutGrid,
   Pencil,
   Check,
-  Smartphone,
+  Zap,
 } from "lucide-react";
 
 interface TemplateMeta {
@@ -24,7 +24,7 @@ interface TemplateMeta {
   previewUrl: string;
 }
 
-type Mode = "library" | "custom";
+type Mode = "auto" | "library" | "custom";
 
 export default function GeneratePage() {
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function GeneratePage() {
   const currentUser = useAuthStore((s) => s.currentUser);
 
   // Mode
-  const [mode, setMode] = useState<Mode>("library");
+  const [mode, setMode] = useState<Mode>("auto");
 
   // Config
   const [selectedProduct, setSelectedProduct] = useState("");
@@ -131,7 +131,71 @@ export default function GeneratePage() {
 
     const { product, offer, image } = getSelections();
 
-    if (mode === "library") {
+    if (mode === "auto") {
+      // Auto mode: select 1 best template, generate 1 ad
+      setProgress({ current: 0, total: 1 });
+
+      try {
+        // Step 1: Get best template IDs from scoring API
+        const selectRes = await fetch("/api/templates/select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            brandAnalysis,
+            offer,
+            format: "square",
+            count: 1,
+          }),
+        });
+
+        if (!selectRes.ok) {
+          setError("Impossible de sélectionner les templates.");
+          setGenerating(false);
+          return;
+        }
+
+        const { templateIds } = await selectRes.json();
+
+        if (!templateIds || templateIds.length === 0) {
+          setError("Aucun template disponible.");
+          setGenerating(false);
+          return;
+        }
+
+        // Step 2: Generate 1 ad with the selected template
+        const tplId = templateIds[0];
+        try {
+          const res = await fetch("/api/generate-ad", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              brandAnalysis,
+              product,
+              offer,
+              productImageBase64: image?.base64,
+              productImageMimeType: image?.mimeType,
+              brandLogoBase64: brandLogo?.base64,
+              brandLogoMimeType: brandLogo?.mimeType,
+              format: "square",
+              templateId: tplId,
+            }),
+          });
+
+          if (!res.ok) {
+            setError("La génération a échoué. Réessaie.");
+          } else {
+            const ad = await res.json();
+            addGeneratedAd(ad);
+            if (currentUser) syncGeneratedAd(currentUser.id, ad);
+          }
+        } catch {
+          setError("La génération a échoué. Réessaie.");
+        }
+        setProgress({ current: 1, total: 1 });
+      } catch {
+        setError("Erreur lors de la sélection automatique.");
+      }
+    } else if (mode === "library") {
       // Library mode: generate one ad per selected template
       if (selectedTemplates.length === 0) {
         setError("Sélectionne au moins un template.");
@@ -273,9 +337,12 @@ export default function GeneratePage() {
   }
 
   const squareTemplates = templates.filter((t) => t.format === "square");
-  const canGenerate = mode === "library"
-    ? selectedTemplates.length > 0 && !!selectedProduct
-    : !!customPrompt.trim() && !!selectedProduct;
+  const canGenerate =
+    mode === "auto"
+      ? !!selectedProduct
+      : mode === "library"
+        ? selectedTemplates.length > 0 && !!selectedProduct
+        : !!customPrompt.trim() && !!selectedProduct;
 
   return (
     <div className="space-y-6">
@@ -347,8 +414,19 @@ export default function GeneratePage() {
         </div>
       </div>
 
-      {/* Mode toggle */}
+      {/* Mode toggle — 3 tabs */}
       <div className="flex gap-2">
+        <button
+          onClick={() => setMode("auto")}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
+            mode === "auto"
+              ? "bg-primary text-white shadow-md"
+              : "bg-white border border-border text-muted hover:bg-gray-50"
+          }`}
+        >
+          <Zap className="w-4 h-4" />
+          Auto
+        </button>
         <button
           onClick={() => setMode("library")}
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
@@ -374,7 +452,34 @@ export default function GeneratePage() {
       </div>
 
       {/* Mode content */}
-      {mode === "library" ? (
+      {mode === "auto" ? (
+        <div className="bg-white rounded-2xl border border-border p-5 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Mode automatique</h2>
+            <p className="text-xs text-muted mt-0.5">
+              L&apos;IA sélectionne automatiquement les templates les plus adaptés à ta marque et génère les ads.
+            </p>
+          </div>
+
+          <button
+            onClick={handleGenerate}
+            disabled={generating || !canGenerate}
+            className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Génération en cours...
+              </>
+            ) : (
+              <>
+                <Zap className="w-4 h-4" />
+                Générer une ad
+              </>
+            )}
+          </button>
+        </div>
+      ) : mode === "library" ? (
         <div className="bg-white rounded-2xl border border-border p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -561,7 +666,7 @@ export default function GeneratePage() {
                     if (res.ok) {
                       const newAd = await res.json();
                       addGeneratedAd(newAd);
-        if (currentUser) syncGeneratedAd(currentUser.id, newAd);
+                      if (currentUser) syncGeneratedAd(currentUser.id, newAd);
                     }
                   } catch {
                     // Silent fail
@@ -575,9 +680,11 @@ export default function GeneratePage() {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Sparkles className="w-10 h-10 text-border mb-3" />
           <p className="text-sm text-muted max-w-sm">
-            {mode === "library"
-              ? "Sélectionnez des templates et cliquez sur Générer. L'IA réplique chaque style pour votre produit."
-              : "Décrivez votre ad et cliquez sur Générer. L'IA crée l'image à partir de votre description."}
+            {mode === "auto"
+              ? "Choisis un produit et clique sur Générer. L'IA sélectionne les meilleurs templates automatiquement."
+              : mode === "library"
+                ? "Sélectionnez des templates et cliquez sur Générer. L'IA réplique chaque style pour votre produit."
+                : "Décrivez votre ad et cliquez sur Générer. L'IA crée l'image à partir de votre description."}
           </p>
         </div>
       )}

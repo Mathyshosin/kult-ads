@@ -36,6 +36,12 @@ export interface TemplateAnalysisData {
   };
 }
 
+export interface TemplateTags {
+  industry: string[];    // cosmétique, food, mode, tech, santé, sport, maison, boisson, hygiène
+  adType: string[];      // promo, bénéfice-produit, comparaison-vs, avis-client, lancement, lifestyle, urgence
+  productType: string[]; // produit-physique, service, saas, abonnement
+}
+
 export interface TemplateMeta {
   id: string;
   name: string;
@@ -43,6 +49,7 @@ export interface TemplateMeta {
   category: string;
   filename: string;
   mimeType: string;
+  tags?: TemplateTags;
 }
 
 const DATA_FILE = path.join(process.cwd(), "src/data/templates.json");
@@ -175,7 +182,7 @@ export function removeTemplate(id: string): boolean {
 // ── Public: update template metadata ──
 export function updateTemplate(
   id: string,
-  partial: { name?: string; format?: string; category?: string }
+  partial: { name?: string; format?: string; category?: string; tags?: TemplateTags }
 ): boolean {
   const templates = readMeta();
   const idx = templates.findIndex((t) => t.id === id);

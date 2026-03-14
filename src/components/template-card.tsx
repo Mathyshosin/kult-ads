@@ -1,7 +1,8 @@
 "use client";
 
 import type { AdTemplate } from "@/lib/types";
-import { X, Pencil } from "lucide-react";
+import { X } from "lucide-react";
+import { INDUSTRY_TAGS, AD_TYPE_TAGS, PRODUCT_TYPE_TAGS } from "@/lib/template-tags";
 
 interface TemplateCardProps {
   template: AdTemplate;
@@ -21,6 +22,35 @@ const categories = [
   "autre",
 ];
 
+function TagToggle({
+  label,
+  value,
+  active,
+  onToggle,
+}: {
+  label: string;
+  value: string;
+  active: boolean;
+  onToggle: (v: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggle(value);
+      }}
+      className={`text-[9px] px-1.5 py-0.5 rounded-full border transition-colors ${
+        active
+          ? "bg-primary/15 border-primary/40 text-primary font-semibold"
+          : "bg-gray-50 border-border text-muted hover:border-primary/30"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function TemplateCard({
   template,
   onRemove,
@@ -30,6 +60,20 @@ export default function TemplateCard({
   editable = false,
 }: TemplateCardProps) {
   const isStory = template.format === "story";
+  const tags = template.tags || { industry: [], adType: [], productType: [] };
+
+  function toggleTag(category: "industry" | "adType" | "productType", value: string) {
+    const current = tags[category] || [];
+    const updated = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    onUpdate?.({
+      tags: { ...tags, [category]: updated },
+    } as Partial<AdTemplate>);
+  }
+
+  // Count total tags for badge
+  const tagCount = tags.industry.length + tags.adType.length + tags.productType.length;
 
   return (
     <div
@@ -61,6 +105,11 @@ export default function TemplateCard({
         <span className="bg-primary/80 text-white text-[10px] font-medium px-2 py-0.5 rounded-full capitalize">
           {template.category}
         </span>
+        {tagCount > 0 && !editable && (
+          <span className="bg-emerald-500/80 text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
+            {tagCount} tag{tagCount > 1 ? "s" : ""}
+          </span>
+        )}
       </div>
 
       {/* Remove button */}
@@ -112,6 +161,55 @@ export default function TemplateCard({
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Tag editing */}
+            <div className="space-y-1.5 pt-1 border-t border-border">
+              {/* Secteur */}
+              <div>
+                <p className="text-[9px] font-semibold text-muted uppercase tracking-wider mb-0.5">Secteur</p>
+                <div className="flex flex-wrap gap-0.5">
+                  {INDUSTRY_TAGS.map((t) => (
+                    <TagToggle
+                      key={t.value}
+                      label={t.label}
+                      value={t.value}
+                      active={tags.industry.includes(t.value)}
+                      onToggle={(v) => toggleTag("industry", v)}
+                    />
+                  ))}
+                </div>
+              </div>
+              {/* Type d'ad */}
+              <div>
+                <p className="text-[9px] font-semibold text-muted uppercase tracking-wider mb-0.5">Type d&apos;ad</p>
+                <div className="flex flex-wrap gap-0.5">
+                  {AD_TYPE_TAGS.map((t) => (
+                    <TagToggle
+                      key={t.value}
+                      label={t.label}
+                      value={t.value}
+                      active={tags.adType.includes(t.value)}
+                      onToggle={(v) => toggleTag("adType", v)}
+                    />
+                  ))}
+                </div>
+              </div>
+              {/* Type produit */}
+              <div>
+                <p className="text-[9px] font-semibold text-muted uppercase tracking-wider mb-0.5">Produit</p>
+                <div className="flex flex-wrap gap-0.5">
+                  {PRODUCT_TYPE_TAGS.map((t) => (
+                    <TagToggle
+                      key={t.value}
+                      label={t.label}
+                      value={t.value}
+                      active={tags.productType.includes(t.value)}
+                      onToggle={(v) => toggleTag("productType", v)}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         ) : (

@@ -54,11 +54,12 @@ export async function POST(request: Request) {
 
     // Action: update metadata
     if (body.action === "update" && body.id) {
-      const { name, format, category } = body;
+      const { name, format, category, tags } = body;
       updateTemplate(body.id, {
         ...(name !== undefined && { name }),
         ...(format !== undefined && { format }),
         ...(category !== undefined && { category }),
+        ...(tags !== undefined && { tags }),
       });
       return NextResponse.json({ success: true });
     }
