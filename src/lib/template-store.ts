@@ -45,7 +45,7 @@ export function getTemplates(): (TemplateMeta & { previewUrl: string })[] {
 // ── Public: get random template with base64 image for Gemini ──
 export function getRandomTemplateWithImage(
   format: "square" | "story"
-): { imageBase64: string; mimeType: string } | null {
+): { id: string; imageBase64: string; mimeType: string } | null {
   const matching = readMeta().filter((t) => t.format === format);
   if (matching.length === 0) return null;
 
@@ -55,6 +55,7 @@ export function getRandomTemplateWithImage(
   try {
     const buffer = fs.readFileSync(imagePath);
     return {
+      id: template.id,
       imageBase64: buffer.toString("base64"),
       mimeType: template.mimeType,
     };
@@ -67,7 +68,7 @@ export function getRandomTemplateWithImage(
 // ── Public: get a specific template by ID with base64 image ──
 export function getTemplateByIdWithImage(
   id: string
-): { imageBase64: string; mimeType: string } | null {
+): { id: string; imageBase64: string; mimeType: string } | null {
   const templates = readMeta();
   const template = templates.find((t) => t.id === id);
   if (!template) return null;
@@ -77,6 +78,7 @@ export function getTemplateByIdWithImage(
   try {
     const buffer = fs.readFileSync(imagePath);
     return {
+      id: template.id,
       imageBase64: buffer.toString("base64"),
       mimeType: template.mimeType,
     };

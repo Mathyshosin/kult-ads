@@ -61,6 +61,9 @@ export async function POST(request: Request) {
         ? null
         : getRandomTemplateWithImage(format);
 
+    // Track the actual template ID used (important for random templates)
+    const actualTemplateId = template?.id || templateId || null;
+
     // ── Build scene description ──
     let sceneDescription: string;
     let imageText: string | null = null;
@@ -370,7 +373,7 @@ ${textInstruction}`;
       callToAction: copy.callToAction,
       productId: product.id,
       offerId: offer?.id,
-      templateId: templateId || null,
+      templateId: actualTemplateId,
       timestamp: Date.now(),
     });
   } catch (error) {
