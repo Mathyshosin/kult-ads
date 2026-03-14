@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
 import type { AdTemplate } from "@/lib/types";
-import { X } from "lucide-react";
+import { X, Package, Monitor } from "lucide-react";
 
 interface TemplateCardProps {
   template: AdTemplate;
@@ -11,62 +10,6 @@ interface TemplateCardProps {
   selected?: boolean;
   onClick?: () => void;
   editable?: boolean;
-}
-
-const categories = [
-  "promo",
-  "lancement",
-  "lifestyle",
-  "comparatif",
-  "témoignage",
-  "autre",
-];
-
-function DebouncedInput({
-  value,
-  onDebouncedChange,
-  placeholder,
-}: {
-  value: string;
-  onDebouncedChange: (v: string) => void;
-  placeholder: string;
-}) {
-  const [local, setLocal] = useState(value);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    setLocal(value);
-  }, [value]);
-
-  const handleChange = useCallback(
-    (v: string) => {
-      setLocal(v);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => onDebouncedChange(v), 800);
-    },
-    [onDebouncedChange]
-  );
-
-  // Save on blur too
-  const handleBlur = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (local !== value) onDebouncedChange(local);
-  }, [local, value, onDebouncedChange]);
-
-  return (
-    <input
-      type="text"
-      value={local}
-      onChange={(e) => {
-        e.stopPropagation();
-        handleChange(e.target.value);
-      }}
-      onBlur={handleBlur}
-      onClick={(e) => e.stopPropagation()}
-      placeholder={placeholder}
-      className="w-full text-[11px] border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/30"
-    />
-  );
 }
 
 export default function TemplateCard({
@@ -78,18 +21,7 @@ export default function TemplateCard({
   editable = false,
 }: TemplateCardProps) {
   const isStory = template.format === "story";
-  const tags = template.tags || { industry: [], adType: [], productType: [] };
-
-  const tagCount = tags.industry.length + tags.adType.length + tags.productType.length;
-
-  const handleTagChange = useCallback(
-    (category: "industry" | "adType" | "productType", value: string) => {
-      onUpdate?.({
-        tags: { ...tags, [category]: value ? [value] : [] },
-      } as Partial<AdTemplate>);
-    },
-    [onUpdate, tags]
-  );
+  const productType = template.tags?.productType?.[0] || "";
 
   return (
     <div
@@ -118,12 +50,11 @@ export default function TemplateCard({
         <span className="bg-black/60 text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
           {isStory ? "Story" : "Carré"}
         </span>
-        <span className="bg-primary/80 text-white text-[10px] font-medium px-2 py-0.5 rounded-full capitalize">
-          {template.category}
-        </span>
-        {tagCount > 0 && !editable && (
-          <span className="bg-emerald-500/80 text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
-            {tagCount} tag{tagCount > 1 ? "s" : ""}
+        {productType && (
+          <span className={`text-white text-[10px] font-medium px-2 py-0.5 rounded-full ${
+            productType === "produit" ? "bg-amber-500/80" : "bg-blue-500/80"
+          }`}>
+            {productType === "produit" ? "Produit" : "Service"}
           </span>
         )}
       </div>
@@ -153,49 +84,41 @@ export default function TemplateCard({
               placeholder="Nom du template"
               className="w-full text-xs font-medium text-foreground border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/30"
             />
-            <div className="flex gap-2">
-              <select
-                value={template.format}
-                onChange={(e) =>
-                  onUpdate?.({ format: e.target.value as "square" | "story" })
-                }
-                onClick={(e) => e.stopPropagation()}
-                className="flex-1 text-[11px] border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/30"
-              >
-                <option value="square">Carré</option>
-                <option value="story">Story</option>
-              </select>
-              <select
-                value={template.category}
-                onChange={(e) => onUpdate?.({ category: e.target.value })}
-                onClick={(e) => e.stopPropagation()}
-                className="flex-1 text-[11px] border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/30 capitalize"
-              >
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
 
-            {/* Tags - champs libres avec debounce */}
-            <div className="space-y-1.5 pt-1 border-t border-border">
-              <DebouncedInput
-                value={tags.industry[0] || ""}
-                onDebouncedChange={(v) => handleTagChange("industry", v)}
-                placeholder="Secteur (ex: cosmétique, food, mode...)"
-              />
-              <DebouncedInput
-                value={tags.adType[0] || ""}
-                onDebouncedChange={(v) => handleTagChange("adType", v)}
-                placeholder="Type d'ad (ex: promo, comparaison, lifestyle...)"
-              />
-              <DebouncedInput
-                value={tags.productType[0] || ""}
-                onDebouncedChange={(v) => handleTagChange("productType", v)}
-                placeholder="Type de produit (ex: physique, service, saas...)"
-              />
+            {/* Toggle Produit / Service */}
+            <div className="flex gap-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdate?.({
+                    tags: { industry: [], adType: [], productType: ["produit"] },
+                  } as Partial<AdTemplate>);
+                }}
+                className={`flex-1 flex items-center justify-center gap-1.5 text-[11px] font-medium py-1.5 rounded-lg border transition-colors ${
+                  productType === "produit"
+                    ? "bg-amber-50 border-amber-300 text-amber-700"
+                    : "border-border text-muted hover:bg-gray-50"
+                }`}
+              >
+                <Package className="w-3 h-3" />
+                Produit
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdate?.({
+                    tags: { industry: [], adType: [], productType: ["service"] },
+                  } as Partial<AdTemplate>);
+                }}
+                className={`flex-1 flex items-center justify-center gap-1.5 text-[11px] font-medium py-1.5 rounded-lg border transition-colors ${
+                  productType === "service"
+                    ? "bg-blue-50 border-blue-300 text-blue-700"
+                    : "border-border text-muted hover:bg-gray-50"
+                }`}
+              >
+                <Monitor className="w-3 h-3" />
+                Service
+              </button>
             </div>
           </div>
         ) : (

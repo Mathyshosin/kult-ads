@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useWizardStore } from "@/lib/store";
 import { useAuthStore } from "@/lib/auth-store";
 import AdPreviewCard from "@/components/ad-preview-card";
-import { AD_TYPE_TAGS } from "@/lib/template-tags";
 import {
   ArrowLeft,
   Loader2,
@@ -34,8 +33,7 @@ export default function GeneratePage() {
   const [selectedOffer, setSelectedOffer] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
 
-  // Ad style preference (optional)
-  const [selectedAdStyle, setSelectedAdStyle] = useState("");
+  // No extra state needed — productType is derived from brand analysis
 
   // Custom prompt (collapsible)
   const [showCustom, setShowCustom] = useState(false);
@@ -92,16 +90,19 @@ export default function GeneratePage() {
     const { product, offer, image } = getSelections();
 
     try {
-      // Step 1: Select best template via scoring API
+      // Step 1: Select a random template (filtered by product type if available)
+      const productObj = brandAnalysis!.products.find((p) => p.id === selectedProduct);
+      const isService = productObj?.description?.toLowerCase().includes("service") ||
+        productObj?.description?.toLowerCase().includes("saas") ||
+        productObj?.description?.toLowerCase().includes("abonnement");
+
       const selectRes = await fetch("/api/templates/select", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          brandAnalysis,
-          offer,
           format: "square",
           count: 1,
-          adStyle: selectedAdStyle || undefined,
+          productType: isService ? "service" : "produit",
         }),
       });
 
@@ -292,38 +293,6 @@ export default function GeneratePage() {
                 </button>
               ))}
             </div>
-          </div>
-        </div>
-
-        {/* Ad style selector */}
-        <div>
-          <label className="block text-xs font-medium text-foreground mb-2">
-            Style d&apos;ad <span className="text-muted font-normal">(optionnel)</span>
-          </label>
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              onClick={() => setSelectedAdStyle("")}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                selectedAdStyle === ""
-                  ? "bg-primary text-white shadow-sm"
-                  : "bg-gray-100 text-muted hover:bg-gray-200"
-              }`}
-            >
-              Auto
-            </button>
-            {AD_TYPE_TAGS.map((tag) => (
-              <button
-                key={tag.value}
-                onClick={() => setSelectedAdStyle(selectedAdStyle === tag.value ? "" : tag.value)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  selectedAdStyle === tag.value
-                    ? "bg-primary text-white shadow-sm"
-                    : "bg-gray-100 text-muted hover:bg-gray-200"
-                }`}
-              >
-                {tag.label}
-              </button>
-            ))}
           </div>
         </div>
 
