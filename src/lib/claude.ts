@@ -506,6 +506,7 @@ IRON RULES:
 4. NEVER add bullet points or feature lists unless the template has them.
 5. Keep text SHORT — match the template's text length roughly.
 6. NEVER add body text / descriptions unless the template has them.
+7. ALL text MUST be written in FRENCH. Never use English words (except the brand name itself if it's in English).
 
 DISCOUNT RULES:
 ${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If the template shows a big percentage, write ONLY the number+% (e.g. "-60%"). The offer name can appear as small text IF the template has small text, but the BIG visible number must be ONLY the percentage.` : "- No offer. Replace any discount area with the brand's strongest selling point in 2-4 words."}

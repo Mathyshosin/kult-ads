@@ -253,7 +253,8 @@ STRICT RULES:
 3. Brand colors: ${colors}.
 ${discountStr && !discountAlreadyInText ? `4. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "4. No extra discount text needed — it's already in the text above (or there is none)."}
 5. Display ONLY the text provided above. Do NOT add extra text, bullet points, descriptions, or prices not specified above. NEVER show any text element twice — each piece of text must appear exactly ONCE.
-6. Match the EXACT proportions and spacing from the layout reference — text sizes, margins, element positions must be faithful to the original template.`;
+6. Match the EXACT proportions and spacing from the layout reference — text sizes, margins, element positions must be faithful to the original template.
+7. ALL text on the image MUST be in FRENCH. Never use English words (except the brand name if it's in English).`;
     } else if (template && layout && !isTextOnly && templateAnalysis?.templateType === "comparison") {
       // ── COMPARISON / VS template ──
       const competitors = brandAnalysis.competitorProducts?.length
@@ -297,7 +298,8 @@ STRICT RULES:
 ${discountStr && !discountAlreadyInText ? `6. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "6. No extra discount text needed."}
 ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
 8. NEVER add labels or text ON the product.
-9. Display ONLY the text provided above. No extra text, no bullet points, no feature lists. NEVER show any text element twice.`;
+9. Display ONLY the text provided above. No extra text, no bullet points, no feature lists. NEVER show any text element twice.
+10. ALL text on the image MUST be in FRENCH. Never use English words (except the brand name if it's in English).`;
     } else if (template && layout && !isTextOnly) {
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──
@@ -352,7 +354,8 @@ ${showPrices ? `6. ${priceInfo}` : "6. NO PRICES on this image. Do NOT show any 
 8. If the text above includes annotations with arrows/lines, each annotation MUST point to the correct part of the product.
 ${!noProduct ? "9. Photorealistic product, professional lighting, high-end advertising quality." : "9. Professional, high-end advertising quality."}
 10. Match the template's proportions EXACTLY — text size ratios, spacing, element positions must be faithful to the described layout.
-${noHuman ? "11. Do NOT add any person, model, hand, or human figure. The template has NO people — keep it that way." : ""}`.trim();
+${noHuman ? "11. Do NOT add any person, model, hand, or human figure. The template has NO people — keep it that way." : ""}
+12. ALL text on the image MUST be in FRENCH. Never use English words (except the brand name if it's in English).`.trim();
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
