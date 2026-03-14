@@ -34,6 +34,7 @@ export async function POST(request: Request) {
       tone: brandAnalysis.tone,
       targetAudience: brandAnalysis.targetAudience,
       uniqueSellingPoints: brandAnalysis.uniqueSellingPoints,
+      competitorProducts: brandAnalysis.competitorProducts,
       productName: product.name,
       productDescription: product.description || "",
       productFeatures: product.features,
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
       console.log("[generate-ad] Scene:", sceneDescription);
       console.log("[generate-ad] Image text:", imageText);
       console.log("[generate-ad] Text-only template:", isTextOnly);
+      console.log("[generate-ad] Template type:", templateAnalysis.templateType);
       console.log("[generate-ad] Layout:", JSON.stringify(templateAnalysis.layout));
     } else {
       sceneDescription = "Product displayed on a clean minimal surface with soft professional studio lighting.";
@@ -129,6 +131,55 @@ RULES:
 1. The ONLY brand name allowed is "${brandAnalysis.brandName}".
 2. Brand colors: ${colors}.
 ${offer ? `3. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "3. No discount."}`;
+    } else if (template && layout && !isTextOnly && templateAnalysis?.templateType === "comparison") {
+      // ── COMPARISON / VS template: show competitor on one side, brand product on the other ──
+      const productDesc = [
+        product.name,
+        product.description ? `(${product.description})` : "",
+      ].filter(Boolean).join(" ");
+
+      const competitors = brandAnalysis.competitorProducts?.length
+        ? brandAnalysis.competitorProducts.slice(0, 2).join(" ou ")
+        : "le produit concurrent traditionnel";
+
+      visualPrompt = `${aspectRatio} — Create a COMPARISON / VS advertising image for "${brandAnalysis.brandName}".
+
+This is a SPLIT comparison ad. One side shows the BAD/OLD alternative, the other shows the GOOD brand product.
+
+LAYOUT: ${layout.comparisonLayout || "left side = bad alternative, right side = good brand product"}
+
+BAD SIDE (competitor):
+- Show a GENERIC ${competitors} — the old/traditional product that "${brandAnalysis.brandName}" replaces.
+- Make it look unappealing: crushed, dull colors, messy, or with negative visual cues.
+- Add negative stats/text about the competitor (from the adapted text below).
+
+GOOD SIDE (brand product):
+- Look at the PRODUCT reference image. This is "${product.name}" — ${productDesc}.
+- Show this EXACT product faithfully, looking clean, premium, and desirable.
+- Add positive stats/text about "${brandAnalysis.brandName}" (from the adapted text below).
+- The product MUST be FULLY VISIBLE — never cropped or cut off.
+
+VISUAL STYLE:
+- Background: ${layout.backgroundStyle}
+- Decorative elements: ${layout.decorativeElements}
+- Text placement: ${layout.textPosition}
+- Typography: ${layout.typographyStyle}
+- Brand name position: ${layout.brandLogoPosition}
+
+TEXT (in French):
+${imageText ? `"${imageText}"` : `Write compelling French comparison text for "${brandAnalysis.brandName}" vs competitors.`}
+Brand name EXACTLY: "${brandAnalysis.brandName}"
+
+SCENE: ${sceneDescription}
+
+RULES:
+1. This MUST be a clear visual comparison — two distinct sides.
+2. The BAD side shows GENERIC ${competitors} (NOT the template's original products).
+3. The GOOD side shows ONLY "${product.name}" from the PRODUCT reference.
+4. Both products must be FULLY VISIBLE — never cropped or cut off.
+5. The ONLY brand name is "${brandAnalysis.brandName}".
+6. Brand colors: ${colors}.
+${offer ? `7. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "7. No discount. Highlight the strongest product benefit."}`;
     } else if (template && layout && !isTextOnly) {
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──
@@ -168,7 +219,7 @@ RULES:
 4. The ONLY brand name is "${brandAnalysis.brandName}".
 5. Brand colors: ${colors}.
 6. Photorealistic product, professional lighting, high-end advertising quality.
-${offer ? `6. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "6. No discount. Highlight the strongest product benefit."}`;
+${offer ? `7. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "7. No discount. Highlight the strongest product benefit."}`;
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText

@@ -1,11 +1,15 @@
 # CLAUDE.md
 
 ## Preview & Verification
-- NEVER use preview tools (preview_screenshot, preview_snapshot, preview_inspect, preview_start, preview_logs, etc.)
+- NEVER use preview tools (preview_screenshot, preview_snapshot, preview_inspect, preview_start, preview_logs, preview_console_logs, preview_eval, preview_click, preview_fill, preview_resize, preview_network, preview_snap, etc.)
 - NEVER take screenshots to verify changes
-- NEVER start dev servers via preview_start
-- The user verifies everything themselves directly
-- Just make the changes, run `npx next build` to check for errors, and move on
+- NEVER start dev servers via preview_start — it does not work in this environment (nvm)
+- NEVER attempt to fix or configure preview_start/launch.json — skip it entirely
+- The user verifies everything themselves directly on their deployed app
+- Just make the changes, run `npx next build` to check for errors, commit, push, and move on
+- After push, tell the user to test — do NOT try to preview anything
+- Do NOT run the preview process — just code → build → commit → push → done
+- Skip plan mode for iterative ad prompt tweaks — just implement and push
 
 ### 1. Plan Mode Default
 - Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)

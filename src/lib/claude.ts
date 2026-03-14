@@ -18,7 +18,8 @@ Le JSON doit suivre exactement cette structure:
   "products": [{"id":"prod-1","name":"...","description":"...","price":"...","features":["..."]}],
   "offers": [{"id":"offer-1","title":"...","description":"...","discountType":"percentage|fixed|freeShipping|other","discountValue":"..."}],
   "targetAudience": "string",
-  "uniqueSellingPoints": ["string", "string"]
+  "uniqueSellingPoints": ["string", "string"],
+  "competitorProducts": ["string", "string"]
 }
 
 Règles:
@@ -27,7 +28,8 @@ Règles:
 - Si aucune offre n'est trouvée, retourne un tableau vide pour offers
 - Les IDs doivent être "prod-1", "prod-2", etc. et "offer-1", "offer-2", etc.
 - Les couleurs doivent être en format hex
-- Sois précis et fidèle aux informations du site`;
+- Sois précis et fidèle aux informations du site
+- Pour competitorProducts: identifie les produits CONCURRENTS / alternatives traditionnelles que cette marque cherche à remplacer. Exemples: si la marque vend des culottes menstruelles → ["tampons", "serviettes hygiéniques", "cups menstruelles"]. Si la marque vend des boissons énergisantes saines → ["Red Bull", "Monster", "sodas sucrés"]. Si la marque vend des compléments bio → ["compléments classiques", "médicaments"]. Déduis-le du positionnement marketing du site.`;
 
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -52,6 +54,7 @@ interface BrandContext {
   tone?: string;
   targetAudience?: string;
   uniqueSellingPoints?: string[];
+  competitorProducts?: string[];
   productName: string;
   productDescription: string;
   productFeatures?: string[];
@@ -66,6 +69,7 @@ function buildBrandContext(ctx: BrandContext): string {
     ctx.tone ? `Tone: ${ctx.tone}` : null,
     ctx.targetAudience ? `Target audience: ${ctx.targetAudience}` : null,
     ctx.uniqueSellingPoints?.length ? `Key selling points: ${ctx.uniqueSellingPoints.join(" | ")}` : null,
+    ctx.competitorProducts?.length ? `Competitor/alternative products this brand replaces: ${ctx.competitorProducts.join(", ")}` : null,
     `Product: "${ctx.productName}" — ${ctx.productDescription}`,
     ctx.productFeatures?.length ? `Product features: ${ctx.productFeatures.join(", ")}` : null,
     ctx.offerTitle ? `Current offer: ${ctx.offerTitle}${ctx.offerDescription ? ` — ${ctx.offerDescription}` : ""}` : null,
@@ -78,6 +82,7 @@ export interface TemplateAnalysis {
   scene: string;
   imageText: string | null;
   isTextOnly: boolean;
+  templateType: "product-showcase" | "comparison" | "text-only" | "lifestyle";
   layout: {
     textPosition: string;       // e.g. "top-left", "center", "bottom"
     productPosition: string;    // e.g. "center-right", "bottom-half", "none"
@@ -87,6 +92,7 @@ export interface TemplateAnalysis {
     typographyStyle: string;    // e.g. "bold sans-serif uppercase, dark navy"
     brandLogoPosition: string;  // e.g. "top-right", "bottom-right", "none"
     decorativeElements: string; // e.g. "organic curved shapes", "geometric lines", "none"
+    comparisonLayout?: string;  // e.g. "left-bad right-good split 50/50" (only for comparison templates)
   };
 }
 
@@ -124,7 +130,11 @@ TARGET BRAND:
 ${context}
 
 ━━━ STEP 1: CLASSIFY ━━━
-Is this a TEXT-ONLY template (no product photo) or a PRODUCT template (product visible)?
+Determine the template type:
+- "text-only": No product photos, only typography/graphics
+- "product-showcase": Shows a product prominently (single product focus)
+- "comparison": Shows a VS/comparison between two things (e.g. left side = bad/old product, right side = good/brand product). Look for split layouts, before/after, pros/cons columns, or any "X vs Y" structure.
+- "lifestyle": Shows a product in a real-life context/scene
 
 ━━━ STEP 2: DETAILED LAYOUT EXTRACTION ━━━
 Describe with PRECISION:
@@ -158,7 +168,15 @@ RULES:
 ━━━ STEP 4: SCENE DESCRIPTION ━━━
 Write a scene description that uses the template's VISUAL STYLE (background, colors, typography, decorative elements) for "${brandContext.brandName}".
 
-CRITICAL PRODUCT RULES:
+IF COMPARISON TEMPLATE:
+- This is a VS/comparison ad. One side shows a BAD/OLD alternative, the other shows the GOOD brand product.
+- For the BAD side: use a GENERIC competitor product relevant to "${brandContext.productName}".
+${brandContext.competitorProducts?.length ? `  Competitors to show: ${brandContext.competitorProducts.join(", ")}. Pick the most visually recognizable one.` : `  Think about what "${brandContext.productName}" replaces and show that generic product.`}
+- For the GOOD side: show "${brandContext.productName}" by "${brandContext.brandName}".
+- Adapt the comparison text: the BAD side gets negative stats about the competitor, the GOOD side gets positive stats about "${brandContext.productName}".
+- Include "comparisonLayout" in layout (e.g. "left-bad right-good split 50/50").
+
+IF PRODUCT SHOWCASE / LIFESTYLE:
 - COMPLETELY IGNORE how products are arranged in the template. Do NOT reproduce the template's product arrangement, quantity, or display style.
 - The template may show many boxes, bottles, packages stacked/arranged — IGNORE ALL OF THAT.
 - Instead, describe ONLY "${brandContext.productName}" (${brandContext.productDescription || "the brand's product"}) displayed simply and elegantly — 1 or 2 units, clean presentation.
@@ -168,6 +186,7 @@ CRITICAL PRODUCT RULES:
 JSON ONLY (no markdown):
 {
   "isTextOnly": true/false,
+  "templateType": "product-showcase" | "comparison" | "text-only" | "lifestyle",
   "scene": "Detailed ENGLISH description recreating the EXACT layout with brand-adapted content. Be very specific about element positions and proportions.",
   "imageText": "The COMPLETE French text to display on the image, with line breaks as \\n. Include headline, subtext, brand name, and CTA text — matching the template's text structure. null if no text.",
   "layout": {
@@ -178,7 +197,8 @@ JSON ONLY (no markdown):
     "backgroundStyle": "...",
     "typographyStyle": "...",
     "brandLogoPosition": "...",
-    "decorativeElements": "..."
+    "decorativeElements": "...",
+    "comparisonLayout": "left-bad right-good split 50/50 (ONLY for comparison templates, null otherwise)"
   }
 }`,
           },
@@ -207,6 +227,7 @@ JSON ONLY (no markdown):
       scene: parsed.scene || "Product displayed elegantly on a clean surface with professional lighting.",
       imageText: parsed.imageText || null,
       isTextOnly: parsed.isTextOnly === true,
+      templateType: parsed.templateType || (parsed.isTextOnly ? "text-only" : "product-showcase"),
       layout: { ...defaultLayout, ...parsed.layout },
     };
   } catch {
@@ -218,13 +239,14 @@ JSON ONLY (no markdown):
           scene: parsed.scene || raw,
           imageText: parsed.imageText || null,
           isTextOnly: parsed.isTextOnly === true,
+          templateType: parsed.templateType || (parsed.isTextOnly ? "text-only" : "product-showcase"),
           layout: { ...defaultLayout, ...parsed.layout },
         };
       } catch {
-        return { scene: raw, imageText: null, isTextOnly: false, layout: defaultLayout };
+        return { scene: raw, imageText: null, isTextOnly: false, templateType: "product-showcase", layout: defaultLayout };
       }
     }
-    return { scene: raw, imageText: null, isTextOnly: false, layout: defaultLayout };
+    return { scene: raw, imageText: null, isTextOnly: false, templateType: "product-showcase", layout: defaultLayout };
   }
 }
 
