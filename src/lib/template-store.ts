@@ -61,15 +61,33 @@ export interface TemplateMeta {
 
 const IMAGES_DIR = path.join(process.cwd(), "public/templates");
 
-// ── Read local image file as base64 ──
-function readLocalImage(filename: string): { imageBase64: string; mimeType: string } | null {
+// ── Read local image file as base64 (with HTTP fallback for Vercel) ──
+async function readLocalImage(filename: string): Promise<{ imageBase64: string; mimeType: string } | null> {
   const imagePath = path.join(IMAGES_DIR, filename);
+  const ext = path.extname(filename).toLowerCase();
+  const mimeType = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
+
+  // Try filesystem first
   try {
     const buffer = fs.readFileSync(imagePath);
-    const ext = path.extname(filename).toLowerCase();
-    const mimeType = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
     return { imageBase64: buffer.toString("base64"), mimeType };
   } catch {
+    // fs failed (common on Vercel) — fallback to HTTP fetch from public URL
+  }
+
+  // HTTP fallback: fetch from the deployed app's public folder
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
+    const url = `${baseUrl}/templates/${filename}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const arrayBuffer = await res.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    return { imageBase64: base64, mimeType };
+  } catch {
+    console.error(`[template-store] Failed to read image: ${filename}`);
     return null;
   }
 }
@@ -99,7 +117,7 @@ export async function getTemplateByIdWithImage(
   if (!row) return null;
 
   if (row.image_source === "local") {
-    const img = readLocalImage(row.filename);
+    const img = await readLocalImage(row.filename);
     if (!img) return null;
     return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType };
   }
@@ -121,7 +139,7 @@ export async function getRandomTemplateWithImage(
   const row = matching[Math.floor(Math.random() * matching.length)];
 
   if (row.image_source === "local") {
-    const img = readLocalImage(row.filename);
+    const img = await readLocalImage(row.filename);
     if (!img) return null;
     return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType };
   }
