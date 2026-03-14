@@ -90,6 +90,8 @@ export interface TemplateAnalysis {
   imageText: string | null;
   isTextOnly: boolean;
   templateType: "product-showcase" | "comparison" | "text-only" | "lifestyle";
+  templateHasPrices: boolean;
+  templateTextCount: number;
   layout: {
     textPosition: string;       // e.g. "top-left", "center", "bottom"
     productPosition: string;    // e.g. "center-right", "bottom-half", "none"
@@ -129,81 +131,84 @@ export async function describeTemplateScene(
           },
           {
             type: "text",
-            text: `You are a creative director specialized in reproducing ad layouts pixel-perfectly for different brands.
-
-Analyze this ad template in EXTREME detail. The goal is to reproduce its EXACT layout, spacing, typography, and visual structure — only swapping the brand content.
+            text: `You are an elite creative director. Your job: analyze an ad template and produce the EXACT same layout for a different brand. You must be EXTREMELY PRECISE about matching the template's text density — never add content that isn't on the template.
 
 TARGET BRAND:
 ${context}
 
-━━━ STEP 1: CLASSIFY ━━━
-Determine the template type:
+━━━ STEP 1: COUNT TEMPLATE TEXT ELEMENTS ━━━
+Before ANYTHING else, count EVERY distinct text element visible on the template:
+- Headline (big text)
+- Subheadline (medium text)
+- Body text / description
+- Price area (original price, sale price)
+- Discount percentage
+- CTA button text
+- Brand name
+- Small text (legal, date, etc.)
+- Bullet points / feature list
+- Annotations with arrows/lines
+
+Write the count as "templateTextCount". Example: if template has headline + discount % + brand name + small date text = 4 text elements.
+
+Also note: does the template show ANY price (€, $, number with currency)? → "templateHasPrices": true/false
+Does the template show bullet points or a feature list? → if no, you MUST NOT create any.
+
+━━━ STEP 2: CLASSIFY ━━━
 - "text-only": No product photos, only typography/graphics
-- "product-showcase": Shows a product prominently (single product focus)
-- "comparison": Shows a VS/comparison between two things (e.g. left side = bad/old product, right side = good/brand product). Look for split layouts, before/after, pros/cons columns, or any "X vs Y" structure.
-- "lifestyle": Shows a product in a real-life context/scene
+- "product-showcase": Shows a product prominently
+- "comparison": VS/split layout comparing two things
+- "lifestyle": Product in real-life context
 
-━━━ STEP 2: DETAILED LAYOUT EXTRACTION ━━━
+━━━ STEP 3: DETAILED LAYOUT EXTRACTION ━━━
 Describe with PRECISION:
-- textPosition: Where is the main text block? (e.g. "top-left occupying 60% width", "centered top third")
-- productPosition: Where is the product? (e.g. "center-right, 40% of image", "none" if text-only)
-- ctaPosition: Where is the CTA button? (e.g. "bottom-left", "none")
-- ctaStyle: Describe CTA appearance (e.g. "white rounded-full pill button with dark text", "none")
-- backgroundStyle: Describe EXACTLY (e.g. "warm peach/beige gradient with organic curved shapes in lighter tones")
-- typographyStyle: Font style and color (e.g. "bold uppercase sans-serif, dark navy #1a1a3e, headline very large, subtext medium regular")
-- brandLogoPosition: Where is the brand name/logo? (e.g. "center below headline, medium serif font")
-- decorativeElements: Any shapes, curves, lines, patterns (e.g. "organic wave shapes in lighter beige behind text area")
+- textPosition, productPosition, ctaPosition, ctaStyle
+- backgroundStyle, typographyStyle, brandLogoPosition, decorativeElements
 
-━━━ STEP 3: CREATE ADAPTED CONTENT ━━━
-Replace the template's text with NEW French text for "${brandContext.brandName}":
-- Use ONLY real facts about the brand
-${brandContext.offerTitle ? `- Current offer: "${brandContext.offerTitle}"${brandContext.offerDescription ? ` — ${brandContext.offerDescription}` : ""}` : "- No offer available. Use the strongest selling point."}
-${brandContext.uniqueSellingPoints?.length ? `- USPs: ${brandContext.uniqueSellingPoints.join(", ")}` : ""}
+━━━ STEP 4: CREATE ADAPTED TEXT — STRICT MATCHING ━━━
+Replace the template's text for "${brandContext.brandName}".
+
+IRON RULES:
+1. You MUST produce EXACTLY the same number of text elements as the template (templateTextCount). Not one more.
+2. If the template has: headline + percentage + brand name + date = produce EXACTLY: headline + percentage + brand name + date. Nothing else.
+3. NEVER add prices if templateHasPrices is false.
+4. NEVER add bullet points or feature lists unless the template has them.
+5. NEVER add body text / descriptions unless the template has them.
+6. NEVER add annotations with arrows unless the template has them.
+7. Keep text SHORT — each element should be roughly the same length as the template's equivalent.
+
+DISCOUNT RULES:
+${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If the template shows a big percentage, write ONLY the number+% (e.g. "-60%"). The offer name can appear as small text IF the template has small text, but the BIG visible number must be ONLY the percentage.` : "- No offer. Replace any discount area with the brand's strongest selling point in 2-4 words."}
+- NEVER use "---" or multiple dashes before a number. Write exactly "-60%" not "---60%".
+
+PRICE RULES:
+- ONLY include prices if the template VISUALLY shows a price area AND real prices exist.
+${brandContext.productOriginalPrice && brandContext.productSalePrice ? `- Real prices: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}` : brandContext.productPrice ? `- Real price: ${brandContext.productPrice}` : "- No prices available. If template has a price area, REMOVE it — leave that space empty or use a short benefit text instead."}
+- NEVER invent prices.
+
+BRAND & PRODUCT:
 - Brand name EXACTLY: "${brandContext.brandName}"
+${brandContext.uniqueSellingPoints?.length ? `- USPs (use only if template has space): ${brandContext.uniqueSellingPoints.slice(0, 2).join(", ")}` : ""}
 
-CRITICAL CONTENT RULES:
-1. MATCH THE TEMPLATE'S TEXT DENSITY: If the template has only a headline + brand name + CTA, write ONLY a headline + brand name + CTA. Do NOT add extra text, bullet points, feature lists, or descriptions that the template doesn't have.
-2. NEVER add prices unless the template VISUALLY shows a price area. If the template has no price displayed, do NOT add any price.
-3. NEVER list product features/benefits as bullet points unless the template explicitly has a bullet point section.
-4. Keep the text SHORT and IMPACTFUL — match the exact amount of text visible on the template, no more.
+━━━ STEP 5: SCENE DESCRIPTION ━━━
+Describe the visual layout for Gemini to reproduce.
 
-CRITICAL RULE FOR DISCOUNTS/PERCENTAGES:
-- If the template shows a large percentage number (e.g. "-10%", "-20%"), replace it with ONLY the numeric discount value: just the number and % sign (e.g. "-60%"), NOT the offer name/title.
-${brandContext.offerTitle ? `- The REAL discount value is: "${brandContext.offerTitle}". Extract ONLY the percentage or numeric value from this. For example if the offer is "Vente privée -60%", write ONLY "-60%" on the image where the template had its percentage — NOT "Vente privée -60%".` : "- There is NO discount/offer. Remove any percentage from the text and replace with a key selling point."}
-- NEVER keep the template's original percentage — it belongs to a different brand.
-- The offer NAME (e.g. "Vente privée", "Soldes") can appear elsewhere in smaller text, but the BIG number must be ONLY the percentage.
-
-RULES:
-- NEVER copy text from the template
-- NEVER mention the template's original brand or products
-- Keep the SAME text structure (if template has 3 question lines + subtext + CTA, create 3 question lines + subtext + CTA)
-- If the template shows prices (original/sale price), use ONLY the REAL prices from the brand context above. NEVER invent or estimate prices. If no price is available, DO NOT show any price at all — leave it out completely.
-- NEVER add more text than what the template shows. Count the text elements on the template and produce the SAME number.
-
-━━━ STEP 4: SCENE DESCRIPTION ━━━
-Write a scene description that uses the template's VISUAL STYLE (background, colors, typography, decorative elements) for "${brandContext.brandName}".
-
-IF COMPARISON TEMPLATE:
-- This is a VS/comparison ad. One side shows a BAD/OLD alternative, the other shows the GOOD brand product.
-- For the BAD side: use a GENERIC competitor product relevant to "${brandContext.productName}".
-${brandContext.competitorProducts?.length ? `  Competitors to show: ${brandContext.competitorProducts.join(", ")}. Pick the most visually recognizable one.` : `  Think about what "${brandContext.productName}" replaces and show that generic product.`}
-- For the GOOD side: show "${brandContext.productName}" by "${brandContext.brandName}".
-- Adapt the comparison text: the BAD side gets negative stats about the competitor, the GOOD side gets positive stats about "${brandContext.productName}".
-- Include "comparisonLayout" in layout (e.g. "left-bad right-good split 50/50").
+IF COMPARISON: describe split layout with competitor on bad side, brand product on good side.
+${brandContext.competitorProducts?.length ? `Competitors: ${brandContext.competitorProducts.join(", ")}.` : ""}
 
 IF PRODUCT SHOWCASE / LIFESTYLE:
-- COMPLETELY IGNORE how products are arranged in the template. Do NOT reproduce the template's product arrangement, quantity, or display style.
-- The template may show many boxes, bottles, packages stacked/arranged — IGNORE ALL OF THAT.
-- Instead, describe ONLY "${brandContext.productName}" (${brandContext.productDescription || "the brand's product"}) displayed simply and elegantly — 1 or 2 units, clean presentation.
-- NEVER describe boxes, packaging, stacks, pyramids, or arrangements from the template.
-- The product display should be SIMPLE: the product centered or positioned according to the layout, with clean professional styling.
+- IGNORE the template's product arrangement completely.
+- Describe ONLY 1 unit of "${brandContext.productName}" displayed simply and cleanly.
+- NEVER describe stacks, multiple units, or arrangements from the template.
 
 JSON ONLY (no markdown):
 {
   "isTextOnly": true/false,
   "templateType": "product-showcase" | "comparison" | "text-only" | "lifestyle",
-  "scene": "Detailed ENGLISH description recreating the EXACT layout with brand-adapted content. Be very specific about element positions and proportions.",
-  "imageText": "The COMPLETE French text to display on the image, with line breaks as \\n. Include headline, subtext, brand name, and CTA text — matching the template's text structure. null if no text.",
+  "templateHasPrices": true/false,
+  "templateTextCount": number,
+  "scene": "ENGLISH description of the layout. Be specific about positions.",
+  "imageText": "ONLY the French text for the image, matching template structure exactly. Use \\n for line breaks. null if no text. MUST have exactly templateTextCount elements.",
   "layout": {
     "textPosition": "...",
     "productPosition": "...",
@@ -213,7 +218,7 @@ JSON ONLY (no markdown):
     "typographyStyle": "...",
     "brandLogoPosition": "...",
     "decorativeElements": "...",
-    "comparisonLayout": "left-bad right-good split 50/50 (ONLY for comparison templates, null otherwise)"
+    "comparisonLayout": "only for comparison templates, null otherwise"
   }
 }`,
           },
@@ -236,32 +241,28 @@ JSON ONLY (no markdown):
     decorativeElements: "none",
   };
 
+  const parseResult = (parsed: Record<string, unknown>): TemplateAnalysis => ({
+    scene: (parsed.scene as string) || "Product displayed elegantly on a clean surface with professional lighting.",
+    imageText: (parsed.imageText as string) || null,
+    isTextOnly: parsed.isTextOnly === true,
+    templateType: (parsed.templateType as TemplateAnalysis["templateType"]) || (parsed.isTextOnly ? "text-only" : "product-showcase"),
+    templateHasPrices: parsed.templateHasPrices === true,
+    templateTextCount: (parsed.templateTextCount as number) || 3,
+    layout: { ...defaultLayout, ...(parsed.layout as Record<string, string>) },
+  });
+
   try {
-    const parsed = JSON.parse(raw);
-    return {
-      scene: parsed.scene || "Product displayed elegantly on a clean surface with professional lighting.",
-      imageText: parsed.imageText || null,
-      isTextOnly: parsed.isTextOnly === true,
-      templateType: parsed.templateType || (parsed.isTextOnly ? "text-only" : "product-showcase"),
-      layout: { ...defaultLayout, ...parsed.layout },
-    };
+    return parseResult(JSON.parse(raw));
   } catch {
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       try {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return {
-          scene: parsed.scene || raw,
-          imageText: parsed.imageText || null,
-          isTextOnly: parsed.isTextOnly === true,
-          templateType: parsed.templateType || (parsed.isTextOnly ? "text-only" : "product-showcase"),
-          layout: { ...defaultLayout, ...parsed.layout },
-        };
+        return parseResult(JSON.parse(jsonMatch[0]));
       } catch {
-        return { scene: raw, imageText: null, isTextOnly: false, templateType: "product-showcase", layout: defaultLayout };
+        return { scene: raw, imageText: null, isTextOnly: false, templateType: "product-showcase", templateHasPrices: false, templateTextCount: 3, layout: defaultLayout };
       }
     }
-    return { scene: raw, imageText: null, isTextOnly: false, templateType: "product-showcase", layout: defaultLayout };
+    return { scene: raw, imageText: null, isTextOnly: false, templateType: "product-showcase", templateHasPrices: false, templateTextCount: 3, layout: defaultLayout };
   }
 }
 

@@ -151,6 +151,14 @@ export async function POST(request: Request) {
 
     if (template && layout && isTextOnly) {
       // ── Text-only template: layout reference image IS sent to Gemini ──
+      const discountStr = offer
+        ? (offer.discountValue && offer.discountType === "percentage"
+          ? `-${offer.discountValue}%`
+          : offer.discountValue
+            ? `-${offer.discountValue}€`
+            : offer.title)
+        : null;
+
       visualPrompt = `${aspectRatio} — Create a text-only advertising image for "${brandAnalysis.brandName}".
 
 Reproduce the EXACT layout from the LAYOUT REFERENCE image:
@@ -161,90 +169,85 @@ Reproduce the EXACT layout from the LAYOUT REFERENCE image:
 - CTA: ${layout.ctaStyle} at ${layout.ctaPosition}
 - Brand name position: ${layout.brandLogoPosition}
 
-TEXT (in French):
-${imageText ? `"${imageText}"` : `Write compelling French ad text for "${brandAnalysis.brandName}".`}
-Brand name EXACTLY: "${brandAnalysis.brandName}"
+TEXT ON IMAGE (in French — display ONLY this text, nothing more):
+${imageText ? `"${imageText}"` : `"${brandAnalysis.brandName}"`}
 
-This is a TEXT-ONLY ad — NO product photos, NO physical objects, NO people. Only typography and graphic elements.
+This is a TEXT-ONLY ad — NO product photos, NO physical objects, NO people.
 
 SCENE: ${sceneDescription}
 
-RULES:
-1. The ONLY brand name allowed is "${brandAnalysis.brandName}".
+STRICT RULES:
+1. The ONLY brand name is "${brandAnalysis.brandName}".
 2. ${logoInstruction}
 3. Brand colors: ${colors}.
-${offer ? `4. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "4. No discount."}`;
+${discountStr ? `4. DISCOUNT: Show "${discountStr}" prominently. No extra dashes.` : "4. No discount."}
+5. Display ONLY the text provided above. Do NOT add extra text, bullet points, descriptions, or prices not specified above.`;
     } else if (template && layout && !isTextOnly && templateAnalysis?.templateType === "comparison") {
-      // ── COMPARISON / VS template: show competitor on one side, brand product on the other ──
-      const productDesc = [
-        product.name,
-        product.description ? `(${product.description})` : "",
-      ].filter(Boolean).join(" ");
-
+      // ── COMPARISON / VS template ──
       const competitors = brandAnalysis.competitorProducts?.length
         ? brandAnalysis.competitorProducts.slice(0, 2).join(" ou ")
         : "le produit concurrent traditionnel";
 
+      const showPrices = templateAnalysis?.templateHasPrices && priceInfo;
+      const discountStr = offer
+        ? (offer.discountValue && offer.discountType === "percentage"
+          ? `-${offer.discountValue}%`
+          : offer.discountValue
+            ? `-${offer.discountValue}€`
+            : offer.title)
+        : null;
+
       visualPrompt = `${aspectRatio} — Create a COMPARISON / VS advertising image for "${brandAnalysis.brandName}".
 
-This is a SPLIT comparison ad. One side shows the BAD/OLD alternative, the other shows the GOOD brand product.
+SPLIT LAYOUT: ${layout.comparisonLayout || "left = bad alternative, right = good brand product"}
 
-LAYOUT: ${layout.comparisonLayout || "left side = bad alternative, right side = good brand product"}
+BAD SIDE: Show a GENERIC ${competitors} — unappealing, dull.
+GOOD SIDE: Show EXACTLY 1 unit of "${product.name}" from the PRODUCT reference — clean, premium, desirable. FULLY VISIBLE.
 
-BAD SIDE (competitor):
-- Show a GENERIC ${competitors} — the old/traditional product that "${brandAnalysis.brandName}" replaces.
-- Make it look unappealing: crushed, dull colors, messy, or with negative visual cues.
-- Add negative stats/text about the competitor (from the adapted text below).
-
-GOOD SIDE (brand product):
-- Look at the PRODUCT reference image. This is "${product.name}" — ${productDesc}.
-- Show this EXACT product faithfully, looking clean, premium, and desirable.
-- Add positive stats/text about "${brandAnalysis.brandName}" (from the adapted text below).
-- The product MUST be FULLY VISIBLE — never cropped or cut off.
-
-VISUAL STYLE:
+LAYOUT:
 - Background: ${layout.backgroundStyle}
-- Decorative elements: ${layout.decorativeElements}
-- Text placement: ${layout.textPosition}
 - Typography: ${layout.typographyStyle}
 - Brand name position: ${layout.brandLogoPosition}
 
-TEXT (in French):
-${imageText ? `"${imageText}"` : `Write compelling French comparison text for "${brandAnalysis.brandName}" vs competitors.`}
-Brand name EXACTLY: "${brandAnalysis.brandName}"
+TEXT ON IMAGE (in French — display ONLY this text):
+${imageText ? `"${imageText}"` : `"${brandAnalysis.brandName}"`}
 
 SCENE: ${sceneDescription}
 
-RULES:
-1. This MUST be a clear visual comparison — two distinct sides.
-2. The BAD side shows GENERIC ${competitors} (NOT the template's original products).
-3. The GOOD side shows ONLY "${product.name}" from the PRODUCT reference.
-4. Both products must be FULLY VISIBLE — never cropped or cut off.
-5. The ONLY brand name is "${brandAnalysis.brandName}".
-6. ${logoInstruction}
-7. Brand colors: ${colors}.
-${offer ? `8. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "8. No discount. Highlight the strongest product benefit."}
-9. NEVER add labels, stickers, tags, text, or ANY overlay directly ON the product — show it exactly as-is.
-${priceInfo ? `10. ${priceInfo}` : "10. ABSOLUTELY NO PRICES — no price was provided, so do NOT show any price, amount, number with € or $ symbol, or anything that looks like a price anywhere on the image. NEVER invent or guess prices."}
-11. ANNOTATION PLACEMENT: If the ad includes feature annotations with lines/arrows pointing to the product, each annotation MUST point to the correct part of the product that matches that feature. Double-check that labels are not swapped or pointing to the wrong side.`;
+STRICT RULES:
+1. Clear visual comparison — two distinct sides.
+2. GOOD side: EXACTLY 1 unit of "${product.name}" from PRODUCT reference. Never cropped.
+3. ${logoInstruction}
+4. Brand colors: ${colors}.
+${discountStr ? `5. DISCOUNT: Show "${discountStr}" prominently. No extra dashes.` : "5. No discount."}
+${showPrices ? `6. ${priceInfo}` : "6. NO PRICES anywhere on the image."}
+7. NEVER add labels or text ON the product.
+8. Display ONLY the text provided above. No extra text, no bullet points, no feature lists.`;
     } else if (template && layout && !isTextOnly) {
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──
-      const productDesc = [
-        product.name,
-        product.description ? `(${product.description})` : "",
-        product.features?.length ? `— ${product.features.slice(0, 3).join(", ")}` : "",
-      ].filter(Boolean).join(" ");
+
+      // Only show prices if Claude detected them on the template AND we have real prices
+      const showPrices = templateAnalysis?.templateHasPrices && priceInfo;
+
+      // Build discount string cleanly
+      const discountStr = offer
+        ? (offer.discountValue && offer.discountType === "percentage"
+          ? `-${offer.discountValue}%`
+          : offer.discountValue
+            ? `-${offer.discountValue}€`
+            : offer.title)
+        : null;
 
       visualPrompt = `${aspectRatio} — Create a professional advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
 
-PRODUCT: Look at the PRODUCT reference image. This is "${product.name}" — ${productDesc}.
-${product.features?.length ? `Features: ${product.features.slice(0, 3).join(", ")}.` : ""}
-Show this EXACT product faithfully — same shape, colors, packaging. Do NOT redesign it.
-Display ONLY 1 or 2 units of this product, clean and simple. Do NOT create stacks, pyramids, or grids of products.
-The product MUST be FULLY VISIBLE — never cropped, cut off, or extending beyond the image edges. Leave comfortable margins around the product.
+PRODUCT: Look at the PRODUCT reference image. Show this EXACT product — same shape, same colors, same packaging.
+- Display EXACTLY 1 unit of this product. NOT 2, NOT a stack, NOT multiple colors.
+- The product MUST be FULLY VISIBLE — never cropped or cut off.
+- NEVER create or invent packaging. Use ONLY what's in the reference photo.
+- NEVER add labels, stickers, or text ON the product.
 
-VISUAL STYLE:
+LAYOUT:
 - Background: ${layout.backgroundStyle}
 - Decorative elements: ${layout.decorativeElements}
 - Text placement: ${layout.textPosition}
@@ -253,24 +256,21 @@ VISUAL STYLE:
 - Brand name position: ${layout.brandLogoPosition}
 - Product area: ${layout.productPosition}
 
-TEXT (in French):
-${imageText ? `"${imageText}"` : `Write compelling French ad text for "${brandAnalysis.brandName}" — "${product.name}".`}
-Brand name EXACTLY: "${brandAnalysis.brandName}"
+TEXT ON IMAGE (in French — display ONLY this text, nothing more):
+${imageText ? `"${imageText}"` : `"${brandAnalysis.brandName}"`}
 
 SCENE: ${sceneDescription}
 
-RULES:
-1. Show ONLY "${product.name}" from the PRODUCT reference — 1 or 2 units max, elegantly displayed.
-2. Do NOT create boxes, packaging, stacks, or multiple product arrangements. Keep it CLEAN and SIMPLE.
-3. The product must be FULLY VISIBLE and well-positioned — NEVER cropped, cut off, or bleeding past image edges. Leave clear margins.
+STRICT RULES:
+1. Show EXACTLY 1 unit of "${product.name}" from the PRODUCT reference. ONE. Not two, not multiple colors.
+2. ${logoInstruction}
+3. Brand colors: ${colors}.
 4. The ONLY brand name is "${brandAnalysis.brandName}".
-5. ${logoInstruction}
-6. Brand colors: ${colors}.
-7. Photorealistic product, professional lighting, high-end advertising quality.
-8. NEVER add labels, stickers, tags, text, or ANY overlay directly ON the product — show it exactly as-is from the reference photo.
-${offer ? `9. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "9. No discount. Highlight the strongest product benefit."}
-${priceInfo ? `10. ${priceInfo}` : "10. ABSOLUTELY NO PRICES — no price was provided, so do NOT show any price, amount, number with € or $ symbol, or anything that looks like a price anywhere on the image. NEVER invent or guess prices."}
-11. ANNOTATION PLACEMENT: If the ad includes feature annotations with lines/arrows pointing to the product (e.g. "Anti-fuite", "Protégée 12h"), each annotation MUST point to the correct part of the product that matches that feature. Double-check that labels are not swapped or pointing to the wrong side. Each dotted line must connect the label text to the relevant area of the product.`;
+${discountStr ? `5. DISCOUNT: Show "${discountStr}" prominently. Write it exactly as shown — no extra dashes.` : "5. No discount on this ad."}
+${showPrices ? `6. ${priceInfo}` : "6. NO PRICES on this image. Do NOT show any price, € symbol, or monetary amount anywhere."}
+7. Display ONLY the text provided above. Do NOT add extra text, bullet points, feature lists, product descriptions, or any text not specified above.
+8. If the text above includes annotations with arrows/lines, each annotation MUST point to the correct part of the product.
+9. Photorealistic product, professional lighting, high-end advertising quality.`;
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
