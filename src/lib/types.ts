@@ -27,6 +27,9 @@ export interface Offer {
   description: string;
   discountType?: string;
   discountValue?: string;
+  originalPrice?: string;
+  salePrice?: string;
+  productId?: string;       // linked product id (e.g. "prod-1")
   validUntil?: string;
 }
 

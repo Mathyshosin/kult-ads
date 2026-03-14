@@ -16,7 +16,7 @@ Le JSON doit suivre exactement cette structure:
   "tone": "string (un parmi: professionnel, fun, luxe, minimaliste, audacieux, chaleureux)",
   "colors": ["#hex1", "#hex2"],
   "products": [{"id":"prod-1","name":"...","description":"...","price":"...","originalPrice":"...","salePrice":"...","features":["..."]}],
-  "offers": [{"id":"offer-1","title":"...","description":"...","discountType":"percentage|fixed|freeShipping|other","discountValue":"..."}],
+  "offers": [{"id":"offer-1","title":"...","description":"...","discountType":"percentage|fixed|freeShipping|other","discountValue":"...","originalPrice":"...","salePrice":"...","productId":"prod-1"}],
   "targetAudience": "string",
   "uniqueSellingPoints": ["string", "string"],
   "competitorProducts": ["string", "string"]
@@ -26,6 +26,7 @@ Règles:
 - Identifie TOUS les produits visibles sur le site
 - Identifie TOUTES les offres/promotions en cours
 - Si aucune offre n'est trouvée, retourne un tableau vide pour offers
+- Pour chaque offre: inclus "originalPrice" (prix barré), "salePrice" (prix promo), et "productId" (l'id du produit concerné, ex: "prod-1"). Si une offre est un pack (ex: "Pack 2+1 offert"), crée une offre distincte avec son propre prix. Exemples: "Pack de 2 culottes" → originalPrice: "59,98€", salePrice: "49,99€", productId: "prod-1". "Pack 3+1 offerte" → originalPrice: "119,96€", salePrice: "89,97€", productId: "prod-1".
 - Les IDs doivent être "prod-1", "prod-2", etc. et "offer-1", "offer-2", etc.
 - Les couleurs doivent être en format hex
 - Sois précis et fidèle aux informations du site

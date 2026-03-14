@@ -309,7 +309,9 @@ export default function GeneratePage() {
             >
               <option value="">Sans offre</option>
               {brandAnalysis.offers.map((o) => (
-                <option key={o.id} value={o.id}>{o.title}</option>
+                <option key={o.id} value={o.id}>
+                  {o.title}{o.salePrice ? ` — ${o.salePrice}` : o.discountValue ? ` (${o.discountValue})` : ""}
+                </option>
               ))}
             </select>
           </div>

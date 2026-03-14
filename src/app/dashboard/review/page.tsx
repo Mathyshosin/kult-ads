@@ -136,6 +136,8 @@ export default function ReviewPage() {
                   type: "textarea",
                 },
                 { key: "price", label: "Prix", value: product.price || "" },
+                { key: "originalPrice", label: "Prix original (barré)", value: product.originalPrice || "" },
+                { key: "salePrice", label: "Prix promo", value: product.salePrice || "" },
                 {
                   key: "features",
                   label: "Caractéristiques (une par ligne)",
@@ -190,6 +192,16 @@ export default function ReviewPage() {
                     key: "discountValue",
                     label: "Valeur de la réduction",
                     value: offer.discountValue || "",
+                  },
+                  {
+                    key: "originalPrice",
+                    label: "Prix original (barré)",
+                    value: offer.originalPrice || "",
+                  },
+                  {
+                    key: "salePrice",
+                    label: "Prix promo de l'offre",
+                    value: offer.salePrice || "",
                   },
                 ]}
                 onSave={(updated) => updateOffer(offer.id, updated as Partial<typeof offer>)}

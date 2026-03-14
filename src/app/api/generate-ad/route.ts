@@ -41,8 +41,8 @@ export async function POST(request: Request) {
       productDescription: product.description || "",
       productFeatures: product.features,
       productPrice: product.price,
-      productOriginalPrice: product.originalPrice,
-      productSalePrice: product.salePrice,
+      productOriginalPrice: offer?.originalPrice || product.originalPrice,
+      productSalePrice: offer?.salePrice || product.salePrice,
       offerTitle: offer?.title,
       offerDescription: offer?.description,
     };
@@ -117,12 +117,16 @@ export async function POST(request: Request) {
       });
     }
 
-    // ── Price info (use REAL prices from the website only) ──
+    // ── Price info: offer prices take priority over product prices ──
     const priceInfo = (() => {
-      if (product.originalPrice && product.salePrice) {
-        return `PRICING (from the brand's website — use these EXACT numbers): Original price: ${product.originalPrice} → Sale price: ${product.salePrice}. Show both prices: the original price crossed out and the sale price highlighted.`;
-      } else if (product.salePrice) {
-        return `PRICING (from the brand's website — use this EXACT number): Sale price: ${product.salePrice}.`;
+      // If offer has its own pricing, use that (e.g. pack pricing)
+      const origPrice = offer?.originalPrice || product.originalPrice;
+      const saleP = offer?.salePrice || product.salePrice;
+
+      if (origPrice && saleP) {
+        return `PRICING (from the brand's website — use these EXACT numbers): Original price: ${origPrice} → Sale price: ${saleP}. Show both prices: the original price crossed out and the sale price highlighted.`;
+      } else if (saleP) {
+        return `PRICING (from the brand's website — use this EXACT number): Sale price: ${saleP}.`;
       } else if (product.price) {
         return `PRICING (from the brand's website — use this EXACT number): Price: ${product.price}.`;
       }
