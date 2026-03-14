@@ -12,6 +12,8 @@ export async function POST(request: Request) {
       offer,
       productImageBase64,
       productImageMimeType,
+      brandLogoBase64,
+      brandLogoMimeType,
       format,
       templateId,
       customPrompt,
@@ -91,11 +93,20 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: productImageBase64,
         mimeType: productImageMimeType || "image/png",
-        label: `THIS IS THE ONLY PRODUCT FOR "${brandAnalysis.brandName}". Show this EXACT product — same shape, colors, packaging. Do NOT use any other product. Any product visible in the layout reference below is from a DIFFERENT brand and must NOT appear.`,
+        label: `THIS IS THE ONLY PRODUCT FOR "${brandAnalysis.brandName}". Show this EXACT product — same shape, colors, packaging. Do NOT use any other product. NEVER add labels, stickers, tags, text, or any overlay ON the product itself — show it exactly as-is in the photo. Any product visible in the layout reference below is from a DIFFERENT brand and must NOT appear.`,
       });
     }
 
-    // Layout reference SECOND — ONLY for text-only templates (no products to confuse Gemini)
+    // Brand logo reference — so Gemini uses the real logo instead of generating one
+    if (brandLogoBase64) {
+      referenceImages.push({
+        base64: brandLogoBase64,
+        mimeType: brandLogoMimeType || "image/png",
+        label: `THIS IS THE OFFICIAL LOGO for "${brandAnalysis.brandName}". Use this EXACT logo when showing the brand name/logo on the ad. Do NOT create, invent, or generate a different logo — use ONLY this one, reproduced faithfully.`,
+      });
+    }
+
+    // Layout reference — ONLY for text-only templates (no products to confuse Gemini)
     // For product templates, Gemini copies the template's products visually no matter what
     // the prompt says, so we rely on Claude's detailed layout description instead.
     if (template && isTextOnly) {
@@ -117,6 +128,11 @@ export async function POST(request: Request) {
       }
       return null;
     })();
+
+    // ── Logo instruction ──
+    const logoInstruction = brandLogoBase64
+      ? `Use the EXACT brand logo from the LOGO reference image for "${brandAnalysis.brandName}". Do NOT generate or invent a logo.`
+      : `If showing a brand name/logo, write "${brandAnalysis.brandName}" in clean typography. Do NOT invent a logo graphic.`;
 
     // ── Gemini prompt ──
     let visualPrompt: string;
@@ -144,8 +160,9 @@ SCENE: ${sceneDescription}
 
 RULES:
 1. The ONLY brand name allowed is "${brandAnalysis.brandName}".
-2. Brand colors: ${colors}.
-${offer ? `3. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "3. No discount."}`;
+2. ${logoInstruction}
+3. Brand colors: ${colors}.
+${offer ? `4. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "4. No discount."}`;
     } else if (template && layout && !isTextOnly && templateAnalysis?.templateType === "comparison") {
       // ── COMPARISON / VS template: show competitor on one side, brand product on the other ──
       const productDesc = [
@@ -193,9 +210,11 @@ RULES:
 3. The GOOD side shows ONLY "${product.name}" from the PRODUCT reference.
 4. Both products must be FULLY VISIBLE — never cropped or cut off.
 5. The ONLY brand name is "${brandAnalysis.brandName}".
-6. Brand colors: ${colors}.
-${offer ? `7. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "7. No discount. Highlight the strongest product benefit."}
-${priceInfo ? `8. ${priceInfo}` : "8. Do NOT show any price if none was provided — NEVER invent prices."}`;
+6. ${logoInstruction}
+7. Brand colors: ${colors}.
+${offer ? `8. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "8. No discount. Highlight the strongest product benefit."}
+9. NEVER add labels, stickers, tags, text, or ANY overlay directly ON the product — show it exactly as-is.
+${priceInfo ? `10. ${priceInfo}` : "10. Do NOT show any price if none was provided — NEVER invent prices."}`;
     } else if (template && layout && !isTextOnly) {
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──
@@ -233,10 +252,12 @@ RULES:
 2. Do NOT create boxes, packaging, stacks, or multiple product arrangements. Keep it CLEAN and SIMPLE.
 3. The product must be FULLY VISIBLE and well-positioned — NEVER cropped, cut off, or bleeding past image edges. Leave clear margins.
 4. The ONLY brand name is "${brandAnalysis.brandName}".
-5. Brand colors: ${colors}.
-6. Photorealistic product, professional lighting, high-end advertising quality.
-${offer ? `7. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "7. No discount. Highlight the strongest product benefit."}
-${priceInfo ? `8. ${priceInfo}` : "8. Do NOT show any price if none was provided — NEVER invent prices."}`;
+5. ${logoInstruction}
+6. Brand colors: ${colors}.
+7. Photorealistic product, professional lighting, high-end advertising quality.
+8. NEVER add labels, stickers, tags, text, or ANY overlay directly ON the product — show it exactly as-is from the reference photo.
+${offer ? `9. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "9. No discount. Highlight the strongest product benefit."}
+${priceInfo ? `10. ${priceInfo}` : "10. Do NOT show any price if none was provided — NEVER invent prices."}`;
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
@@ -270,6 +291,7 @@ RULES:
 - The ONLY product allowed in this image is "${product.name}" from the PRODUCT reference. No other brand's products.
 - Keep the product IDENTICAL to the PRODUCT reference — same shape, colors, packaging. Do NOT redesign it.
 - The product must be FULLY VISIBLE and well-positioned — NEVER cropped, cut off, or bleeding past image edges. Leave clear margins.
+- NEVER add labels, stickers, tags, text, or ANY overlay directly ON the product — show it exactly as-is.
 - Colors: ${colors}. Photorealistic, professional camera, high-end lighting.
 ${textInstruction}`;
     }

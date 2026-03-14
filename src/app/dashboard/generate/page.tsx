@@ -33,6 +33,7 @@ export default function GeneratePage() {
   const addGeneratedAd = useWizardStore((s) => s.addGeneratedAd);
   const updateGeneratedAd = useWizardStore((s) => s.updateGeneratedAd);
   const clearAds = useWizardStore((s) => s.clearAds);
+  const brandLogo = useWizardStore((s) => s.brandLogo);
 
   // Mode
   const [mode, setMode] = useState<Mode>("library");
@@ -150,6 +151,8 @@ export default function GeneratePage() {
               offer,
               productImageBase64: image?.base64,
               productImageMimeType: image?.mimeType,
+              brandLogoBase64: brandLogo?.base64,
+              brandLogoMimeType: brandLogo?.mimeType,
               format: "square",
               templateId,
             }),
@@ -199,6 +202,8 @@ export default function GeneratePage() {
               offer,
               productImageBase64: image?.base64,
               productImageMimeType: image?.mimeType,
+              brandLogoBase64: brandLogo?.base64,
+              brandLogoMimeType: brandLogo?.mimeType,
               format: "square",
               customPrompt: customPrompt.trim(),
             }),

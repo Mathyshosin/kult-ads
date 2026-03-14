@@ -11,12 +11,19 @@ import type {
   WizardStep,
 } from "./types";
 
+interface BrandLogo {
+  base64: string;
+  mimeType: string;
+  previewUrl: string;
+}
+
 interface WizardState {
   currentStep: WizardStep;
   isAnalyzing: boolean;
   brandAnalysis: BrandAnalysis | null;
   uploadedImages: UploadedImage[];
   generatedAds: GeneratedAd[];
+  brandLogo: BrandLogo | null;
 
   setStep: (step: WizardStep) => void;
   setAnalyzing: (v: boolean) => void;
@@ -30,6 +37,7 @@ interface WizardState {
   addOffer: (offer: Offer) => void;
   addImage: (image: UploadedImage) => void;
   removeImage: (id: string) => void;
+  setBrandLogo: (logo: BrandLogo | null) => void;
   addGeneratedAd: (ad: GeneratedAd) => void;
   updateGeneratedAd: (id: string, updates: Partial<GeneratedAd>) => void;
   clearAds: () => void;
@@ -45,6 +53,7 @@ export const useWizardStore = create<WizardState>()(
       brandAnalysis: null,
       uploadedImages: [],
       generatedAds: [],
+      brandLogo: null,
 
       setStep: (step) => set({ currentStep: step }),
       setAnalyzing: (v) => set({ isAnalyzing: v }),
@@ -124,6 +133,7 @@ export const useWizardStore = create<WizardState>()(
         set((state) => ({
           uploadedImages: state.uploadedImages.filter((i) => i.id !== id),
         })),
+      setBrandLogo: (logo) => set({ brandLogo: logo }),
       addGeneratedAd: (ad) =>
         set((state) => ({
           generatedAds: [...state.generatedAds, ad],
@@ -142,6 +152,7 @@ export const useWizardStore = create<WizardState>()(
           brandAnalysis: null,
           uploadedImages: [],
           generatedAds: [],
+          brandLogo: null,
         }),
     }),
     {
@@ -159,6 +170,7 @@ export const useWizardStore = create<WizardState>()(
         currentStep: state.currentStep,
         brandAnalysis: state.brandAnalysis,
         uploadedImages: state.uploadedImages,
+        brandLogo: state.brandLogo,
         // generatedAds not persisted — too heavy with base64 backgrounds
       }),
     }

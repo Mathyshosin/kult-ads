@@ -30,6 +30,8 @@ export default function ImagesPage() {
   const addImage = useWizardStore((s) => s.addImage);
   const removeImage = useWizardStore((s) => s.removeImage);
   const setStep = useWizardStore((s) => s.setStep);
+  const brandLogo = useWizardStore((s) => s.brandLogo);
+  const setBrandLogo = useWizardStore((s) => s.setBrandLogo);
 
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -129,6 +131,30 @@ export default function ImagesPage() {
       setError(err instanceof Error ? err.message : "Erreur upload");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleLogoUpload(files: File[]) {
+    if (files.length === 0) return;
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("images", files[0]);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+      const { images } = await res.json();
+      if (images[0]) {
+        setBrandLogo({
+          base64: images[0].base64,
+          mimeType: images[0].mimeType,
+          previewUrl: images[0].dataUrl,
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur upload logo");
     }
   }
 
@@ -291,6 +317,59 @@ export default function ImagesPage() {
               )}
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Brand Logo */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">
+          Logo de la marque
+        </h2>
+        <div className="bg-white rounded-2xl border border-border p-5">
+          {brandLogo ? (
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl overflow-hidden border border-border flex-shrink-0 bg-gray-50 flex items-center justify-center">
+                <img
+                  src={brandLogo.previewUrl}
+                  alt="Logo"
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Logo uploadé</p>
+                <p className="text-xs text-muted mt-0.5">
+                  Ce logo sera utilisé sur toutes les ads générées.
+                </p>
+              </div>
+              <button
+                onClick={() => setBrandLogo(null)}
+                className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+              >
+                Supprimer
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <p className="text-sm text-muted">
+                  Uploadez le logo pour qu&apos;il apparaisse sur les ads au lieu d&apos;un logo généré.
+                </p>
+              </div>
+              <label className="cursor-pointer bg-primary text-white px-4 py-2 rounded-xl text-xs font-medium hover:bg-primary-dark transition-colors">
+                Uploader le logo
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.length) {
+                      handleLogoUpload(Array.from(e.target.files));
+                    }
+                  }}
+                />
+              </label>
+            </div>
+          )}
         </div>
       </div>
 
