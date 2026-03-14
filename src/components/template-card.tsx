@@ -1,8 +1,8 @@
 "use client";
 
+import { useState, useRef, useEffect, useCallback } from "react";
 import type { AdTemplate } from "@/lib/types";
 import { X } from "lucide-react";
-import { INDUSTRY_TAGS, AD_TYPE_TAGS, PRODUCT_TYPE_TAGS } from "@/lib/template-tags";
 
 interface TemplateCardProps {
   template: AdTemplate;
@@ -22,6 +22,53 @@ const categories = [
   "autre",
 ];
 
+function DebouncedInput({
+  value,
+  onDebouncedChange,
+  placeholder,
+}: {
+  value: string;
+  onDebouncedChange: (v: string) => void;
+  placeholder: string;
+}) {
+  const [local, setLocal] = useState(value);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setLocal(value);
+  }, [value]);
+
+  const handleChange = useCallback(
+    (v: string) => {
+      setLocal(v);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => onDebouncedChange(v), 800);
+    },
+    [onDebouncedChange]
+  );
+
+  // Save on blur too
+  const handleBlur = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (local !== value) onDebouncedChange(local);
+  }, [local, value, onDebouncedChange]);
+
+  return (
+    <input
+      type="text"
+      value={local}
+      onChange={(e) => {
+        e.stopPropagation();
+        handleChange(e.target.value);
+      }}
+      onBlur={handleBlur}
+      onClick={(e) => e.stopPropagation()}
+      placeholder={placeholder}
+      className="w-full text-[11px] border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/30"
+    />
+  );
+}
+
 export default function TemplateCard({
   template,
   onRemove,
@@ -35,14 +82,14 @@ export default function TemplateCard({
 
   const tagCount = tags.industry.length + tags.adType.length + tags.productType.length;
 
-  function handleTagChange(
-    category: "industry" | "adType" | "productType",
-    value: string
-  ) {
-    onUpdate?.({
-      tags: { ...tags, [category]: value ? [value] : [] },
-    } as Partial<AdTemplate>);
-  }
+  const handleTagChange = useCallback(
+    (category: "industry" | "adType" | "productType", value: string) => {
+      onUpdate?.({
+        tags: { ...tags, [category]: value ? [value] : [] },
+      } as Partial<AdTemplate>);
+    },
+    [onUpdate, tags]
+  );
 
   return (
     <div
@@ -132,52 +179,23 @@ export default function TemplateCard({
               </select>
             </div>
 
-            {/* Tag dropdowns */}
+            {/* Tags - champs libres avec debounce */}
             <div className="space-y-1.5 pt-1 border-t border-border">
-              <select
+              <DebouncedInput
                 value={tags.industry[0] || ""}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  handleTagChange("industry", e.target.value);
-                }}
-                onClick={(e) => e.stopPropagation()}
-                className="w-full text-[11px] border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/30"
-              >
-                <option value="">-- Secteur --</option>
-                {INDUSTRY_TAGS.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-
-              <select
+                onDebouncedChange={(v) => handleTagChange("industry", v)}
+                placeholder="Secteur (ex: cosmétique, food, mode...)"
+              />
+              <DebouncedInput
                 value={tags.adType[0] || ""}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  handleTagChange("adType", e.target.value);
-                }}
-                onClick={(e) => e.stopPropagation()}
-                className="w-full text-[11px] border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/30"
-              >
-                <option value="">-- Type d&apos;ad --</option>
-                {AD_TYPE_TAGS.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-
-              <select
+                onDebouncedChange={(v) => handleTagChange("adType", v)}
+                placeholder="Type d'ad (ex: promo, comparaison, lifestyle...)"
+              />
+              <DebouncedInput
                 value={tags.productType[0] || ""}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  handleTagChange("productType", e.target.value);
-                }}
-                onClick={(e) => e.stopPropagation()}
-                className="w-full text-[11px] border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/30"
-              >
-                <option value="">-- Type de produit --</option>
-                {PRODUCT_TYPE_TAGS.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
+                onDebouncedChange={(v) => handleTagChange("productType", v)}
+                placeholder="Type de produit (ex: physique, service, saas...)"
+              />
             </div>
           </div>
         ) : (
