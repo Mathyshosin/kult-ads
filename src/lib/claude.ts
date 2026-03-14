@@ -119,6 +119,52 @@ Génère ${count} concepts DIFFÉRENTS pour ce produit.`,
   return textBlock ? textBlock.text : "";
 }
 
+// ── Analyze a template image and describe the scene for Gemini ──
+export async function describeTemplateScene(
+  templateBase64: string,
+  templateMimeType: string,
+  productName: string,
+  productDescription: string,
+): Promise<string> {
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 300,
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: templateMimeType as "image/png" | "image/jpeg" | "image/webp" | "image/gif",
+              data: templateBase64,
+            },
+          },
+          {
+            type: "text",
+            text: `Describe this ad's visual scene in English for an AI image generator. Focus ONLY on:
+- Layout and composition (where is the product positioned, how much space it takes)
+- Background (color, texture, environment)
+- Props and setting (surfaces, objects, people, hands)
+- Lighting (soft, dramatic, studio, natural)
+- Overall mood/aesthetic
+
+Write 2-3 sentences MAX. Be specific and concrete.
+Do NOT mention any text, logos, brand names, or typography.
+Replace the product in the image with: "${productName}" (${productDescription}).
+
+Example output: "Close-up of hands holding the product against a soft pink studio background. Minimalist flat lay composition with the product centered, surrounded by small decorative flowers. Warm soft lighting from above."`,
+          },
+        ],
+      },
+    ],
+  });
+
+  const textBlock = message.content.find((block) => block.type === "text");
+  return textBlock ? textBlock.text : "";
+}
+
 export async function generateAdCopy(
   brandName: string,
   tone: string,

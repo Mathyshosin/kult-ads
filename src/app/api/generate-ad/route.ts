@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateAdCopy } from "@/lib/claude";
+import { generateAdCopy, describeTemplateScene } from "@/lib/claude";
 import { generateImage } from "@/lib/gemini";
 import { getRandomTemplateWithImage, getTemplateByIdWithImage } from "@/lib/template-store";
 
@@ -12,7 +12,6 @@ export async function POST(request: Request) {
       productImageBase64,
       productImageMimeType,
       format,
-      // Mode: library (templateId) or custom (customPrompt)
       templateId,
       customPrompt,
     } = await request.json();
@@ -25,63 +24,60 @@ export async function POST(request: Request) {
     }
 
     const aspectRatio = format === "square" ? "1:1" : "9:16";
+    const colors = brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "modern, clean";
 
-    // ── Get template image ──
+    // ── Get template image (library mode only) ──
     const template = templateId
       ? getTemplateByIdWithImage(templateId)
       : customPrompt
-        ? null // Custom mode doesn't need a template
+        ? null
         : getRandomTemplateWithImage(format);
 
-    // Reference images
+    // ── Build scene description ──
+    let sceneDescription: string;
+
+    if (customPrompt) {
+      // Custom mode: user's own prompt
+      sceneDescription = customPrompt;
+    } else if (template) {
+      // Library mode: Claude analyzes the template and describes the scene
+      console.log("[generate-ad] Analyzing template with Claude...");
+      sceneDescription = await describeTemplateScene(
+        template.imageBase64,
+        template.mimeType,
+        product.name,
+        product.description || "",
+      );
+      console.log("[generate-ad] Scene description:", sceneDescription);
+    } else {
+      // Fallback
+      sceneDescription = "Product displayed on a clean minimal surface with soft professional studio lighting.";
+    }
+
+    // ── Reference images: only the product photo ──
     const referenceImages: Array<{
       base64: string;
       mimeType: string;
       label: string;
     }> = [];
 
-    if (template) {
-      referenceImages.push({
-        base64: template.imageBase64,
-        mimeType: template.mimeType,
-        label: "STYLE INSPIRATION — create a similar style ad for a different brand/product",
-      });
-    }
-
     if (productImageBase64) {
       referenceImages.push({
         base64: productImageBase64,
         mimeType: productImageMimeType || "image/png",
-        label: "PRODUCT to feature in the ad",
+        label: "PRODUCT to feature in the ad — keep it identical, do not modify",
       });
     }
 
-    // ── Build Gemini prompt ──
-    let visualPrompt: string;
-    const colors = brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "modern, clean";
+    // ── Gemini prompt: always a concrete scene description ──
+    const visualPrompt = `${aspectRatio} professional advertising photo for "${brandAnalysis.brandName}".
+Product: ${product.name}
 
-    // Product context for better prompt
-    const productContext = `Product: ${product.name}${product.description ? ` — ${product.description}` : ""}`;
+Scene: ${sceneDescription}
 
-    if (customPrompt) {
-      // Custom mode
-      visualPrompt = `${aspectRatio} professional product photography for "${brandAnalysis.brandName}".
-${productContext}
-
-Scene: ${customPrompt}
-
-The product must be naturally placed in the scene (on a surface, held in hands, worn, etc.) — NOT floating or pasted on. Keep the product identical to the PRODUCT reference image.
-Photorealistic, professional lighting. Leave empty space for text overlay.
-CRITICAL: Generate ZERO text, ZERO words, ZERO letters, ZERO logos, ZERO numbers anywhere in the image. The image must be purely photographic with no writing of any kind.`;
-    } else {
-      // Library mode
-      visualPrompt = `${aspectRatio} professional product photography for "${brandAnalysis.brandName}".
-${productContext}
-
-Use the STYLE INSPIRATION only for mood and composition direction. Create a completely new photo featuring the PRODUCT reference naturally in a real scene (on a surface, held in hands, worn, etc.) — NOT floating or pasted on. Keep the product identical to the reference.
-Colors: ${colors}. Photorealistic, professional lighting, shallow depth of field. Leave empty space for text overlay.
-CRITICAL: Generate ZERO text, ZERO words, ZERO letters, ZERO logos, ZERO numbers anywhere in the image. The image must be purely photographic with no writing of any kind.`;
-    }
+The product must appear naturally in the scene. Keep it identical to the PRODUCT reference.
+Colors: ${colors}. Photorealistic, professional lighting.
+CRITICAL: ZERO text, words, letters, logos, or numbers in the image.`;
 
     // ── SEQUENTIAL: Image first, then copy ──
     const visualResult = await generateImage(visualPrompt, aspectRatio, referenceImages);
