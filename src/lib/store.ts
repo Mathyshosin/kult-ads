@@ -169,9 +169,8 @@ export const useWizardStore = create<WizardState>()(
       partialize: (state) => ({
         currentStep: state.currentStep,
         brandAnalysis: state.brandAnalysis,
-        uploadedImages: state.uploadedImages,
-        brandLogo: state.brandLogo,
-        // generatedAds not persisted — too heavy with base64 backgrounds
+        // uploadedImages, brandLogo, generatedAds NOT persisted — base64 data
+        // blows past the ~5 MB localStorage quota.
       }),
     }
   )
