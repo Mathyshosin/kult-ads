@@ -90,12 +90,14 @@ export async function POST(request: Request) {
       });
     }
 
-    // Layout reference SECOND (structural guide only)
-    if (template) {
+    // Layout reference SECOND — ONLY for text-only templates (no products to confuse Gemini)
+    // For product templates, Gemini copies the template's products visually no matter what
+    // the prompt says, so we rely on Claude's detailed layout description instead.
+    if (template && isTextOnly) {
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: `LAYOUT REFERENCE (from a DIFFERENT brand — NOT "${brandAnalysis.brandName}"). Copy ONLY the visual structure: background, element positions, text arrangement, decorative shapes. REPLACE all products with the PRODUCT reference above. IGNORE all text, brand names, logos, and products in this image.`,
+        label: `LAYOUT REFERENCE (from a DIFFERENT brand — NOT "${brandAnalysis.brandName}"). Copy ONLY the visual structure: background, element positions, text arrangement, decorative shapes. IGNORE all text, brand names, and logos in this image.`,
       });
     }
 
@@ -103,54 +105,66 @@ export async function POST(request: Request) {
     let visualPrompt: string;
     const layout = templateAnalysis?.layout;
 
-    if (template && layout) {
-      // ── Template-based generation: pixel-perfect reproduction ──
-      const textContent = imageText
-        ? `\nEXACT TEXT TO DISPLAY (in French, with line breaks as shown):\n"${imageText}"\nSpell the brand name "${brandAnalysis.brandName}" EXACTLY.`
-        : "";
+    if (template && layout && isTextOnly) {
+      // ── Text-only template: layout reference image IS sent to Gemini ──
+      visualPrompt = `${aspectRatio} — Create a text-only advertising image for "${brandAnalysis.brandName}".
 
-      // Build product description for Gemini to know what to generate
+Reproduce the EXACT layout from the LAYOUT REFERENCE image:
+- Background: ${layout.backgroundStyle}
+- Decorative elements: ${layout.decorativeElements}
+- Text placement: ${layout.textPosition}
+- Typography: ${layout.typographyStyle}
+- CTA: ${layout.ctaStyle} at ${layout.ctaPosition}
+- Brand name position: ${layout.brandLogoPosition}
+
+TEXT (in French):
+${imageText ? `"${imageText}"` : `Write compelling French ad text for "${brandAnalysis.brandName}".`}
+Brand name EXACTLY: "${brandAnalysis.brandName}"
+
+This is a TEXT-ONLY ad — NO product photos, NO physical objects, NO people. Only typography and graphic elements.
+
+SCENE: ${sceneDescription}
+
+RULES:
+1. The ONLY brand name allowed is "${brandAnalysis.brandName}".
+2. Brand colors: ${colors}.
+${offer ? `3. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "3. No discount."}`;
+    } else if (template && layout && !isTextOnly) {
+      // ── Product template: NO layout reference image sent (Gemini copies products visually)
+      //    Instead, use Claude's detailed layout description + product photo only ──
       const productDesc = [
         product.name,
         product.description ? `(${product.description})` : "",
         product.features?.length ? `— ${product.features.slice(0, 3).join(", ")}` : "",
       ].filter(Boolean).join(" ");
 
-      visualPrompt = `${aspectRatio} — Create an advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
+      visualPrompt = `${aspectRatio} — Create a professional advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
 
-STEP 1 — ERASE FROM THE LAYOUT REFERENCE:
-Look at the LAYOUT REFERENCE image. It contains products, packaging, bottles, boxes, or objects from a DIFFERENT brand.
-You must COMPLETELY ERASE AND DELETE every single product, box, bottle, can, jar, packaging, and physical object visible in the LAYOUT REFERENCE.
-Replace the area where those products were with the background color/style.
+PRODUCT: Look at the PRODUCT reference image. This is "${product.name}" — ${productDesc}.
+${product.features?.length ? `Features: ${product.features.slice(0, 3).join(", ")}.` : ""}
+Show this EXACT product faithfully — same shape, colors, packaging. Do NOT redesign it.
 
-STEP 2 — PLACE THE CORRECT PRODUCT:
-Now look at the PRODUCT reference image. This is "${product.name}" — ${productDesc}.
-Place this product (exactly as shown in the PRODUCT reference) in the area where the layout reference had its products.
-${product.features?.length ? `This product is: ${product.features.slice(0, 3).join(", ")}.` : ""}
-Show ONLY this product. If the layout had multiple items, show 2-3 copies or angles of THIS product instead.
-
-STEP 3 — APPLY THE LAYOUT STRUCTURE:
+LAYOUT (reproduce this structure precisely):
+- Product placement: ${layout.productPosition}
 - Background: ${layout.backgroundStyle}
 - Decorative elements: ${layout.decorativeElements}
 - Text placement: ${layout.textPosition}
 - Typography: ${layout.typographyStyle}
 - CTA: ${layout.ctaStyle} at ${layout.ctaPosition}
-- Brand name: ${layout.brandLogoPosition}
+- Brand name position: ${layout.brandLogoPosition}
 
-STEP 4 — ADD TEXT (in French):
+TEXT (in French):
 ${imageText ? `"${imageText}"` : `Write compelling French ad text for "${brandAnalysis.brandName}" — "${product.name}".`}
 Brand name EXACTLY: "${brandAnalysis.brandName}"
 
-${isTextOnly ? "This is a TEXT-ONLY ad — NO product photos, NO physical objects, NO people. Only typography and graphic elements." : ""}
-
 SCENE: ${sceneDescription}
 
-ABSOLUTE RULES:
-1. ZERO products, boxes, bottles, cans, or packaging from the LAYOUT REFERENCE may appear. They must ALL be erased.
-2. The ONLY product allowed is "${product.name}" from the PRODUCT reference image.
-3. The ONLY brand name allowed is "${brandAnalysis.brandName}".
-4. Brand colors: ${colors}.
-${offer ? `5. DISCOUNT: Replace any percentage with "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "5. No discount. Replace any percentage with a key benefit."}`;
+RULES:
+1. The ONLY product is "${product.name}" from the PRODUCT reference. No other products.
+2. The ONLY brand name is "${brandAnalysis.brandName}".
+3. Brand colors: ${colors}.
+4. Photorealistic product, professional lighting, high-end advertising quality.
+${offer ? `5. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "5. No discount. Highlight the strongest product benefit."}`;
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
