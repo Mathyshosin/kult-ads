@@ -503,10 +503,11 @@ IRON RULES:
 1. You MUST produce EXACTLY ${meta.templateTextCount} text elements matching: ${meta.textElements.join(", ")}. Not one more.
 2. EVERY text element must be about "${brandContext.productName}" by "${brandContext.brandName}".
 3. ${meta.templateHasPrices ? "Template has prices — use real prices if available." : "Template has NO prices — ZERO prices in imageText."}
-4. NEVER add bullet points or feature lists unless the template has them.
+4. NEVER add bullet points, feature lists, star ratings, review counts, or statistics. Keep it clean.
 5. Keep text SHORT — match the template's text length roughly.
 6. NEVER add body text / descriptions unless the template has them.
 7. ALL text MUST be written in the SAME LANGUAGE as the brand's website/content. Match the brand's communication language exactly.
+8. NEVER invent numbers, percentages, ratings, or customer counts. Only use REAL data from the brand info provided.
 
 DISCOUNT RULES:
 ${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If the template shows a big percentage, write ONLY the number+% (e.g. "-60%"). The offer name can appear as small text IF the template has small text, but the BIG visible number must be ONLY the percentage.` : "- No offer. Replace any discount area with the brand's strongest selling point in 2-4 words."}

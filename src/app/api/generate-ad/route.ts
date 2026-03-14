@@ -252,9 +252,11 @@ STRICT RULES:
 2. ${logoInstruction}
 3. Brand colors: ${colors}.
 ${discountStr && !discountAlreadyInText ? `4. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "4. No extra discount text needed — it's already in the text above (or there is none)."}
-5. Display ONLY the text provided above. Do NOT add extra text, bullet points, descriptions, or prices not specified above. NEVER show any text element twice — each piece of text must appear exactly ONCE.
+5. Display ONLY the text provided above. Do NOT add extra text, bullet points, feature lists, star ratings, review counts, statistics, or any text not specified above. NEVER show any text element twice.
 6. Match the EXACT proportions and spacing from the layout reference — text sizes, margins, element positions must be faithful to the original template.
-7. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.`;
+7. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
+8. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display on the image. NEVER render position percentages as visible text.
+9. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.`;
     } else if (template && layout && !isTextOnly && templateAnalysis?.templateType === "comparison") {
       // ── COMPARISON / VS template ──
       const competitors = brandAnalysis.competitorProducts?.length
@@ -298,8 +300,10 @@ STRICT RULES:
 ${discountStr && !discountAlreadyInText ? `6. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "6. No extra discount text needed."}
 ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
 8. NEVER add labels or text ON the product.
-9. Display ONLY the text provided above. No extra text, no bullet points, no feature lists. NEVER show any text element twice.
-10. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.`;
+9. Display ONLY the text provided above. No extra text, no bullet points, no feature lists, no star ratings, no review counts, no statistics. NEVER show any text element twice.
+10. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
+11. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display. NEVER render position percentages as visible text.
+12. NEVER invent statistics, star ratings, review counts, or customer numbers.`;
     } else if (template && layout && !isTextOnly) {
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──
@@ -350,12 +354,14 @@ ${!noProduct ? `1. Show EXACTLY 1 unit of "${product.name}" from the PRODUCT ref
 4. The ONLY brand name is "${brandAnalysis.brandName}".
 ${discountStr && !discountAlreadyInText ? `5. DISCOUNT: Show "${discountStr}" prominently. Write it exactly as shown — no extra dashes. Show it ONLY ONCE.` : "5. No extra discount text needed — it's already in the text above (or there is none)."}
 ${showPrices ? `6. ${priceInfo}` : "6. NO PRICES on this image. Do NOT show any price, € symbol, or monetary amount anywhere."}
-7. Display ONLY the text provided above. Do NOT add extra text, bullet points, feature lists, product descriptions, or any text not specified above. NEVER show any text element twice — each piece of text must appear exactly ONCE.
+7. Display ONLY the text provided above. Do NOT add extra text, bullet points, feature lists, star ratings, review counts, statistics, product descriptions, or any text not specified above. NEVER show any text element twice.
 8. If the text above includes annotations with arrows/lines, each annotation MUST point to the correct part of the product.
 ${!noProduct ? "9. Photorealistic product, professional lighting, high-end advertising quality." : "9. Professional, high-end advertising quality."}
 10. Match the template's proportions EXACTLY — text size ratios, spacing, element positions must be faithful to the described layout.
 ${noHuman ? "11. Do NOT add any person, model, hand, or human figure. The template has NO people — keep it that way." : ""}
-12. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.`.trim();
+12. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
+13. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display on the image. NEVER render position percentages as visible text.
+14. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.`.trim();
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
