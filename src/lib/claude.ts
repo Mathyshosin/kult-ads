@@ -156,12 +156,14 @@ RULES:
 - Keep the SAME text structure (if template has 3 question lines + subtext + CTA, create 3 question lines + subtext + CTA)
 
 ━━━ STEP 4: SCENE DESCRIPTION ━━━
-Write a scene description that RECREATES the template's exact visual structure for "${brandContext.brandName}".
-Be extremely specific about positions, sizes, and proportions.
+Write a scene description that uses the template's VISUAL STYLE (background, colors, typography, decorative elements) for "${brandContext.brandName}".
 
-CRITICAL: In your scene description, replace ALL products from the template with "${brandContext.productName}" (${brandContext.productDescription || "the brand's product"}).
-For example, if the template shows boxes of supplements, describe "${brandContext.productName}" displayed in the same arrangement instead.
-NEVER describe the template's original products — describe "${brandContext.productName}" in their place.
+CRITICAL PRODUCT RULES:
+- COMPLETELY IGNORE how products are arranged in the template. Do NOT reproduce the template's product arrangement, quantity, or display style.
+- The template may show many boxes, bottles, packages stacked/arranged — IGNORE ALL OF THAT.
+- Instead, describe ONLY "${brandContext.productName}" (${brandContext.productDescription || "the brand's product"}) displayed simply and elegantly — 1 or 2 units, clean presentation.
+- NEVER describe boxes, packaging, stacks, pyramids, or arrangements from the template.
+- The product display should be SIMPLE: the product centered or positioned according to the layout, with clean professional styling.
 
 JSON ONLY (no markdown):
 {

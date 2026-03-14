@@ -143,15 +143,16 @@ ${offer ? `3. DISCOUNT: Show "${offer.discountValue && offer.discountType === "p
 PRODUCT: Look at the PRODUCT reference image. This is "${product.name}" — ${productDesc}.
 ${product.features?.length ? `Features: ${product.features.slice(0, 3).join(", ")}.` : ""}
 Show this EXACT product faithfully — same shape, colors, packaging. Do NOT redesign it.
+Display ONLY 1 or 2 units of this product, clean and simple. Do NOT create stacks, pyramids, or grids of products.
 
-LAYOUT (reproduce this structure precisely):
-- Product placement: ${layout.productPosition}
+VISUAL STYLE:
 - Background: ${layout.backgroundStyle}
 - Decorative elements: ${layout.decorativeElements}
 - Text placement: ${layout.textPosition}
 - Typography: ${layout.typographyStyle}
 - CTA: ${layout.ctaStyle} at ${layout.ctaPosition}
 - Brand name position: ${layout.brandLogoPosition}
+- Product area: ${layout.productPosition}
 
 TEXT (in French):
 ${imageText ? `"${imageText}"` : `Write compelling French ad text for "${brandAnalysis.brandName}" — "${product.name}".`}
@@ -160,11 +161,12 @@ Brand name EXACTLY: "${brandAnalysis.brandName}"
 SCENE: ${sceneDescription}
 
 RULES:
-1. The ONLY product is "${product.name}" from the PRODUCT reference. No other products.
-2. The ONLY brand name is "${brandAnalysis.brandName}".
-3. Brand colors: ${colors}.
-4. Photorealistic product, professional lighting, high-end advertising quality.
-${offer ? `5. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "5. No discount. Highlight the strongest product benefit."}`;
+1. Show ONLY "${product.name}" from the PRODUCT reference — 1 or 2 units max, elegantly displayed.
+2. Do NOT create boxes, packaging, stacks, or multiple product arrangements. Keep it CLEAN and SIMPLE.
+3. The ONLY brand name is "${brandAnalysis.brandName}".
+4. Brand colors: ${colors}.
+5. Photorealistic product, professional lighting, high-end advertising quality.
+${offer ? `6. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "6. No discount. Highlight the strongest product benefit."}`;
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
