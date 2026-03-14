@@ -85,36 +85,52 @@ Génère le texte publicitaire en français.`,
   },
   {
     id: "gemini-library",
-    title: "Gemini — Mode Bibliothèque",
-    model: "Gemini 2.5 Flash Image (gemini-2.5-flash-image)",
+    title: "Gemini — Mode Bibliothèque (produit)",
+    model: "Gemini 3.1 Flash Image (gemini-3.1-flash-image-preview)",
     icon: <Image className="w-4 h-4" />,
-    description: "L'utilisateur choisit un template de la bibliothèque. Gemini crée une NOUVELLE image de zéro en s'inspirant du style/mood du template, avec le produit de la marque.",
-    systemPrompt: `(Pas de system prompt — Gemini utilise un prompt direct avec images de référence)
+    description: "Claude analyse le template → décrit la scène adaptée → Gemini génère l'image avec la photo produit. Si le template est text-only, le mode textuel est activé automatiquement.",
+    systemPrompt: `(Pas de system prompt — Gemini utilise un prompt direct)
 
-Images de référence envoyées :
-1. [STYLE INSPIRATION] — "use this ad as inspiration for the overall layout, composition style, and visual mood. Do NOT copy it. Create a completely NEW image from scratch."
-2. [PRODUCT] — "this is the exact product to feature in the new ad. Do NOT modify it."`,
-    userPromptTemplate: `Create a brand new {aspectRatio} advertising photo from scratch for "{brandName}".
+Image de référence envoyée :
+1. [PRODUCT] — "use this EXACT product in the image. Do NOT create variants."
+(Pas d'image de référence si template text-only)`,
+    userPromptTemplate: `{aspectRatio} professional advertising photo for "{brandName}".
 
-Look at the STYLE INSPIRATION image and understand its visual approach: the type of composition, the mood, the lighting style, and the overall aesthetic. Then create a COMPLETELY NEW and DIFFERENT image that captures a similar vibe but features the PRODUCT from the reference photo.
+Scene: {sceneDescription — générée par Claude à partir du template}
 
-CRITICAL: Do NOT copy, edit, or overlay the inspiration image. Generate an entirely new photograph from scratch. The only thing you take from the inspiration is the general aesthetic direction.
+RULES:
+- The ONLY product allowed is "{productName}" from the PRODUCT reference.
+- Keep the product IDENTICAL — same shape, colors, packaging.
+- Colors: {colors}. Photorealistic, professional camera, high-end lighting.
+- {textInstruction — si imageText: inclure le texte / sinon: pas de texte}`,
+  },
+  {
+    id: "gemini-textonly",
+    title: "Gemini — Mode Text-Only",
+    model: "Gemini 3.1 Flash Image (gemini-3.1-flash-image-preview)",
+    icon: <Image className="w-4 h-4" />,
+    description: "Activé automatiquement quand Claude détecte un template purement textuel (pas de photo produit). Génère un visuel typographique/graphique sans photo produit.",
+    systemPrompt: `(Pas de system prompt — Gemini utilise un prompt direct)
 
-Rules:
-- Create a COMPLETELY NEW image — do NOT paste the product onto the inspiration image.
-- The PRODUCT from the reference must be the hero — feature it prominently as the clear focal point.
-- Keep the product IDENTICAL to the PRODUCT reference — same packaging, colors, shape. Do NOT redesign it.
-- Be inspired by the STYLE INSPIRATION's mood and composition type, but create a fresh, unique scene.
-- If a person appears in the scene, they MUST be holding or wearing the product directly.
-- Leave breathing room in the image (top or bottom third) for text overlay later.
-- Color palette: {colors}.
-- Photorealistic, shot on professional camera, shallow depth of field on background.
-- Absolutely NO text, words, letters, numbers, watermarks, or UI elements.`,
+AUCUNE image de référence envoyée (pas de photo produit).`,
+    userPromptTemplate: `{aspectRatio} bold graphic advertising design for "{brandName}".
+
+Scene: {sceneDescription — générée par Claude}
+
+This is a TEXT-FOCUSED graphic ad — NO product photography, NO physical objects.
+
+RULES:
+- TYPOGRAPHIC / GRAPHIC design. Bold typography, colors, shapes, patterns, gradients.
+- {textContent — headline adapté à la marque}
+- Colors: {colors}. Premium, on-brand.
+- Text = hero of the image. Large, readable.
+- NO product photos, NO physical objects, NO people.
+- Professional graphic design quality, clean layout.`,
   },
   {
     id: "gemini-custom",
     title: "Gemini — Mode Personnalisé",
-    model: "Gemini 2.5 Flash Image (gemini-2.5-flash-image)",
+    model: "Gemini 3.1 Flash Image (gemini-3.1-flash-image-preview)",
     icon: <Image className="w-4 h-4" />,
     description: "L'utilisateur écrit sa propre description de scène. Gemini crée une NOUVELLE image de zéro à partir de cette description en intégrant le produit.",
     systemPrompt: `(Pas de system prompt — Gemini utilise un prompt direct avec image produit)
@@ -136,10 +152,10 @@ Rules:
   {
     id: "gemini-config",
     title: "Configuration Gemini",
-    model: "Gemini 2.5 Flash Image",
+    model: "Gemini 3.1 Flash Image Preview",
     icon: <Cpu className="w-4 h-4" />,
     description: "Paramètres techniques de l'appel Gemini : modèle, retry, backoff.",
-    systemPrompt: `Modèle : gemini-2.5-flash-image
+    systemPrompt: `Modèle : gemini-3.1-flash-image-preview
 Response modalities : ["IMAGE", "TEXT"]
 Max retries : 3
 Backoff : exponentiel (1s, 2s, 3s)
@@ -243,9 +259,9 @@ export default function AdminPage() {
               <div className="w-6 h-6 rounded-md bg-blue-100 flex items-center justify-center">
                 <Image className="w-3.5 h-3.5 text-blue-600" />
               </div>
-              <span className="text-xs font-semibold text-foreground">Gemini 2.5 Flash</span>
+              <span className="text-xs font-semibold text-foreground">Gemini 3.1 Flash</span>
             </div>
-            <p className="text-[11px] text-muted">2 modes : bibliothèque (template) ou personnalisé (prompt libre)</p>
+            <p className="text-[11px] text-muted">3 modes : bibliothèque, text-only (auto), personnalisé</p>
           </div>
         </div>
 

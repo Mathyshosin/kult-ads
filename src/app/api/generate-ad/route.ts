@@ -50,6 +50,7 @@ export async function POST(request: Request) {
     // ── Build scene description ──
     let sceneDescription: string;
     let imageText: string | null = null;
+    let isTextOnly = false;
 
     if (customPrompt) {
       sceneDescription = customPrompt;
@@ -62,20 +63,22 @@ export async function POST(request: Request) {
       );
       sceneDescription = analysis.scene;
       imageText = analysis.imageText;
+      isTextOnly = analysis.isTextOnly;
       console.log("[generate-ad] Scene:", sceneDescription);
       console.log("[generate-ad] Image text:", imageText);
+      console.log("[generate-ad] Text-only template:", isTextOnly);
     } else {
       sceneDescription = "Product displayed on a clean minimal surface with soft professional studio lighting.";
     }
 
-    // ── Reference images: only the product photo ──
+    // ── Reference images: product photo (skipped for text-only templates) ──
     const referenceImages: Array<{
       base64: string;
       mimeType: string;
       label: string;
     }> = [];
 
-    if (productImageBase64) {
+    if (productImageBase64 && !isTextOnly) {
       referenceImages.push({
         base64: productImageBase64,
         mimeType: productImageMimeType || "image/png",
@@ -84,11 +87,34 @@ export async function POST(request: Request) {
     }
 
     // ── Gemini prompt ──
-    const textInstruction = imageText
-      ? `Include this text prominently on the image in a bold, stylish font: "${imageText}". The brand name "${brandAnalysis.brandName}" must be spelled EXACTLY like this if it appears.`
-      : `Do NOT include any text, words, letters, logos, or numbers in the image.`;
+    let visualPrompt: string;
 
-    const visualPrompt = `${aspectRatio} professional advertising photo for "${brandAnalysis.brandName}".
+    if (isTextOnly) {
+      // Text-only template: graphic/typographic ad, NO product photo
+      const textContent = imageText
+        ? `The main headline text on the image MUST be: "${imageText}". Spell the brand name "${brandAnalysis.brandName}" EXACTLY like this.`
+        : `Create compelling French text for "${brandAnalysis.brandName}" using their key selling points.`;
+
+      visualPrompt = `${aspectRatio} bold graphic advertising design for "${brandAnalysis.brandName}".
+
+Scene: ${sceneDescription}
+
+This is a TEXT-FOCUSED graphic ad — NO product photography, NO physical objects.
+
+RULES:
+- This is a TYPOGRAPHIC / GRAPHIC design. Use bold typography, colors, shapes, patterns, gradients as the main visual.
+- ${textContent}
+- Colors: ${colors}. The design must feel premium and on-brand.
+- Text must be large, readable, and the hero of the image.
+- NO product photos, NO physical objects, NO people. Only typography and graphic elements.
+- Professional graphic design quality, clean layout.`;
+    } else {
+      // Standard template: product photo ad
+      const textInstruction = imageText
+        ? `Include this text prominently on the image in a bold, stylish font: "${imageText}". The brand name "${brandAnalysis.brandName}" must be spelled EXACTLY like this if it appears.`
+        : `Do NOT include any text, words, letters, logos, or numbers in the image.`;
+
+      visualPrompt = `${aspectRatio} professional advertising photo for "${brandAnalysis.brandName}".
 
 Scene: ${sceneDescription}
 
@@ -97,6 +123,7 @@ RULES:
 - Keep the product IDENTICAL to the PRODUCT reference — same shape, colors, packaging. Do NOT redesign it.
 - Colors: ${colors}. Photorealistic, professional camera, high-end lighting.
 ${textInstruction}`;
+    }
 
     // ── SEQUENTIAL: Image first, then copy ──
     const visualResult = await generateImage(visualPrompt, aspectRatio, referenceImages);

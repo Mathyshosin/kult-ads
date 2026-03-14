@@ -78,13 +78,13 @@ export async function describeTemplateScene(
   templateBase64: string,
   templateMimeType: string,
   brandContext: BrandContext,
-): Promise<{ scene: string; imageText: string | null }> {
+): Promise<{ scene: string; imageText: string | null; isTextOnly: boolean }> {
 
   const context = buildBrandContext(brandContext);
 
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
-    max_tokens: 600,
+    max_tokens: 800,
     messages: [
       {
         role: "user",
@@ -99,32 +99,52 @@ export async function describeTemplateScene(
           },
           {
             type: "text",
-            text: `You are a creative director. Look at this ad template and extract ONLY its abstract structure, then create a NEW ad concept for a completely different brand.
+            text: `You are a creative director. Look at this ad template and create a NEW ad concept for a completely different brand.
 
 TARGET BRAND:
 ${context}
 
-STEP 1 — EXTRACT ABSTRACT STRUCTURE ONLY:
-What is the LAYOUT TYPE? (split screen, centered product, full-bleed, flat lay, grid, etc.)
-What is the CONCEPT TYPE? (VS/comparison, offer/promo, benefit, lifestyle, showcase, social proof)
+STEP 1 — CLASSIFY THE TEMPLATE:
+First, determine: does this template contain a PRODUCT PHOTO or PHYSICAL OBJECT as the main visual?
+
+TEXT-ONLY template examples (isTextOnly = true):
+- Only text/typography with colored background
+- Graphic elements like toggle switches, icons, shapes, patterns — but NO product photo
+- Infographic-style with text and abstract visuals
+- Bold headline with CTA button, no product imagery
+
+PRODUCT template examples (isTextOnly = false):
+- A product (bottle, jar, clothing, food, etc.) is clearly visible as the hero
+- A person using/wearing/holding a product
+- A lifestyle photo with a physical product in it
+
+STEP 2 — EXTRACT ABSTRACT STRUCTURE:
+What is the LAYOUT TYPE? (split screen, centered, full-bleed, flat lay, grid, etc.)
+What is the CONCEPT TYPE? (VS/comparison, offer/promo, benefit, lifestyle, showcase, toggle/switch, question/answer)
 What is the BACKGROUND TYPE? (solid color, gradient, photo, texture)
 What is the MOOD? (energetic, minimal, luxurious, playful, professional)
 
 ABSOLUTE RULES — NEVER VIOLATE:
-- NEVER mention ANY product, brand, logo, jar, bottle, box, or object visible in the template
+- NEVER mention ANY product, brand, logo, or object visible in the template
 - NEVER copy ANY text, slogan, number, or claim from the template
-- NEVER describe specific props from the template (no jars, no bottles, no boxes from other brands)
-- Your scene must contain ONLY "${brandContext.productName}" by "${brandContext.brandName}" — NOTHING from the template's brand
+- NEVER describe specific props from the template
 
-STEP 2 — BUILD A 100% NEW SCENE for "${brandContext.productName}":
-Using the abstract structure from Step 1, describe a completely new scene.
-- VS/comparison → "${brandContext.productName}" on the left VS a generic competing product that people actually use as an alternative (describe the competitor generically, e.g. "disposable pads" not a specific brand)
-- Offer/promo → "${brandContext.productName}" showcased prominently ${brandContext.offerTitle ? `with the offer "${brandContext.offerTitle}"` : "with its key benefit"}
-- Lifestyle → "${brandContext.productName}" used naturally by ${brandContext.targetAudience || "a customer"}
-- Showcase → "${brandContext.productName}" in a clean, professional product photo
-- All accessories and props must be relevant to "${brandContext.productName}" — NOT copied from the template
+STEP 3 — BUILD THE NEW SCENE:
 
-STEP 3 — TEXT (if the template has text):
+IF isTextOnly = true (template has NO product photo):
+→ Describe a PURELY GRAPHIC/TYPOGRAPHIC scene. NO product photo, NO physical objects, NO people.
+→ Use bold typography, graphic elements, shapes, colors as the visual.
+→ Recreate the same CONCEPT (toggle, question, statement, comparison) but with "${brandContext.brandName}" content.
+→ Example: if template has toggle switches → describe toggle switches with "${brandContext.brandName}" labels. If template is a bold question → describe bold question text about "${brandContext.productName}".
+
+IF isTextOnly = false (template HAS a product photo):
+→ Describe a scene featuring "${brandContext.productName}" as the hero product.
+→ VS/comparison → "${brandContext.productName}" VS a generic competing product (e.g. "disposable pads")
+→ Offer/promo → "${brandContext.productName}" showcased prominently ${brandContext.offerTitle ? `with the offer "${brandContext.offerTitle}"` : "with its key benefit"}
+→ Lifestyle → "${brandContext.productName}" used naturally by ${brandContext.targetAudience || "a customer"}
+→ Showcase → "${brandContext.productName}" in a clean, professional product photo
+
+STEP 4 — TEXT (if the template has text):
 Create NEW French text using ONLY these real facts about "${brandContext.brandName}":
 ${brandContext.offerTitle ? `- Offer: "${brandContext.offerTitle}"` : "- No offer. Use strongest selling point."}
 ${brandContext.uniqueSellingPoints?.length ? `- USPs: ${brandContext.uniqueSellingPoints.join(", ")}` : ""}
@@ -132,7 +152,8 @@ Brand name spelled EXACTLY: "${brandContext.brandName}"
 
 JSON ONLY (no markdown):
 {
-  "scene": "2-3 sentences in ENGLISH. New scene using ONLY ${brandContext.productName}. No elements from the template's brand.",
+  "isTextOnly": true or false,
+  "scene": "2-3 sentences in ENGLISH describing the new scene. If isTextOnly=true: describe ONLY graphic/typographic elements, NO product. If isTextOnly=false: describe scene with the product.",
   "imageText": "French headline for the image (max 6 words) using real brand facts. null if template has no text."
 }`,
           },
@@ -149,18 +170,19 @@ JSON ONLY (no markdown):
     return {
       scene: parsed.scene || "Product displayed elegantly on a clean surface with professional lighting.",
       imageText: parsed.imageText || null,
+      isTextOnly: parsed.isTextOnly === true,
     };
   } catch {
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[0]);
-        return { scene: parsed.scene || raw, imageText: parsed.imageText || null };
+        return { scene: parsed.scene || raw, imageText: parsed.imageText || null, isTextOnly: parsed.isTextOnly === true };
       } catch {
-        return { scene: raw, imageText: null };
+        return { scene: raw, imageText: null, isTextOnly: false };
       }
     }
-    return { scene: raw, imageText: null };
+    return { scene: raw, imageText: null, isTextOnly: false };
   }
 }
 
