@@ -195,6 +195,8 @@ Describe with EXTREME PRECISION using % of image dimensions:
 ━━━ STEP 4: CREATE ADAPTED TEXT — STRICT MATCHING ━━━
 Replace the template's text for "${brandContext.brandName}".
 
+CRITICAL: The template is from a COMPLETELY DIFFERENT brand/product. You must REPLACE ALL text with content about "${brandContext.brandName}" and "${brandContext.productName}". NEVER copy, reuse, or keep ANY word or phrase from the template's original text. The template text is irrelevant — only the STRUCTURE matters (how many elements, their sizes, their positions).
+
 IRON RULES:
 1. You MUST produce EXACTLY the same number of text elements as the template (templateTextCount). Not one more.
 2. If the template has: headline + percentage + brand name + date = produce EXACTLY: headline + percentage + brand name + date. Nothing else.
@@ -203,6 +205,7 @@ IRON RULES:
 5. NEVER add body text / descriptions unless the template has them.
 6. NEVER add annotations with arrows unless the template has them.
 7. Keep text SHORT — each element should be roughly the same length as the template's equivalent.
+8. EVERY text element must be about "${brandContext.productName}" by "${brandContext.brandName}". If the template headline says "WC Japonais" or "Shampoing Bio" — IGNORE it completely and write a headline about "${brandContext.productName}" instead.
 
 DISCOUNT RULES:
 ${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If the template shows a big percentage, write ONLY the number+% (e.g. "-60%"). The offer name can appear as small text IF the template has small text, but the BIG visible number must be ONLY the percentage.` : "- No offer. Replace any discount area with the brand's strongest selling point in 2-4 words."}
