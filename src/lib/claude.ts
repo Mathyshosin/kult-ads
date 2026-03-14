@@ -119,16 +119,23 @@ Génère ${count} concepts DIFFÉRENTS pour ce produit.`,
   return textBlock ? textBlock.text : "";
 }
 
-// ── Analyze a template image and describe the scene for Gemini ──
+// ── Analyze a template and create an adapted scene description + text ──
 export async function describeTemplateScene(
   templateBase64: string,
   templateMimeType: string,
   productName: string,
   productDescription: string,
-): Promise<string> {
+  brandName: string,
+  offerTitle?: string,
+  offerDescription?: string,
+): Promise<{ scene: string; imageText: string | null }> {
+  const offerContext = offerTitle
+    ? `The brand has this offer: "${offerTitle}" (${offerDescription || ""}). Use it for the text.`
+    : `No special offer. Use a compelling selling point about ${productName} for the text.`;
+
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
-    max_tokens: 300,
+    max_tokens: 500,
     messages: [
       {
         role: "user",
@@ -143,18 +150,26 @@ export async function describeTemplateScene(
           },
           {
             type: "text",
-            text: `Describe this ad's visual scene in English for an AI image generator. Focus ONLY on:
-- Layout and composition (where is the product positioned, how much space it takes)
-- Background (color, texture, environment)
-- Props and setting (surfaces, objects, people, hands)
-- Lighting (soft, dramatic, studio, natural)
-- Overall mood/aesthetic
+            text: `You are a creative director. Analyze this ad template and create instructions for an AI image generator to produce a similar ad for a DIFFERENT product.
 
-Write 2-3 sentences MAX. Be specific and concrete.
-Do NOT mention any text, logos, brand names, or typography.
-Replace the product in the image with: "${productName}" (${productDescription}).
+PRODUCT TO ADVERTISE: "${productName}" (${productDescription}) by "${brandName}"
 
-Example output: "Close-up of hands holding the product against a soft pink studio background. Minimalist flat lay composition with the product centered, surrounded by small decorative flowers. Warm soft lighting from above."`,
+STEP 1 — ADAPT THE CONCEPT (not copy literally):
+Look at the template's CONCEPT (what makes it eye-catching). Then reimagine it for "${productName}".
+- If the template shows stacked boxes → for underwear, show neatly folded/arranged underwear
+- If the template shows someone holding a product → show someone holding/wearing ${productName}
+- If the template shows a flat lay → show ${productName} in a flat lay with relevant accessories
+The VIBE and ENERGY should match, but the scene must make sense for ${productName}.
+
+STEP 2 — TEXT ON THE IMAGE:
+Does the template have prominent text/headlines on the image itself? If yes, provide adapted text for ${brandName}.
+${offerContext}
+
+Respond in JSON ONLY (no markdown):
+{
+  "scene": "2-3 sentences in ENGLISH describing the adapted scene for the image generator. Be specific about composition, background, lighting, product placement.",
+  "imageText": "Short French text to display ON the image (max 6 words, like a headline/offer). null if the template has no text on it."
+}`,
           },
         ],
       },
@@ -162,7 +177,26 @@ Example output: "Close-up of hands holding the product against a soft pink studi
   });
 
   const textBlock = message.content.find((block) => block.type === "text");
-  return textBlock ? textBlock.text : "";
+  const raw = textBlock?.text || "";
+
+  try {
+    const parsed = JSON.parse(raw);
+    return {
+      scene: parsed.scene || "Product displayed elegantly on a clean surface with professional lighting.",
+      imageText: parsed.imageText || null,
+    };
+  } catch {
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return { scene: parsed.scene || raw, imageText: parsed.imageText || null };
+      } catch {
+        return { scene: raw, imageText: null };
+      }
+    }
+    return { scene: raw, imageText: null };
+  }
 }
 
 export async function generateAdCopy(
