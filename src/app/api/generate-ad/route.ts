@@ -26,6 +26,20 @@ export async function POST(request: Request) {
     const aspectRatio = format === "square" ? "1:1" : "9:16";
     const colors = brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "modern, clean";
 
+    // ── Full brand context (shared between Claude calls) ──
+    const brandContext = {
+      brandName: brandAnalysis.brandName,
+      brandDescription: brandAnalysis.brandDescription,
+      tone: brandAnalysis.tone,
+      targetAudience: brandAnalysis.targetAudience,
+      uniqueSellingPoints: brandAnalysis.uniqueSellingPoints,
+      productName: product.name,
+      productDescription: product.description || "",
+      productFeatures: product.features,
+      offerTitle: offer?.title,
+      offerDescription: offer?.description,
+    };
+
     // ── Get template image (library mode only) ──
     const template = templateId
       ? getTemplateByIdWithImage(templateId)
@@ -38,19 +52,13 @@ export async function POST(request: Request) {
     let imageText: string | null = null;
 
     if (customPrompt) {
-      // Custom mode: user's own prompt
       sceneDescription = customPrompt;
     } else if (template) {
-      // Library mode: Claude analyzes + adapts the template
       console.log("[generate-ad] Analyzing template with Claude...");
       const analysis = await describeTemplateScene(
         template.imageBase64,
         template.mimeType,
-        product.name,
-        product.description || "",
-        brandAnalysis.brandName,
-        offer?.title,
-        offer?.description,
+        brandContext,
       );
       sceneDescription = analysis.scene;
       imageText = analysis.imageText;
@@ -71,13 +79,13 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: productImageBase64,
         mimeType: productImageMimeType || "image/png",
-        label: "PRODUCT to feature in the ad — keep it identical, do not modify",
+        label: "PRODUCT — use this EXACT product in the image. Do NOT create variants, do NOT redesign it, do NOT change its appearance in any way.",
       });
     }
 
     // ── Gemini prompt ──
     const textInstruction = imageText
-      ? `Include this text prominently on the image in a bold, stylish font: "${imageText}". Make the text readable and well-integrated into the design.`
+      ? `Include this text prominently on the image in a bold, stylish font: "${imageText}". The brand name "${brandAnalysis.brandName}" must be spelled EXACTLY like this if it appears.`
       : `Do NOT include any text, words, letters, logos, or numbers in the image.`;
 
     const visualPrompt = `${aspectRatio} professional advertising photo for "${brandAnalysis.brandName}".
@@ -85,7 +93,7 @@ Product: ${product.name}
 
 Scene: ${sceneDescription}
 
-The product must appear naturally in the scene. Keep it identical to the PRODUCT reference.
+IMPORTANT: Use the EXACT product from the PRODUCT reference image. Do NOT create a different version, variant, or redesign. The product must look identical to the reference photo and appear naturally in the scene.
 Colors: ${colors}. Photorealistic, professional lighting.
 ${textInstruction}`;
 
@@ -99,22 +107,17 @@ ${textInstruction}`;
       );
     }
 
-    // Copy angle for Claude copywriting
+    // Copy angle
     const copyAngle = customPrompt
       ? `Adapte le texte à cette direction créative : ${customPrompt}`
       : imageText
-        ? `Le texte "${imageText}" est déjà sur l'image. Complète avec un body text et CTA cohérents.`
-        : "Mets en avant le bénéfice principal du produit de manière percutante.";
+        ? `Le texte "${imageText}" est déjà sur l'image. Complète avec un body text et CTA cohérents qui renforcent ce message.`
+        : "Mets en avant le bénéfice le plus fort du produit avec les vrais arguments de la marque.";
 
     const copyRaw = await generateAdCopy(
-      brandAnalysis.brandName,
-      brandAnalysis.tone,
-      product.name,
-      product.description,
-      offer?.title,
-      offer?.description,
+      brandContext,
       format,
-      copyAngle
+      copyAngle,
     );
 
     // Parse copy

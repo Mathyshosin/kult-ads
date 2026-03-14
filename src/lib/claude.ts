@@ -45,97 +45,46 @@ Règles:
   return textBlock ? textBlock.text : "";
 }
 
-// ── Generate smart, product-specific ad concepts ──
-export async function generateAdConcepts(
-  brandName: string,
-  brandDescription: string,
-  tone: string,
-  productName: string,
-  productDescription: string,
-  targetAudience: string,
-  colors: string[],
-  uniqueSellingPoints: string[],
-  offerTitle?: string,
-  offerDescription?: string,
-  count: number = 4,
-  customDirection?: string,
-  existingAdTypes?: string[]
-): Promise<string> {
-  const systemPrompt = `Tu es un directeur artistique expert en publicités statiques pour Instagram/Facebook/TikTok.
+// ── Brand context builder (used by multiple functions) ──
+interface BrandContext {
+  brandName: string;
+  brandDescription?: string;
+  tone?: string;
+  targetAudience?: string;
+  uniqueSellingPoints?: string[];
+  productName: string;
+  productDescription: string;
+  productFeatures?: string[];
+  offerTitle?: string;
+  offerDescription?: string;
+}
 
-CONTEXTE : Gemini reçoit la photo du produit + un template de style. Il crée une image publicitaire COMPLÈTE avec le produit intégré. Le texte est ajouté en CSS par-dessus.
-
-RÈGLES :
-1. scenePrompt en ANGLAIS, COURT (2-3 phrases MAX)
-2. Le produit est fourni en photo — Gemini l'intègre TEL QUEL
-3. Chaque concept = un adType DIFFÉRENT et une scène DIFFÉRENTE
-4. RÈGLE PERSONNES : Si une personne apparaît dans la scène, elle DOIT soit TENIR le produit en main, soit le PORTER sur elle. Jamais une personne à côté du produit sans interaction directe.
-
-TYPES D'ADS :
-- "offre" : promo/réduction
-- "bénéfice" : avantage clé du produit
-- "comparaison" : VS alternative
-- "témoignage" : preuve sociale
-- "lifestyle" : produit dans la vraie vie
-- "premium" : luxe, haut de gamme
-- "urgence" : stock limité
-
-JSON UNIQUEMENT :
-{
-  "concepts": [
-    {
-      "id": "concept-1",
-      "adType": "string",
-      "scenePrompt": "string (ANGLAIS, 2-3 phrases)",
-      "copyAngle": "string (FRANÇAIS)"
-    }
-  ]
-}`;
-
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 2000,
-    system: systemPrompt,
-    messages: [
-      {
-        role: "user",
-        content: `Marque : ${brandName}
-Description : ${brandDescription}
-Ton : ${tone}
-Couleurs : ${colors.join(", ")}
-Produit : ${productName} — ${productDescription}
-Audience : ${targetAudience}
-Points forts : ${uniqueSellingPoints.join(", ")}
-${offerTitle ? `Offre en cours : ${offerTitle} — ${offerDescription}` : "Pas d'offre spéciale."}
-${customDirection ? `\nDIRECTION DU CLIENT (PRIORITAIRE) : ${customDirection}` : ""}
-${existingAdTypes && existingAdTypes.length > 0 ? `\nCONCEPTS DÉJÀ UTILISÉS (NE PAS RÉPÉTER) : ${existingAdTypes.join(", ")}` : ""}
-
-Génère ${count} concepts DIFFÉRENTS pour ce produit.`,
-      },
-    ],
-  });
-
-  const textBlock = message.content.find((block) => block.type === "text");
-  return textBlock ? textBlock.text : "";
+function buildBrandContext(ctx: BrandContext): string {
+  const parts = [
+    `Brand: "${ctx.brandName}" (EXACT SPELLING — never add accents, change capitalization, or modify this name)`,
+    ctx.brandDescription ? `About: ${ctx.brandDescription}` : null,
+    ctx.tone ? `Tone: ${ctx.tone}` : null,
+    ctx.targetAudience ? `Target audience: ${ctx.targetAudience}` : null,
+    ctx.uniqueSellingPoints?.length ? `Key selling points: ${ctx.uniqueSellingPoints.join(" | ")}` : null,
+    `Product: "${ctx.productName}" — ${ctx.productDescription}`,
+    ctx.productFeatures?.length ? `Product features: ${ctx.productFeatures.join(", ")}` : null,
+    ctx.offerTitle ? `Current offer: ${ctx.offerTitle}${ctx.offerDescription ? ` — ${ctx.offerDescription}` : ""}` : null,
+  ];
+  return parts.filter(Boolean).join("\n");
 }
 
 // ── Analyze a template and create an adapted scene description + text ──
 export async function describeTemplateScene(
   templateBase64: string,
   templateMimeType: string,
-  productName: string,
-  productDescription: string,
-  brandName: string,
-  offerTitle?: string,
-  offerDescription?: string,
+  brandContext: BrandContext,
 ): Promise<{ scene: string; imageText: string | null }> {
-  const offerContext = offerTitle
-    ? `The brand has this offer: "${offerTitle}" (${offerDescription || ""}). Use it for the text.`
-    : `No special offer. Use a compelling selling point about ${productName} for the text.`;
+
+  const context = buildBrandContext(brandContext);
 
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
-    max_tokens: 500,
+    max_tokens: 600,
     messages: [
       {
         role: "user",
@@ -150,25 +99,38 @@ export async function describeTemplateScene(
           },
           {
             type: "text",
-            text: `You are a creative director. Analyze this ad template and create instructions for an AI image generator to produce a similar ad for a DIFFERENT product.
+            text: `You are a senior creative director at a top advertising agency. Analyze this ad template and create instructions to produce a SIMILAR but ADAPTED ad for a completely different brand and product.
 
-PRODUCT TO ADVERTISE: "${productName}" (${productDescription}) by "${brandName}"
+BRAND & PRODUCT CONTEXT:
+${context}
 
-STEP 1 — ADAPT THE CONCEPT (not copy literally):
-Look at the template's CONCEPT (what makes it eye-catching). Then reimagine it for "${productName}".
-- If the template shows stacked boxes → for underwear, show neatly folded/arranged underwear
-- If the template shows someone holding a product → show someone holding/wearing ${productName}
-- If the template shows a flat lay → show ${productName} in a flat lay with relevant accessories
-The VIBE and ENERGY should match, but the scene must make sense for ${productName}.
+YOUR TASKS:
 
-STEP 2 — TEXT ON THE IMAGE:
-Does the template have prominent text/headlines on the image itself? If yes, provide adapted text for ${brandName}.
-${offerContext}
+1. UNDERSTAND THE TEMPLATE'S CONCEPT — what TYPE of ad is this?
+   - Is it a VS/comparison ad? (product vs competitor)
+   - Is it a lifestyle shot? (product in real life)
+   - Is it an offer/promo ad? (discount, free shipping)
+   - Is it a benefit-focused ad? (highlighting a feature)
+   - Is it a social proof ad? (testimonials, numbers)
+   - Is it a product showcase? (flat lay, studio shot)
 
-Respond in JSON ONLY (no markdown):
+2. ADAPT THE CONCEPT INTELLIGENTLY for "${brandContext.productName}":
+   - VS/comparison: pick a REAL competing product that makes sense. E.g. for menstrual underwear → "culotte menstruelle VS serviette hygiénique". For reusable water bottle → "gourde VS bouteille plastique". The competitor must be an actual alternative people use.
+   - Lifestyle: show the product being used naturally by the target audience (${brandContext.targetAudience || "the customer"}).
+   - Offer/promo: if there's an offer, use it. Otherwise use the strongest selling point.
+   - Benefit: pick the most compelling feature from: ${brandContext.uniqueSellingPoints?.join(", ") || brandContext.productDescription}
+   - Social proof: use real-sounding numbers and claims based on the brand.
+
+3. TEXT ON THE IMAGE:
+   - If the template has prominent text, create adapted French text for "${brandContext.brandName}".
+   - The brand name must be spelled EXACTLY: "${brandContext.brandName}" (no modifications).
+   - Use the REAL offer, features, or selling points — not generic marketing fluff.
+   ${brandContext.offerTitle ? `- Use this real offer: "${brandContext.offerTitle}"` : "- No offer available. Use the strongest selling point."}
+
+Respond in JSON ONLY (no markdown, no backticks):
 {
-  "scene": "2-3 sentences in ENGLISH describing the adapted scene for the image generator. Be specific about composition, background, lighting, product placement.",
-  "imageText": "Short French text to display ON the image (max 6 words, like a headline/offer). null if the template has no text on it."
+  "scene": "2-3 sentences in ENGLISH. Describe the adapted scene for an image generator. Be very specific about: background, lighting, product placement, props, composition. The scene must make total sense for ${brandContext.productName}.",
+  "imageText": "French text for ON the image (max 8 words). Use brand name exactly as '${brandContext.brandName}'. null if template has no text."
 }`,
           },
         ],
@@ -200,26 +162,27 @@ Respond in JSON ONLY (no markdown):
 }
 
 export async function generateAdCopy(
-  brandName: string,
-  tone: string,
-  productName: string,
-  productDescription: string,
-  offerTitle?: string,
-  offerDescription?: string,
+  brandContext: BrandContext,
   format?: string,
   conversionAngle?: string
 ): Promise<string> {
-  const systemPrompt = `Tu es un copywriter expert en publicité digitale française.
-Génère du texte publicitaire pour UNE AD spécifique.
-Réponds UNIQUEMENT avec du JSON valide, sans markdown, sans backticks.
 
+  const context = buildBrandContext(brandContext);
+
+  const systemPrompt = `Tu es un copywriter senior spécialisé en publicité digitale française à haute conversion.
+
+Règles ABSOLUES :
+1. Le texte doit parler UNIQUEMENT de "${brandContext.productName}" par "${brandContext.brandName}".
+2. Le nom de marque est "${brandContext.brandName}" — orthographe EXACTE, jamais de modification.
+3. Utilise les VRAIS arguments marketing de la marque, pas du blabla générique.
+4. Chaque mot doit être spécifique à CE produit et SES vrais bénéfices.
+
+JSON UNIQUEMENT (pas de markdown) :
 {
-  "headline": "string (max 8 mots, percutant)",
-  "bodyText": "string (max 25 mots, persuasif)",
-  "callToAction": "string (max 4 mots)"
-}
-
-RÈGLE ABSOLUE : Le texte DOIT parler UNIQUEMENT du produit décrit ci-dessous. Ne parle JAMAIS d'un autre sujet (pas d'anti-âge, pas de beauté générique, pas de santé aléatoire). Chaque mot doit être directement lié au produit et à ses bénéfices réels.`;
+  "headline": "max 8 mots, percutant, spécifique au produit",
+  "bodyText": "max 25 mots, argument concret tiré des vrais bénéfices",
+  "callToAction": "max 4 mots"
+}`;
 
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -228,17 +191,13 @@ RÈGLE ABSOLUE : Le texte DOIT parler UNIQUEMENT du produit décrit ci-dessous. 
     messages: [
       {
         role: "user",
-        content: `Marque: ${brandName} (ton: ${tone})
+        content: `${context}
 
-PRODUIT (le texte DOIT parler de ça et RIEN D'AUTRE):
-Nom: ${productName}
-Description: ${productDescription}
+Format: ${format === "story" ? "Story vertical" : "Post carré"}
 
-${offerTitle ? `Offre: ${offerTitle} — ${offerDescription}` : "Pas d'offre spéciale."}
+DIRECTION CRÉATIVE : ${conversionAngle || "Mets en avant le bénéfice le plus fort."}
 
-Direction: ${conversionAngle || "Mets en avant le bénéfice principal."}
-
-Écris le headline, bodyText et CTA en français. Le texte doit être 100% spécifique à "${productName}".`,
+Écris un texte publicitaire en français qui utilise les VRAIS arguments de "${brandContext.brandName}", pas des phrases génériques.`,
       },
     ],
   });
