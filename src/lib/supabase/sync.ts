@@ -398,3 +398,51 @@ export async function loadGeneratedAds(
 
   return ads;
 }
+
+export async function deleteGeneratedAd(
+  userId: string,
+  adId: string
+): Promise<void> {
+  const sb = supabase();
+
+  // Get storage path first
+  const { data: row } = await sb
+    .from("generated_ads")
+    .select("image_path")
+    .eq("id", adId)
+    .eq("user_id", userId)
+    .single();
+
+  if (row) {
+    await sb.storage.from("generated-ads").remove([row.image_path]);
+    await sb.from("generated_ads").delete().eq("id", adId);
+  }
+}
+
+export async function deleteAllGeneratedAds(
+  userId: string,
+  brandAnalysisId: string
+): Promise<void> {
+  const sb = supabase();
+
+  // Get all ad storage paths
+  const { data: rows } = await sb
+    .from("generated_ads")
+    .select("id, image_path")
+    .eq("user_id", userId)
+    .eq("brand_analysis_id", brandAnalysisId);
+
+  if (rows && rows.length > 0) {
+    // Delete storage files
+    const paths = rows.map((r) => r.image_path).filter(Boolean);
+    if (paths.length > 0) {
+      await sb.storage.from("generated-ads").remove(paths);
+    }
+    // Delete DB rows
+    await sb
+      .from("generated_ads")
+      .delete()
+      .eq("user_id", userId)
+      .eq("brand_analysis_id", brandAnalysisId);
+  }
+}

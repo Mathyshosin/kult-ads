@@ -34,6 +34,7 @@ export default function GeneratePage() {
   const addGeneratedAd = useWizardStore((s) => s.addGeneratedAd);
   const updateGeneratedAd = useWizardStore((s) => s.updateGeneratedAd);
   const clearAds = useWizardStore((s) => s.clearAds);
+  const syncClearAds = useWizardStore((s) => s.syncClearAds);
   const brandLogo = useWizardStore((s) => s.brandLogo);
   const syncGeneratedAd = useWizardStore((s) => s.syncGeneratedAd);
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -517,7 +518,10 @@ export default function GeneratePage() {
               {generatedAds.length} publicité{generatedAds.length > 1 ? "s" : ""} générée{generatedAds.length > 1 ? "s" : ""}
             </p>
             <button
-              onClick={() => clearAds()}
+              onClick={() => {
+                clearAds();
+                if (currentUser) syncClearAds(currentUser.id);
+              }}
               className="text-xs text-muted hover:text-foreground transition-colors"
             >
               Tout effacer

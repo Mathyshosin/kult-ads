@@ -18,6 +18,8 @@ import {
   loadUploadedImages,
   saveGeneratedAd,
   loadGeneratedAds,
+  deleteGeneratedAd as syncDeleteGeneratedAd,
+  deleteAllGeneratedAds as syncDeleteAllGeneratedAds,
 } from "./supabase/sync";
 
 export interface BrandLogo {
@@ -51,6 +53,7 @@ interface WizardState {
   setBrandLogo: (logo: BrandLogo | null) => void;
   addGeneratedAd: (ad: GeneratedAd) => void;
   updateGeneratedAd: (id: string, updates: Partial<GeneratedAd>) => void;
+  removeGeneratedAd: (id: string) => void;
   clearAds: () => void;
   reset: () => void;
 
@@ -59,6 +62,8 @@ interface WizardState {
   syncImage: (userId: string, image: UploadedImage) => Promise<void>;
   syncLogo: (userId: string, logo: BrandLogo) => Promise<void>;
   syncGeneratedAd: (userId: string, ad: GeneratedAd) => Promise<void>;
+  syncDeleteGeneratedAd: (userId: string, adId: string) => Promise<void>;
+  syncClearAds: (userId: string) => Promise<void>;
   hydrateFromSupabase: (userId: string) => Promise<void>;
 }
 
@@ -160,6 +165,10 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
         ad.id === id ? { ...ad, ...updates } : ad
       ),
     })),
+  removeGeneratedAd: (id) =>
+    set((state) => ({
+      generatedAds: state.generatedAds.filter((ad) => ad.id !== id),
+    })),
   clearAds: () => set({ generatedAds: [] }),
   reset: () =>
     set({
@@ -212,6 +221,24 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
       await saveGeneratedAd(userId, brandAnalysisId, ad);
     } catch (err) {
       console.error("[sync] Error saving generated ad:", err);
+    }
+  },
+
+  syncDeleteGeneratedAd: async (userId, adId) => {
+    try {
+      await syncDeleteGeneratedAd(userId, adId);
+    } catch (err) {
+      console.error("[sync] Error deleting generated ad:", err);
+    }
+  },
+
+  syncClearAds: async (userId) => {
+    const { brandAnalysisId } = get();
+    if (!brandAnalysisId) return;
+    try {
+      await syncDeleteAllGeneratedAds(userId, brandAnalysisId);
+    } catch (err) {
+      console.error("[sync] Error clearing all ads:", err);
     }
   },
 
