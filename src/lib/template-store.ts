@@ -43,7 +43,6 @@ export interface TemplateMeta {
   category: string;
   filename: string;
   mimeType: string;
-  analysis?: TemplateAnalysisData;  // Pre-computed, filled by analyze script
 }
 
 const DATA_FILE = path.join(process.cwd(), "src/data/templates.json");
@@ -75,7 +74,7 @@ export function getTemplates(): (TemplateMeta & { previewUrl: string })[] {
 // ── Public: get random template with base64 image for Gemini ──
 export function getRandomTemplateWithImage(
   format: "square" | "story"
-): { id: string; imageBase64: string; mimeType: string; analysis?: TemplateAnalysisData } | null {
+): { id: string; imageBase64: string; mimeType: string } | null {
   const matching = readMeta().filter((t) => t.format === format);
   if (matching.length === 0) return null;
 
@@ -88,7 +87,6 @@ export function getRandomTemplateWithImage(
       id: template.id,
       imageBase64: buffer.toString("base64"),
       mimeType: template.mimeType,
-      analysis: template.analysis,
     };
   } catch {
     console.error(`Template image not found: ${imagePath}`);
@@ -99,7 +97,7 @@ export function getRandomTemplateWithImage(
 // ── Public: get a specific template by ID with base64 image ──
 export function getTemplateByIdWithImage(
   id: string
-): { id: string; imageBase64: string; mimeType: string; analysis?: TemplateAnalysisData } | null {
+): { id: string; imageBase64: string; mimeType: string } | null {
   const templates = readMeta();
   const template = templates.find((t) => t.id === id);
   if (!template) return null;
@@ -112,7 +110,6 @@ export function getTemplateByIdWithImage(
       id: template.id,
       imageBase64: buffer.toString("base64"),
       mimeType: template.mimeType,
-      analysis: template.analysis,
     };
   } catch {
     console.error(`Template image not found: ${imagePath}`);
@@ -173,25 +170,6 @@ export function removeTemplate(id: string): boolean {
   // Update metadata
   writeMeta(templates.filter((t) => t.id !== id));
   return true;
-}
-
-// ── Public: save pre-computed analysis for a template ──
-export function saveTemplateAnalysis(
-  id: string,
-  analysis: TemplateAnalysisData
-): boolean {
-  const templates = readMeta();
-  const idx = templates.findIndex((t) => t.id === id);
-  if (idx === -1) return false;
-
-  templates[idx].analysis = analysis;
-  writeMeta(templates);
-  return true;
-}
-
-// ── Public: get all templates that need analysis ──
-export function getTemplatesNeedingAnalysis(): TemplateMeta[] {
-  return readMeta().filter((t) => !t.analysis);
 }
 
 // ── Public: update template metadata ──

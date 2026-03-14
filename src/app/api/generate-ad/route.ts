@@ -4,6 +4,7 @@ import type { TemplateAnalysis } from "@/lib/claude";
 import { generateImage } from "@/lib/gemini";
 import { getRandomTemplateWithImage, getTemplateByIdWithImage } from "@/lib/template-store";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
+import { getTemplateAnalysisFromDb } from "@/lib/supabase/template-analysis";
 
 /** Sanitize discount string: fix double dashes and double percent signs */
 function cleanDiscount(raw: string): string {
@@ -80,13 +81,15 @@ export async function POST(request: Request) {
     if (customPrompt) {
       sceneDescription = customPrompt;
     } else if (template) {
-      const hasPrecomputedAnalysis = !!template.analysis;
-      console.log(`[generate-ad] ${hasPrecomputedAnalysis ? "Using pre-computed metadata + adapting text" : "Full template analysis"} with Claude...`);
+      // Fetch pre-computed analysis from Supabase
+      const templateId = template.id;
+      const precomputedAnalysis = await getTemplateAnalysisFromDb(templateId);
+      console.log(`[generate-ad] ${precomputedAnalysis ? "Using pre-computed metadata from Supabase + adapting text" : "Full template analysis (no pre-computed data)"} with Claude...`);
       templateAnalysis = await describeTemplateScene(
         template.imageBase64,
         template.mimeType,
         brandContext,
-        template.analysis,  // Pass pre-computed metadata if available
+        precomputedAnalysis || undefined,
       );
       sceneDescription = templateAnalysis.scene;
       imageText = templateAnalysis.imageText;
