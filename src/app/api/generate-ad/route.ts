@@ -240,7 +240,7 @@ Reproduce the EXACT layout from the LAYOUT REFERENCE image:
 ${layout.textAreaPercent ? `- Text area: ${layout.textAreaPercent}` : ""}
 ${layout.margins ? `- Margins: ${layout.margins}` : ""}
 
-TEXT ON IMAGE (in French — display ONLY this text, nothing more):
+TEXT ON IMAGE (in the brand's language — display ONLY this text, nothing more):
 ${imageText ? `"${imageText}"` : `"${brandAnalysis.brandName}"`}
 
 This is a TEXT-ONLY ad — NO product photos, NO physical objects, NO people.
@@ -254,7 +254,7 @@ STRICT RULES:
 ${discountStr && !discountAlreadyInText ? `4. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "4. No extra discount text needed — it's already in the text above (or there is none)."}
 5. Display ONLY the text provided above. Do NOT add extra text, bullet points, descriptions, or prices not specified above. NEVER show any text element twice — each piece of text must appear exactly ONCE.
 6. Match the EXACT proportions and spacing from the layout reference — text sizes, margins, element positions must be faithful to the original template.
-7. ALL text on the image MUST be in FRENCH. Never use English words (except the brand name if it's in English).`;
+7. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.`;
     } else if (template && layout && !isTextOnly && templateAnalysis?.templateType === "comparison") {
       // ── COMPARISON / VS template ──
       const competitors = brandAnalysis.competitorProducts?.length
@@ -284,7 +284,7 @@ LAYOUT:
 - Brand name position: ${layout.brandLogoPosition}
 ${layout.margins ? `- Margins: ${layout.margins}` : ""}
 
-TEXT ON IMAGE (in French — display ONLY this text):
+TEXT ON IMAGE (in the brand's language — display ONLY this text):
 ${imageText ? `"${imageText}"` : `"${brandAnalysis.brandName}"`}
 
 SCENE: ${sceneDescription}
@@ -299,7 +299,7 @@ ${discountStr && !discountAlreadyInText ? `6. DISCOUNT: Show "${discountStr}" pr
 ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
 8. NEVER add labels or text ON the product.
 9. Display ONLY the text provided above. No extra text, no bullet points, no feature lists. NEVER show any text element twice.
-10. ALL text on the image MUST be in FRENCH. Never use English words (except the brand name if it's in English).`;
+10. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.`;
     } else if (template && layout && !isTextOnly) {
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──
@@ -338,7 +338,7 @@ TYPOGRAPHY (match this style precisely):
 - Primary text color: ${layout.textColor}${layout.accentColor ? `\n- Accent/highlight color: ${layout.accentColor}` : ""}
 - General style: ${layout.typographyStyle}
 
-TEXT ON IMAGE (in French — display ONLY this text, nothing more):
+TEXT ON IMAGE (in the brand's language — display ONLY this text, nothing more):
 ${imageText ? `"${imageText}"` : `"${brandAnalysis.brandName}"`}
 
 SCENE: ${sceneDescription}
@@ -355,12 +355,12 @@ ${showPrices ? `6. ${priceInfo}` : "6. NO PRICES on this image. Do NOT show any 
 ${!noProduct ? "9. Photorealistic product, professional lighting, high-end advertising quality." : "9. Professional, high-end advertising quality."}
 10. Match the template's proportions EXACTLY — text size ratios, spacing, element positions must be faithful to the described layout.
 ${noHuman ? "11. Do NOT add any person, model, hand, or human figure. The template has NO people — keep it that way." : ""}
-12. ALL text on the image MUST be in FRENCH. Never use English words (except the brand name if it's in English).`.trim();
+12. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.`.trim();
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
         ? `The main headline text on the image MUST be: "${imageText}". Spell the brand name "${brandAnalysis.brandName}" EXACTLY like this.`
-        : `Create compelling French text for "${brandAnalysis.brandName}" using their key selling points.`;
+        : `Create compelling text in the brand's language for "${brandAnalysis.brandName}" using their key selling points.`;
 
       visualPrompt = `${aspectRatio} bold graphic advertising design for "${brandAnalysis.brandName}".
 

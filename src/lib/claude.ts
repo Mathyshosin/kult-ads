@@ -388,7 +388,7 @@ JSON ONLY (no markdown):
   "templateHasHumanModel": true/false,
   "templateHasProductPhoto": true/false,
   "scene": "ENGLISH description of the layout with PRECISE % positions. Be extremely specific.",
-  "imageText": "ONLY the French text for the image, matching template structure exactly. Use \\n for line breaks. null if no text. MUST have exactly templateTextCount elements.",
+  "imageText": "Text for the image in the brand's language, matching template structure exactly. Use \\n for line breaks. null if no text. MUST have exactly templateTextCount elements.",
   "layout": {
     "textPosition": "use % from top/left edges",
     "productPosition": "use % of image, or 'none'",
@@ -506,7 +506,7 @@ IRON RULES:
 4. NEVER add bullet points or feature lists unless the template has them.
 5. Keep text SHORT — match the template's text length roughly.
 6. NEVER add body text / descriptions unless the template has them.
-7. ALL text MUST be written in FRENCH. Never use English words (except the brand name itself if it's in English).
+7. ALL text MUST be written in the SAME LANGUAGE as the brand's website/content. Match the brand's communication language exactly.
 
 DISCOUNT RULES:
 ${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If the template shows a big percentage, write ONLY the number+% (e.g. "-60%"). The offer name can appear as small text IF the template has small text, but the BIG visible number must be ONLY the percentage.` : "- No offer. Replace any discount area with the brand's strongest selling point in 2-4 words."}
@@ -522,7 +522,7 @@ ${meta.templateType === "product-showcase" || meta.templateType === "lifestyle" 
 JSON ONLY:
 {
   "scene": "ENGLISH description of layout for image generation",
-  "imageText": "French text adapted for the brand, matching template structure exactly. Use \\n for line breaks. MUST have exactly ${meta.templateTextCount} elements matching: ${meta.textElements.join(", ")}."
+  "imageText": "Text adapted for the brand in the brand's language, matching template structure exactly. Use \\n for line breaks. MUST have exactly ${meta.templateTextCount} elements matching: ${meta.textElements.join(", ")}."
 }`,
           },
         ],
