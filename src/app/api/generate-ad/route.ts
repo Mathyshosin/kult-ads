@@ -232,11 +232,15 @@ ${discountStr ? `4. DISCOUNT: Show "${discountStr}" prominently. No extra dashes
         ? brandAnalysis.competitorProducts.slice(0, 2).join(" ou ")
         : "le produit concurrent traditionnel";
 
+      const productCategory = product.description || product.name;
+
       visualPrompt = `${aspectRatio} — Create a COMPARISON / VS advertising image for "${brandAnalysis.brandName}".
 
 SPLIT LAYOUT: ${layout.comparisonLayout || "left = bad alternative, right = good brand product"}
 
-BAD SIDE: Show a GENERIC ${competitors} — unappealing, dull.
+BAD SIDE: Show a generic, unappealing version of the OLD/INFERIOR alternative in the SAME product category as "${product.name}" (${productCategory}).
+- CRITICAL: Do NOT copy the template's specific objects (if the template shows a crushed can, a bottle, etc. from another industry — IGNORE those). Instead show a relevant inferior product from "${product.name}"'s actual category.
+- Make it look dull, uncomfortable, outdated, or wasteful — visually unappealing.
 GOOD SIDE: Show EXACTLY 1 unit of "${product.name}" from the PRODUCT reference — clean, premium, desirable. FULLY VISIBLE.
 
 LAYOUT:
@@ -254,13 +258,14 @@ SCENE: ${sceneDescription}
 
 STRICT RULES:
 1. Clear visual comparison — two distinct sides.
-2. GOOD side: EXACTLY 1 unit of "${product.name}" from PRODUCT reference. Never cropped.
-3. ${logoInstruction}
-4. Brand colors: ${colors}.
-${discountStr ? `5. DISCOUNT: Show "${discountStr}" prominently. No extra dashes.` : "5. No discount."}
-${showPrices ? `6. ${priceInfo}` : "6. NO PRICES anywhere on the image."}
-7. NEVER add labels or text ON the product.
-8. Display ONLY the text provided above. No extra text, no bullet points, no feature lists.`;
+2. BAD side: Must show a product from the SAME CATEGORY as "${product.name}". NOT a random object from the template.
+3. GOOD side: EXACTLY 1 unit of "${product.name}" from PRODUCT reference. Never cropped. Show the actual product, NOT a hand holding a card or logo.
+4. ${logoInstruction}
+5. Brand colors: ${colors}.
+${discountStr ? `6. DISCOUNT: Show "${discountStr}" prominently. No extra dashes.` : "6. No discount."}
+${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
+8. NEVER add labels or text ON the product.
+9. Display ONLY the text provided above. No extra text, no bullet points, no feature lists.`;
     } else if (template && layout && !isTextOnly) {
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──

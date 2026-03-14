@@ -223,8 +223,11 @@ ${brandContext.uniqueSellingPoints?.length ? `- USPs (use only if template has s
 ━━━ STEP 5: SCENE DESCRIPTION ━━━
 Describe the visual layout for Gemini to reproduce.
 
-IF COMPARISON: describe split layout with competitor on bad side, brand product on good side.
-${brandContext.competitorProducts?.length ? `Competitors: ${brandContext.competitorProducts.join(", ")}.` : ""}
+IF COMPARISON: describe split layout adapted to "${brandContext.productName}"'s CATEGORY.
+- BAD SIDE: Show a generic product from the SAME CATEGORY as "${brandContext.productName}" — NOT the template's product. The template may show a drink can, a shampoo bottle, etc. — IGNORE those objects. Instead, show the typical inferior alternative in "${brandContext.productName}"'s actual product category.
+- GOOD SIDE: Show "${brandContext.productName}" from the PRODUCT reference photo.
+- CRITICAL: The bad side must make sense for this brand's industry. If "${brandContext.productName}" is underwear, show old uncomfortable underwear — NOT a crushed can.
+${brandContext.competitorProducts?.length ? `Competitors in this category: ${brandContext.competitorProducts.join(", ")}.` : ""}
 
 IF PRODUCT SHOWCASE / LIFESTYLE:
 - IGNORE the template's product arrangement completely.
