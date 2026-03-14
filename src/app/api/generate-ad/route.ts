@@ -109,7 +109,7 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: brandLogoBase64,
         mimeType: brandLogoMimeType || "image/png",
-        label: `THIS IS THE OFFICIAL LOGO for "${brandAnalysis.brandName}". Use this EXACT logo when showing the brand name/logo on the ad. Do NOT create, invent, or generate a different logo — use ONLY this one, reproduced faithfully.`,
+        label: `THIS IS THE OFFICIAL LOGO for "${brandAnalysis.brandName}". Use this EXACT logo when showing the brand name/logo on the ad. Do NOT create, invent, or generate a different logo — use ONLY this one, reproduced faithfully. CRITICAL LOGO RULES: NEVER change the font/typography of the logo. NEVER add any element to or around the logo (no outline, no shadow, no badge, no background shape). The ONLY modification allowed is changing the logo color for contrast — if the logo is white on a white background, switch it to black (or vice versa). Otherwise keep the original colors exactly.`,
       });
     }
 
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
 
     // ── Logo instruction ──
     const logoInstruction = brandLogoBase64
-      ? `Use the EXACT brand logo from the LOGO reference image for "${brandAnalysis.brandName}". Do NOT generate or invent a logo.`
+      ? `Use the EXACT brand logo from the LOGO reference image for "${brandAnalysis.brandName}". Do NOT generate or invent a logo. NEVER change the logo's font or typography. NEVER add elements to the logo. The ONLY allowed change is adjusting the logo color for readability — e.g. if the logo is white and the background is white, make the logo black (or vice versa). Otherwise keep original colors.`
       : `If showing a brand name/logo, write "${brandAnalysis.brandName}" in clean typography. Do NOT invent a logo graphic.`;
 
     // ── Gemini prompt ──
