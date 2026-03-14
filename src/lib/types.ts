@@ -8,6 +8,7 @@ export interface BrandAnalysis {
   offers: Offer[];
   targetAudience: string;
   uniqueSellingPoints: string[];
+  competitorProducts?: string[];
 }
 
 export interface Product {
@@ -15,6 +16,8 @@ export interface Product {
   name: string;
   description: string;
   price?: string;
+  originalPrice?: string;
+  salePrice?: string;
   features: string[];
 }
 

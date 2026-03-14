@@ -15,7 +15,7 @@ Le JSON doit suivre exactement cette structure:
   "brandDescription": "string (2-3 phrases décrivant la marque)",
   "tone": "string (un parmi: professionnel, fun, luxe, minimaliste, audacieux, chaleureux)",
   "colors": ["#hex1", "#hex2"],
-  "products": [{"id":"prod-1","name":"...","description":"...","price":"...","features":["..."]}],
+  "products": [{"id":"prod-1","name":"...","description":"...","price":"...","originalPrice":"...","salePrice":"...","features":["..."]}],
   "offers": [{"id":"offer-1","title":"...","description":"...","discountType":"percentage|fixed|freeShipping|other","discountValue":"..."}],
   "targetAudience": "string",
   "uniqueSellingPoints": ["string", "string"],
@@ -29,6 +29,7 @@ Règles:
 - Les IDs doivent être "prod-1", "prod-2", etc. et "offer-1", "offer-2", etc.
 - Les couleurs doivent être en format hex
 - Sois précis et fidèle aux informations du site
+- Pour les prix: "price" = prix affiché principal, "originalPrice" = prix avant réduction (prix barré), "salePrice" = prix après réduction. Si pas de promo, originalPrice et salePrice sont null. UTILISE UNIQUEMENT les prix réels affichés sur le site — JAMAIS de prix inventés.
 - Pour competitorProducts: identifie les produits CONCURRENTS / alternatives traditionnelles que cette marque cherche à remplacer. Exemples: si la marque vend des culottes menstruelles → ["tampons", "serviettes hygiéniques", "cups menstruelles"]. Si la marque vend des boissons énergisantes saines → ["Red Bull", "Monster", "sodas sucrés"]. Si la marque vend des compléments bio → ["compléments classiques", "médicaments"]. Déduis-le du positionnement marketing du site.`;
 
   const message = await anthropic.messages.create({
@@ -58,6 +59,9 @@ interface BrandContext {
   productName: string;
   productDescription: string;
   productFeatures?: string[];
+  productPrice?: string;
+  productOriginalPrice?: string;
+  productSalePrice?: string;
   offerTitle?: string;
   offerDescription?: string;
 }
@@ -73,6 +77,8 @@ function buildBrandContext(ctx: BrandContext): string {
     `Product: "${ctx.productName}" — ${ctx.productDescription}`,
     ctx.productFeatures?.length ? `Product features: ${ctx.productFeatures.join(", ")}` : null,
     ctx.offerTitle ? `Current offer: ${ctx.offerTitle}${ctx.offerDescription ? ` — ${ctx.offerDescription}` : ""}` : null,
+    ctx.productPrice ? `Product price: ${ctx.productPrice}` : null,
+    ctx.productOriginalPrice && ctx.productSalePrice ? `Price: ${ctx.productOriginalPrice} → ${ctx.productSalePrice} (use these EXACT prices from the website, NEVER invent prices)` : null,
   ];
   return parts.filter(Boolean).join("\n");
 }
@@ -164,6 +170,7 @@ RULES:
 - NEVER copy text from the template
 - NEVER mention the template's original brand or products
 - Keep the SAME text structure (if template has 3 question lines + subtext + CTA, create 3 question lines + subtext + CTA)
+- If the template shows prices (original/sale price), use ONLY the REAL prices from the brand context above. NEVER invent or estimate prices. If no price is available, omit prices entirely.
 
 ━━━ STEP 4: SCENE DESCRIPTION ━━━
 Write a scene description that uses the template's VISUAL STYLE (background, colors, typography, decorative elements) for "${brandContext.brandName}".

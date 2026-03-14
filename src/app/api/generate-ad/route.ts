@@ -38,6 +38,9 @@ export async function POST(request: Request) {
       productName: product.name,
       productDescription: product.description || "",
       productFeatures: product.features,
+      productPrice: product.price,
+      productOriginalPrice: product.originalPrice,
+      productSalePrice: product.salePrice,
       offerTitle: offer?.title,
       offerDescription: offer?.description,
     };
@@ -102,6 +105,18 @@ export async function POST(request: Request) {
         label: `LAYOUT REFERENCE (from a DIFFERENT brand — NOT "${brandAnalysis.brandName}"). Copy ONLY the visual structure: background, element positions, text arrangement, decorative shapes. IGNORE all text, brand names, and logos in this image.`,
       });
     }
+
+    // ── Price info (use REAL prices from the website only) ──
+    const priceInfo = (() => {
+      if (product.originalPrice && product.salePrice) {
+        return `PRICING (from the brand's website — use these EXACT numbers): Original price: ${product.originalPrice} → Sale price: ${product.salePrice}. Show both prices: the original price crossed out and the sale price highlighted.`;
+      } else if (product.salePrice) {
+        return `PRICING (from the brand's website — use this EXACT number): Sale price: ${product.salePrice}.`;
+      } else if (product.price) {
+        return `PRICING (from the brand's website — use this EXACT number): Price: ${product.price}.`;
+      }
+      return null;
+    })();
 
     // ── Gemini prompt ──
     let visualPrompt: string;
@@ -179,7 +194,8 @@ RULES:
 4. Both products must be FULLY VISIBLE — never cropped or cut off.
 5. The ONLY brand name is "${brandAnalysis.brandName}".
 6. Brand colors: ${colors}.
-${offer ? `7. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "7. No discount. Highlight the strongest product benefit."}`;
+${offer ? `7. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "7. No discount. Highlight the strongest product benefit."}
+${priceInfo ? `8. ${priceInfo}` : "8. Do NOT show any price if none was provided — NEVER invent prices."}`;
     } else if (template && layout && !isTextOnly) {
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──
@@ -219,7 +235,8 @@ RULES:
 4. The ONLY brand name is "${brandAnalysis.brandName}".
 5. Brand colors: ${colors}.
 6. Photorealistic product, professional lighting, high-end advertising quality.
-${offer ? `7. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "7. No discount. Highlight the strongest product benefit."}`;
+${offer ? `7. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "7. No discount. Highlight the strongest product benefit."}
+${priceInfo ? `8. ${priceInfo}` : "8. Do NOT show any price if none was provided — NEVER invent prices."}`;
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
