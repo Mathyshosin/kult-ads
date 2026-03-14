@@ -225,7 +225,8 @@ RULES:
 7. Brand colors: ${colors}.
 ${offer ? `8. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "8. No discount. Highlight the strongest product benefit."}
 9. NEVER add labels, stickers, tags, text, or ANY overlay directly ON the product — show it exactly as-is.
-${priceInfo ? `10. ${priceInfo}` : "10. ABSOLUTELY NO PRICES — no price was provided, so do NOT show any price, amount, number with € or $ symbol, or anything that looks like a price anywhere on the image. NEVER invent or guess prices."}`;
+${priceInfo ? `10. ${priceInfo}` : "10. ABSOLUTELY NO PRICES — no price was provided, so do NOT show any price, amount, number with € or $ symbol, or anything that looks like a price anywhere on the image. NEVER invent or guess prices."}
+11. ANNOTATION PLACEMENT: If the ad includes feature annotations with lines/arrows pointing to the product, each annotation MUST point to the correct part of the product that matches that feature. Double-check that labels are not swapped or pointing to the wrong side.`;
     } else if (template && layout && !isTextOnly) {
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──
@@ -268,7 +269,8 @@ RULES:
 7. Photorealistic product, professional lighting, high-end advertising quality.
 8. NEVER add labels, stickers, tags, text, or ANY overlay directly ON the product — show it exactly as-is from the reference photo.
 ${offer ? `9. DISCOUNT: Show "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "9. No discount. Highlight the strongest product benefit."}
-${priceInfo ? `10. ${priceInfo}` : "10. ABSOLUTELY NO PRICES — no price was provided, so do NOT show any price, amount, number with € or $ symbol, or anything that looks like a price anywhere on the image. NEVER invent or guess prices."}`;
+${priceInfo ? `10. ${priceInfo}` : "10. ABSOLUTELY NO PRICES — no price was provided, so do NOT show any price, amount, number with € or $ symbol, or anything that looks like a price anywhere on the image. NEVER invent or guess prices."}
+11. ANNOTATION PLACEMENT: If the ad includes feature annotations with lines/arrows pointing to the product (e.g. "Anti-fuite", "Protégée 12h"), each annotation MUST point to the correct part of the product that matches that feature. Double-check that labels are not swapped or pointing to the wrong side. Each dotted line must connect the label text to the relevant area of the product.`;
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
