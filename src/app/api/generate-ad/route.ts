@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateAdCopy, describeTemplateScene } from "@/lib/claude";
+import type { TemplateAnalysis } from "@/lib/claude";
 import { generateImage } from "@/lib/gemini";
 import { getRandomTemplateWithImage, getTemplateByIdWithImage } from "@/lib/template-store";
 
@@ -51,33 +52,45 @@ export async function POST(request: Request) {
     let sceneDescription: string;
     let imageText: string | null = null;
     let isTextOnly = false;
+    let templateAnalysis: TemplateAnalysis | null = null;
 
     if (customPrompt) {
       sceneDescription = customPrompt;
     } else if (template) {
       console.log("[generate-ad] Analyzing template with Claude...");
-      const analysis = await describeTemplateScene(
+      templateAnalysis = await describeTemplateScene(
         template.imageBase64,
         template.mimeType,
         brandContext,
       );
-      sceneDescription = analysis.scene;
-      imageText = analysis.imageText;
-      isTextOnly = analysis.isTextOnly;
+      sceneDescription = templateAnalysis.scene;
+      imageText = templateAnalysis.imageText;
+      isTextOnly = templateAnalysis.isTextOnly;
       console.log("[generate-ad] Scene:", sceneDescription);
       console.log("[generate-ad] Image text:", imageText);
       console.log("[generate-ad] Text-only template:", isTextOnly);
+      console.log("[generate-ad] Layout:", JSON.stringify(templateAnalysis.layout));
     } else {
       sceneDescription = "Product displayed on a clean minimal surface with soft professional studio lighting.";
     }
 
-    // ── Reference images: product photo (skipped for text-only templates) ──
+    // ── Reference images ──
     const referenceImages: Array<{
       base64: string;
       mimeType: string;
       label: string;
     }> = [];
 
+    // ALWAYS add template as reference when available (this is the key change)
+    if (template) {
+      referenceImages.push({
+        base64: template.imageBase64,
+        mimeType: template.mimeType,
+        label: "TEMPLATE REFERENCE — You MUST reproduce this EXACT layout, composition, element positions, background style, typography style, and visual structure. Only change the text content and brand/product. The output must look like a near-identical twin of this template.",
+      });
+    }
+
+    // Add product photo (skipped for text-only templates)
     if (productImageBase64 && !isTextOnly) {
       referenceImages.push({
         base64: productImageBase64,
@@ -88,9 +101,37 @@ export async function POST(request: Request) {
 
     // ── Gemini prompt ──
     let visualPrompt: string;
+    const layout = templateAnalysis?.layout;
 
-    if (isTextOnly) {
-      // Text-only template: graphic/typographic ad, NO product photo
+    if (template && layout) {
+      // ── Template-based generation: pixel-perfect reproduction ──
+      const textContent = imageText
+        ? `\nEXACT TEXT TO DISPLAY (in French, with line breaks as shown):\n"${imageText}"\nSpell the brand name "${brandAnalysis.brandName}" EXACTLY.`
+        : "";
+
+      visualPrompt = `${aspectRatio} — Reproduce the TEMPLATE REFERENCE image with pixel-perfect fidelity, only changing the brand content.
+
+YOU MUST COPY FROM THE TEMPLATE:
+- Background: ${layout.backgroundStyle}
+- Decorative elements: ${layout.decorativeElements}
+- Text position: ${layout.textPosition}
+- Typography: ${layout.typographyStyle}
+- CTA button: ${layout.ctaStyle} at ${layout.ctaPosition}
+- Brand logo/name position: ${layout.brandLogoPosition}
+${!isTextOnly ? `- Product position: ${layout.productPosition}` : "- NO product photo — this is a pure typographic/graphic design"}
+
+SCENE: ${sceneDescription}
+${textContent}
+
+CRITICAL RULES:
+1. The layout, spacing, proportions, and visual hierarchy must be IDENTICAL to the TEMPLATE REFERENCE.
+2. Only replace: text content → "${brandAnalysis.brandName}" content, brand colors → ${colors}.
+3. Keep the SAME background style, the SAME decorative shapes, the SAME text arrangement.
+4. The output should be indistinguishable from the template in terms of structure — someone should think it's the same designer.
+${!isTextOnly && productImageBase64 ? `5. Use the PRODUCT reference photo as-is — same shape, colors, packaging. Place it at: ${layout.productPosition}.` : ""}
+${isTextOnly ? "5. NO product photos, NO physical objects, NO people. Only typography and graphic elements." : ""}`;
+    } else if (isTextOnly) {
+      // Fallback text-only (no template ref)
       const textContent = imageText
         ? `The main headline text on the image MUST be: "${imageText}". Spell the brand name "${brandAnalysis.brandName}" EXACTLY like this.`
         : `Create compelling French text for "${brandAnalysis.brandName}" using their key selling points.`;
@@ -109,7 +150,7 @@ RULES:
 - NO product photos, NO physical objects, NO people. Only typography and graphic elements.
 - Professional graphic design quality, clean layout.`;
     } else {
-      // Standard template: product photo ad
+      // Fallback product ad (no template ref)
       const textInstruction = imageText
         ? `Include this text prominently on the image in a bold, stylish font: "${imageText}". The brand name "${brandAnalysis.brandName}" must be spelled EXACTLY like this if it appears.`
         : `Do NOT include any text, words, letters, logos, or numbers in the image.`;

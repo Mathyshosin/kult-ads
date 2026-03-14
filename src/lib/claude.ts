@@ -73,18 +73,35 @@ function buildBrandContext(ctx: BrandContext): string {
   return parts.filter(Boolean).join("\n");
 }
 
+// ── Template analysis result (detailed layout info for Gemini) ──
+export interface TemplateAnalysis {
+  scene: string;
+  imageText: string | null;
+  isTextOnly: boolean;
+  layout: {
+    textPosition: string;       // e.g. "top-left", "center", "bottom"
+    productPosition: string;    // e.g. "center-right", "bottom-half", "none"
+    ctaPosition: string;        // e.g. "bottom-left", "bottom-center", "none"
+    ctaStyle: string;           // e.g. "rounded white button", "pill shape dark", "none"
+    backgroundStyle: string;    // e.g. "warm peach gradient", "solid white", "photo"
+    typographyStyle: string;    // e.g. "bold sans-serif uppercase, dark navy"
+    brandLogoPosition: string;  // e.g. "top-right", "bottom-right", "none"
+    decorativeElements: string; // e.g. "organic curved shapes", "geometric lines", "none"
+  };
+}
+
 // ── Analyze a template and create an adapted scene description + text ──
 export async function describeTemplateScene(
   templateBase64: string,
   templateMimeType: string,
   brandContext: BrandContext,
-): Promise<{ scene: string; imageText: string | null; isTextOnly: boolean }> {
+): Promise<TemplateAnalysis> {
 
   const context = buildBrandContext(brandContext);
 
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
-    max_tokens: 800,
+    max_tokens: 1200,
     messages: [
       {
         role: "user",
@@ -99,62 +116,58 @@ export async function describeTemplateScene(
           },
           {
             type: "text",
-            text: `You are a creative director. Look at this ad template and create a NEW ad concept for a completely different brand.
+            text: `You are a creative director specialized in reproducing ad layouts pixel-perfectly for different brands.
+
+Analyze this ad template in EXTREME detail. The goal is to reproduce its EXACT layout, spacing, typography, and visual structure — only swapping the brand content.
 
 TARGET BRAND:
 ${context}
 
-STEP 1 — CLASSIFY THE TEMPLATE:
-First, determine: does this template contain a PRODUCT PHOTO or PHYSICAL OBJECT as the main visual?
+━━━ STEP 1: CLASSIFY ━━━
+Is this a TEXT-ONLY template (no product photo) or a PRODUCT template (product visible)?
 
-TEXT-ONLY template examples (isTextOnly = true):
-- Only text/typography with colored background
-- Graphic elements like toggle switches, icons, shapes, patterns — but NO product photo
-- Infographic-style with text and abstract visuals
-- Bold headline with CTA button, no product imagery
+━━━ STEP 2: DETAILED LAYOUT EXTRACTION ━━━
+Describe with PRECISION:
+- textPosition: Where is the main text block? (e.g. "top-left occupying 60% width", "centered top third")
+- productPosition: Where is the product? (e.g. "center-right, 40% of image", "none" if text-only)
+- ctaPosition: Where is the CTA button? (e.g. "bottom-left", "none")
+- ctaStyle: Describe CTA appearance (e.g. "white rounded-full pill button with dark text", "none")
+- backgroundStyle: Describe EXACTLY (e.g. "warm peach/beige gradient with organic curved shapes in lighter tones")
+- typographyStyle: Font style and color (e.g. "bold uppercase sans-serif, dark navy #1a1a3e, headline very large, subtext medium regular")
+- brandLogoPosition: Where is the brand name/logo? (e.g. "center below headline, medium serif font")
+- decorativeElements: Any shapes, curves, lines, patterns (e.g. "organic wave shapes in lighter beige behind text area")
 
-PRODUCT template examples (isTextOnly = false):
-- A product (bottle, jar, clothing, food, etc.) is clearly visible as the hero
-- A person using/wearing/holding a product
-- A lifestyle photo with a physical product in it
-
-STEP 2 — EXTRACT ABSTRACT STRUCTURE:
-What is the LAYOUT TYPE? (split screen, centered, full-bleed, flat lay, grid, etc.)
-What is the CONCEPT TYPE? (VS/comparison, offer/promo, benefit, lifestyle, showcase, toggle/switch, question/answer)
-What is the BACKGROUND TYPE? (solid color, gradient, photo, texture)
-What is the MOOD? (energetic, minimal, luxurious, playful, professional)
-
-ABSOLUTE RULES — NEVER VIOLATE:
-- NEVER mention ANY product, brand, logo, or object visible in the template
-- NEVER copy ANY text, slogan, number, or claim from the template
-- NEVER describe specific props from the template
-
-STEP 3 — BUILD THE NEW SCENE:
-
-IF isTextOnly = true (template has NO product photo):
-→ Describe a PURELY GRAPHIC/TYPOGRAPHIC scene. NO product photo, NO physical objects, NO people.
-→ Use bold typography, graphic elements, shapes, colors as the visual.
-→ Recreate the same CONCEPT (toggle, question, statement, comparison) but with "${brandContext.brandName}" content.
-→ Example: if template has toggle switches → describe toggle switches with "${brandContext.brandName}" labels. If template is a bold question → describe bold question text about "${brandContext.productName}".
-
-IF isTextOnly = false (template HAS a product photo):
-→ Describe a scene featuring "${brandContext.productName}" as the hero product.
-→ VS/comparison → "${brandContext.productName}" VS a generic competing product (e.g. "disposable pads")
-→ Offer/promo → "${brandContext.productName}" showcased prominently ${brandContext.offerTitle ? `with the offer "${brandContext.offerTitle}"` : "with its key benefit"}
-→ Lifestyle → "${brandContext.productName}" used naturally by ${brandContext.targetAudience || "a customer"}
-→ Showcase → "${brandContext.productName}" in a clean, professional product photo
-
-STEP 4 — TEXT (if the template has text):
-Create NEW French text using ONLY these real facts about "${brandContext.brandName}":
-${brandContext.offerTitle ? `- Offer: "${brandContext.offerTitle}"` : "- No offer. Use strongest selling point."}
+━━━ STEP 3: CREATE ADAPTED CONTENT ━━━
+Replace the template's text with NEW French text for "${brandContext.brandName}":
+- Use ONLY real facts about the brand
+${brandContext.offerTitle ? `- Current offer: "${brandContext.offerTitle}"` : "- No offer available. Use the strongest selling point."}
 ${brandContext.uniqueSellingPoints?.length ? `- USPs: ${brandContext.uniqueSellingPoints.join(", ")}` : ""}
-Brand name spelled EXACTLY: "${brandContext.brandName}"
+- Brand name EXACTLY: "${brandContext.brandName}"
+
+RULES:
+- NEVER copy text from the template
+- NEVER mention the template's original brand or products
+- Keep the SAME text structure (if template has 3 question lines + subtext + CTA, create 3 question lines + subtext + CTA)
+
+━━━ STEP 4: SCENE DESCRIPTION ━━━
+Write a scene description that RECREATES the template's exact visual structure for "${brandContext.brandName}".
+Be extremely specific about positions, sizes, and proportions.
 
 JSON ONLY (no markdown):
 {
-  "isTextOnly": true or false,
-  "scene": "2-3 sentences in ENGLISH describing the new scene. If isTextOnly=true: describe ONLY graphic/typographic elements, NO product. If isTextOnly=false: describe scene with the product.",
-  "imageText": "French headline for the image (max 6 words) using real brand facts. null if template has no text."
+  "isTextOnly": true/false,
+  "scene": "Detailed ENGLISH description recreating the EXACT layout with brand-adapted content. Be very specific about element positions and proportions.",
+  "imageText": "The COMPLETE French text to display on the image, with line breaks as \\n. Include headline, subtext, brand name, and CTA text — matching the template's text structure. null if no text.",
+  "layout": {
+    "textPosition": "...",
+    "productPosition": "...",
+    "ctaPosition": "...",
+    "ctaStyle": "...",
+    "backgroundStyle": "...",
+    "typographyStyle": "...",
+    "brandLogoPosition": "...",
+    "decorativeElements": "..."
+  }
 }`,
           },
         ],
@@ -165,24 +178,41 @@ JSON ONLY (no markdown):
   const textBlock = message.content.find((block) => block.type === "text");
   const raw = textBlock?.text || "";
 
+  const defaultLayout = {
+    textPosition: "center",
+    productPosition: "none",
+    ctaPosition: "bottom-center",
+    ctaStyle: "rounded button",
+    backgroundStyle: "solid color",
+    typographyStyle: "bold sans-serif",
+    brandLogoPosition: "bottom-right",
+    decorativeElements: "none",
+  };
+
   try {
     const parsed = JSON.parse(raw);
     return {
       scene: parsed.scene || "Product displayed elegantly on a clean surface with professional lighting.",
       imageText: parsed.imageText || null,
       isTextOnly: parsed.isTextOnly === true,
+      layout: { ...defaultLayout, ...parsed.layout },
     };
   } catch {
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[0]);
-        return { scene: parsed.scene || raw, imageText: parsed.imageText || null, isTextOnly: parsed.isTextOnly === true };
+        return {
+          scene: parsed.scene || raw,
+          imageText: parsed.imageText || null,
+          isTextOnly: parsed.isTextOnly === true,
+          layout: { ...defaultLayout, ...parsed.layout },
+        };
       } catch {
-        return { scene: raw, imageText: null, isTextOnly: false };
+        return { scene: raw, imageText: null, isTextOnly: false, layout: defaultLayout };
       }
     }
-    return { scene: raw, imageText: null, isTextOnly: false };
+    return { scene: raw, imageText: null, isTextOnly: false, layout: defaultLayout };
   }
 }
 
