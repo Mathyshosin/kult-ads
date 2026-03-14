@@ -60,20 +60,27 @@ export async function POST(request: Request) {
     let visualPrompt: string;
     const colors = brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "modern, clean";
 
+    // Product context for better prompt
+    const productContext = `Product: ${product.name}${product.description ? ` — ${product.description}` : ""}`;
+
     if (customPrompt) {
       // Custom mode
-      visualPrompt = `${aspectRatio} product advertising photo for "${brandAnalysis.brandName}".
+      visualPrompt = `${aspectRatio} professional product photography for "${brandAnalysis.brandName}".
+${productContext}
 
 Scene: ${customPrompt}
 
-Feature the PRODUCT prominently. Keep it identical to the reference. Photorealistic, professional camera. No text or watermarks. Leave space for text overlay.`;
+The product must be naturally placed in the scene (on a surface, held in hands, worn, etc.) — NOT floating or pasted on. Keep the product identical to the PRODUCT reference image.
+Photorealistic, professional lighting. Leave empty space for text overlay.
+CRITICAL: Generate ZERO text, ZERO words, ZERO letters, ZERO logos, ZERO numbers anywhere in the image. The image must be purely photographic with no writing of any kind.`;
     } else {
       // Library mode
-      visualPrompt = `${aspectRatio} product advertising photo for "${brandAnalysis.brandName}".
+      visualPrompt = `${aspectRatio} professional product photography for "${brandAnalysis.brandName}".
+${productContext}
 
-Create a new ad with the same style, mood, and composition as the STYLE INSPIRATION image, but featuring the PRODUCT from the reference. Adapt the colors to: ${colors}.
-
-Photorealistic, professional camera, shallow depth of field. No text, no watermarks. Leave space for text overlay.`;
+Use the STYLE INSPIRATION only for mood and composition direction. Create a completely new photo featuring the PRODUCT reference naturally in a real scene (on a surface, held in hands, worn, etc.) — NOT floating or pasted on. Keep the product identical to the reference.
+Colors: ${colors}. Photorealistic, professional lighting, shallow depth of field. Leave empty space for text overlay.
+CRITICAL: Generate ZERO text, ZERO words, ZERO letters, ZERO logos, ZERO numbers anywhere in the image. The image must be purely photographic with no writing of any kind.`;
     }
 
     // ── SEQUENTIAL: Image first, then copy ──

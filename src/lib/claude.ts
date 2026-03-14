@@ -129,23 +129,17 @@ export async function generateAdCopy(
   format?: string,
   conversionAngle?: string
 ): Promise<string> {
-  const systemPrompt = `Tu es un copywriter expert en publicité digitale française, spécialisé dans les ads à haute conversion.
-Génère du texte publicitaire percutant et optimisé pour la conversion.
+  const systemPrompt = `Tu es un copywriter expert en publicité digitale française.
+Génère du texte publicitaire pour UNE AD spécifique.
 Réponds UNIQUEMENT avec du JSON valide, sans markdown, sans backticks.
 
-Le JSON doit suivre cette structure:
 {
-  "headline": "string (max 8 mots, percutant, accrocheur, qui stoppe le scroll)",
-  "bodyText": "string (max 25 mots, persuasif, qui donne envie d'acheter)",
-  "callToAction": "string (max 4 mots, action claire et urgente)"
+  "headline": "string (max 8 mots, percutant)",
+  "bodyText": "string (max 25 mots, persuasif)",
+  "callToAction": "string (max 4 mots)"
 }
 
-Règles de copywriting:
-- Le headline doit créer une émotion immédiate (curiosité, désir, urgence)
-- Le bodyText doit donner UNE raison concrète d'acheter MAINTENANT
-- Le CTA doit pousser à l'action immédiate
-- Utilise des mots puissants : exclusif, gratuit, immédiat, limité, secret, nouveau
-- Adapte le ton à la marque mais garde toujours l'intention de conversion`;
+RÈGLE ABSOLUE : Le texte DOIT parler UNIQUEMENT du produit décrit ci-dessous. Ne parle JAMAIS d'un autre sujet (pas d'anti-âge, pas de beauté générique, pas de santé aléatoire). Chaque mot doit être directement lié au produit et à ses bénéfices réels.`;
 
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -154,18 +148,17 @@ Règles de copywriting:
     messages: [
       {
         role: "user",
-        content: `Marque: ${brandName}
-Ton: ${tone}
-Produit: ${productName} - ${productDescription}
-${offerTitle ? `Offre en cours: ${offerTitle} - ${offerDescription}` : "Pas d'offre spéciale"}
-Format: ${format === "story" ? "Story Instagram/TikTok (vertical)" : "Post carré Instagram/Facebook"}
+        content: `Marque: ${brandName} (ton: ${tone})
 
-ANGLE DE CONVERSION À UTILISER:
-${conversionAngle || "Choisis l'angle le plus percutant pour ce produit"}
+PRODUIT (le texte DOIT parler de ça et RIEN D'AUTRE):
+Nom: ${productName}
+Description: ${productDescription}
 
-IMPORTANT: Le texte doit être DIFFÉRENT et UNIQUE. Pas de formules génériques. Adapte-toi spécifiquement à ce produit et cet angle.
+${offerTitle ? `Offre: ${offerTitle} — ${offerDescription}` : "Pas d'offre spéciale."}
 
-Génère le texte publicitaire en français.`,
+Direction: ${conversionAngle || "Mets en avant le bénéfice principal."}
+
+Écris le headline, bodyText et CTA en français. Le texte doit être 100% spécifique à "${productName}".`,
       },
     ],
   });
