@@ -4,7 +4,8 @@ import type { TemplateAnalysis } from "@/lib/claude";
 import { generateImage } from "@/lib/gemini";
 import { getRandomTemplateWithImage, getTemplateByIdWithImage } from "@/lib/template-store";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
-import { getTemplateAnalysisFromDb } from "@/lib/supabase/template-analysis";
+import { getTemplateAnalysisFromDb, saveTemplateAnalysisToDb } from "@/lib/supabase/template-analysis";
+import { analyzeTemplateMetadata } from "@/lib/claude";
 
 /** Sanitize discount string: fix double dashes and double percent signs */
 function cleanDiscount(raw: string): string {
@@ -81,15 +82,27 @@ export async function POST(request: Request) {
     if (customPrompt) {
       sceneDescription = customPrompt;
     } else if (template) {
-      // Fetch pre-computed analysis from Supabase
-      const templateId = template.id;
-      const precomputedAnalysis = await getTemplateAnalysisFromDb(templateId);
-      console.log(`[generate-ad] ${precomputedAnalysis ? "Using pre-computed metadata from Supabase + adapting text" : "Full template analysis (no pre-computed data)"} with Claude...`);
+      // Fetch pre-computed analysis from Supabase (or analyze + cache on first use)
+      let precomputedAnalysis = await getTemplateAnalysisFromDb(template.id);
+
+      if (!precomputedAnalysis) {
+        // First time using this template → analyze and save to Supabase for future use
+        console.log(`[generate-ad] No cached metadata for ${template.id}, analyzing and caching...`);
+        precomputedAnalysis = await analyzeTemplateMetadata(template.imageBase64, template.mimeType);
+        // Save in background (don't block ad generation)
+        saveTemplateAnalysisToDb(template.id, precomputedAnalysis).catch((err) =>
+          console.error("[generate-ad] Failed to cache template analysis:", err)
+        );
+        console.log(`[generate-ad] Template ${template.id} analyzed and cached to Supabase`);
+      } else {
+        console.log(`[generate-ad] Using cached metadata from Supabase for ${template.id}`);
+      }
+
       templateAnalysis = await describeTemplateScene(
         template.imageBase64,
         template.mimeType,
         brandContext,
-        precomputedAnalysis || undefined,
+        precomputedAnalysis,
       );
       sceneDescription = templateAnalysis.scene;
       imageText = templateAnalysis.imageText;
