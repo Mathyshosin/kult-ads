@@ -7,13 +7,43 @@
 import fs from "fs";
 import path from "path";
 
-interface TemplateMeta {
+// Pre-computed template analysis (fixed fields that don't change per brand)
+export interface TemplateAnalysisData {
+  isTextOnly: boolean;
+  templateType: "product-showcase" | "comparison" | "text-only" | "lifestyle";
+  templateHasPrices: boolean;
+  templateTextCount: number;
+  templateHasHumanModel: boolean;
+  templateHasProductPhoto: boolean;
+  textElements: string[];  // e.g. ["headline", "percentage", "brand-name", "date"]
+  layout: {
+    textPosition: string;
+    productPosition: string;
+    ctaPosition: string;
+    ctaStyle: string;
+    backgroundStyle: string;
+    typographyStyle: string;
+    brandLogoPosition: string;
+    decorativeElements: string;
+    comparisonLayout?: string;
+    headlineStyle: string;
+    subheadlineStyle?: string;
+    textColor: string;
+    accentColor?: string;
+    productSizePercent?: string;
+    textAreaPercent?: string;
+    margins?: string;
+  };
+}
+
+export interface TemplateMeta {
   id: string;
   name: string;
   format: "square" | "story";
   category: string;
   filename: string;
   mimeType: string;
+  analysis?: TemplateAnalysisData;  // Pre-computed, filled by analyze script
 }
 
 const DATA_FILE = path.join(process.cwd(), "src/data/templates.json");
@@ -45,7 +75,7 @@ export function getTemplates(): (TemplateMeta & { previewUrl: string })[] {
 // ── Public: get random template with base64 image for Gemini ──
 export function getRandomTemplateWithImage(
   format: "square" | "story"
-): { id: string; imageBase64: string; mimeType: string } | null {
+): { id: string; imageBase64: string; mimeType: string; analysis?: TemplateAnalysisData } | null {
   const matching = readMeta().filter((t) => t.format === format);
   if (matching.length === 0) return null;
 
@@ -58,6 +88,7 @@ export function getRandomTemplateWithImage(
       id: template.id,
       imageBase64: buffer.toString("base64"),
       mimeType: template.mimeType,
+      analysis: template.analysis,
     };
   } catch {
     console.error(`Template image not found: ${imagePath}`);
@@ -68,7 +99,7 @@ export function getRandomTemplateWithImage(
 // ── Public: get a specific template by ID with base64 image ──
 export function getTemplateByIdWithImage(
   id: string
-): { id: string; imageBase64: string; mimeType: string } | null {
+): { id: string; imageBase64: string; mimeType: string; analysis?: TemplateAnalysisData } | null {
   const templates = readMeta();
   const template = templates.find((t) => t.id === id);
   if (!template) return null;
@@ -81,6 +112,7 @@ export function getTemplateByIdWithImage(
       id: template.id,
       imageBase64: buffer.toString("base64"),
       mimeType: template.mimeType,
+      analysis: template.analysis,
     };
   } catch {
     console.error(`Template image not found: ${imagePath}`);
@@ -141,6 +173,25 @@ export function removeTemplate(id: string): boolean {
   // Update metadata
   writeMeta(templates.filter((t) => t.id !== id));
   return true;
+}
+
+// ── Public: save pre-computed analysis for a template ──
+export function saveTemplateAnalysis(
+  id: string,
+  analysis: TemplateAnalysisData
+): boolean {
+  const templates = readMeta();
+  const idx = templates.findIndex((t) => t.id === id);
+  if (idx === -1) return false;
+
+  templates[idx].analysis = analysis;
+  writeMeta(templates);
+  return true;
+}
+
+// ── Public: get all templates that need analysis ──
+export function getTemplatesNeedingAnalysis(): TemplateMeta[] {
+  return readMeta().filter((t) => !t.analysis);
 }
 
 // ── Public: update template metadata ──

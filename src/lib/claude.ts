@@ -116,14 +116,156 @@ export interface TemplateAnalysis {
   };
 }
 
+// ── One-shot template analysis: extract fixed metadata (no brand context needed) ──
+export async function analyzeTemplateMetadata(
+  templateBase64: string,
+  templateMimeType: string,
+): Promise<import("@/lib/template-store").TemplateAnalysisData> {
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1500,
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: templateMimeType as "image/png" | "image/jpeg" | "image/webp" | "image/gif",
+              data: templateBase64,
+            },
+          },
+          {
+            type: "text",
+            text: `You are analyzing an ad template to extract its FIXED visual properties. This analysis will be stored and reused — it must be accurate and brand-agnostic.
+
+Analyze this template image and extract:
+
+1. TEMPLATE TYPE:
+- "text-only": No product photos, no people, only typography/graphics/shapes
+- "product-showcase": Shows a product prominently (no person)
+- "comparison": VS/split layout comparing two things
+- "lifestyle": Product shown with a person or in real-life context
+
+2. TEXT ELEMENTS — Count EVERY distinct text element:
+- Headline, subheadline, body text, price area, discount %, CTA button text, brand name, small text (legal/date), bullet points, annotations
+- List them as an array: e.g. ["headline", "discount-percentage", "brand-name", "date-text"]
+
+3. TEMPLATE FLAGS:
+- templateHasPrices: Does the template show ANY price (€, $, number with currency)?
+- templateHasHumanModel: Is there a person/model visible?
+- templateHasProductPhoto: Is there a physical product visible?
+
+4. DETAILED LAYOUT (use % of image dimensions):
+- textPosition: Where is text? Use % (e.g. "headline at top 10-25%, left-aligned with 8% margin")
+- productPosition: Where is the product? (e.g. "centered in bottom 50%", "none")
+- productSizePercent: Product size relative to image (e.g. "~45% height, ~35% width")
+- ctaPosition + ctaStyle: CTA button position and style
+- backgroundStyle: Exact background description
+- typographyStyle: General font style
+- headlineStyle: Font weight + case + serif/sans + color hex + size as % of image
+- subheadlineStyle: Same format, or null
+- textColor: Primary text color as hex
+- accentColor: Highlight/discount/CTA color as hex, or null
+- brandLogoPosition: Where is the logo? Use %
+- decorativeElements: Shapes, patterns, or "none"
+- comparisonLayout: For comparison templates only (e.g. "left-bad right-good 50/50"), null otherwise
+- textAreaPercent: What % of image is text zone
+- margins: Approximate margins
+
+JSON ONLY (no markdown):
+{
+  "isTextOnly": true/false,
+  "templateType": "product-showcase" | "comparison" | "text-only" | "lifestyle",
+  "templateHasPrices": true/false,
+  "templateTextCount": number,
+  "templateHasHumanModel": true/false,
+  "templateHasProductPhoto": true/false,
+  "textElements": ["headline", "discount-percentage", ...],
+  "layout": {
+    "textPosition": "...",
+    "productPosition": "...",
+    "ctaPosition": "...",
+    "ctaStyle": "...",
+    "backgroundStyle": "...",
+    "typographyStyle": "...",
+    "brandLogoPosition": "...",
+    "decorativeElements": "...",
+    "comparisonLayout": "... or null",
+    "headlineStyle": "...",
+    "subheadlineStyle": "... or null",
+    "textColor": "#hex",
+    "accentColor": "#hex or null",
+    "productSizePercent": "... or null",
+    "textAreaPercent": "...",
+    "margins": "..."
+  }
+}`,
+          },
+        ],
+      },
+    ],
+  });
+
+  const textBlock = message.content.find((block) => block.type === "text");
+  const raw = textBlock?.text || "";
+
+  const defaultResult: import("@/lib/template-store").TemplateAnalysisData = {
+    isTextOnly: false,
+    templateType: "product-showcase",
+    templateHasPrices: false,
+    templateTextCount: 3,
+    templateHasHumanModel: false,
+    templateHasProductPhoto: true,
+    textElements: ["headline", "brand-name"],
+    layout: {
+      textPosition: "center",
+      productPosition: "none",
+      ctaPosition: "bottom-center",
+      ctaStyle: "rounded button",
+      backgroundStyle: "solid color",
+      typographyStyle: "bold sans-serif",
+      brandLogoPosition: "bottom-right",
+      decorativeElements: "none",
+      headlineStyle: "bold sans-serif, large",
+      textColor: "#000000",
+    },
+  };
+
+  try {
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+    return {
+      isTextOnly: parsed.isTextOnly === true,
+      templateType: parsed.templateType || "product-showcase",
+      templateHasPrices: parsed.templateHasPrices === true,
+      templateTextCount: (parsed.templateTextCount as number) || 3,
+      templateHasHumanModel: parsed.templateHasHumanModel === true,
+      templateHasProductPhoto: parsed.templateHasProductPhoto !== false,
+      textElements: Array.isArray(parsed.textElements) ? parsed.textElements : ["headline", "brand-name"],
+      layout: { ...defaultResult.layout, ...(parsed.layout || {}) },
+    };
+  } catch {
+    console.error("[analyzeTemplateMetadata] Failed to parse Claude response:", raw);
+    return defaultResult;
+  }
+}
+
 // ── Analyze a template and create an adapted scene description + text ──
 export async function describeTemplateScene(
   templateBase64: string,
   templateMimeType: string,
   brandContext: BrandContext,
+  precomputedAnalysis?: import("@/lib/template-store").TemplateAnalysisData,
 ): Promise<TemplateAnalysis> {
 
   const context = buildBrandContext(brandContext);
+
+  // If we have pre-computed metadata, use a SIMPLER prompt — Claude only needs to adapt text
+  if (precomputedAnalysis) {
+    return describeTemplateSceneWithMetadata(templateBase64, templateMimeType, brandContext, precomputedAnalysis);
+  }
 
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -312,6 +454,112 @@ JSON ONLY (no markdown):
       }
     }
     return { scene: raw, imageText: null, isTextOnly: false, templateType: "product-showcase", templateHasPrices: false, templateTextCount: 3, templateHasHumanModel: false, templateHasProductPhoto: true, layout: defaultLayout };
+  }
+}
+
+// ── Faster adaptation when pre-computed metadata exists ──
+async function describeTemplateSceneWithMetadata(
+  templateBase64: string,
+  templateMimeType: string,
+  brandContext: BrandContext,
+  meta: import("@/lib/template-store").TemplateAnalysisData,
+): Promise<TemplateAnalysis> {
+  const context = buildBrandContext(brandContext);
+
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1000,
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: templateMimeType as "image/png" | "image/jpeg" | "image/webp" | "image/gif",
+              data: templateBase64,
+            },
+          },
+          {
+            type: "text",
+            text: `You are an elite creative director. Your job: adapt an ad template's TEXT for a different brand. The template's visual structure has already been analyzed — you only need to create the adapted text and scene description.
+
+TARGET BRAND:
+${context}
+
+PRE-ANALYZED TEMPLATE METADATA (these are FACTS — do NOT override them):
+- Template type: ${meta.templateType}
+- Text elements on template: ${meta.textElements.join(", ")} (${meta.templateTextCount} total)
+- Has prices: ${meta.templateHasPrices}
+- Has human model: ${meta.templateHasHumanModel}
+- Has product photo: ${meta.templateHasProductPhoto}
+
+YOUR TASK: Create ONLY the adapted text and scene description for "${brandContext.brandName}".
+
+CRITICAL: The template is from a COMPLETELY DIFFERENT brand/product. You must REPLACE ALL text with content about "${brandContext.brandName}" and "${brandContext.productName}". NEVER copy, reuse, or keep ANY word or phrase from the template's original text.
+
+IRON RULES:
+1. You MUST produce EXACTLY ${meta.templateTextCount} text elements matching: ${meta.textElements.join(", ")}. Not one more.
+2. EVERY text element must be about "${brandContext.productName}" by "${brandContext.brandName}".
+3. ${meta.templateHasPrices ? "Template has prices — use real prices if available." : "Template has NO prices — ZERO prices in imageText."}
+4. NEVER add bullet points or feature lists unless the template has them.
+5. Keep text SHORT — match the template's text length roughly.
+6. NEVER add body text / descriptions unless the template has them.
+
+DISCOUNT RULES:
+${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If the template shows a big percentage, write ONLY the number+% (e.g. "-60%"). The offer name can appear as small text IF the template has small text, but the BIG visible number must be ONLY the percentage.` : "- No offer. Replace any discount area with the brand's strongest selling point in 2-4 words."}
+- NEVER use "---" or multiple dashes before a number. Write exactly "-60%" not "---60%".
+
+PRICE RULES:
+${meta.templateHasPrices ? (brandContext.productOriginalPrice && brandContext.productSalePrice ? `Use real prices: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}` : brandContext.productPrice ? `Use real price: ${brandContext.productPrice}` : "No prices available → do NOT show any price.") : "ZERO prices. No exceptions."}
+
+SCENE: Describe the visual layout for image generation.
+${meta.templateType === "comparison" ? `COMPARISON: Describe split layout. BAD SIDE: Show a generic inferior product from the SAME CATEGORY as "${brandContext.productName}" — NOT the template's product. GOOD SIDE: Show "${brandContext.productName}".` : ""}
+${meta.templateType === "product-showcase" || meta.templateType === "lifestyle" ? `Describe ONLY 1 unit of "${brandContext.productName}" displayed simply and cleanly. NEVER describe multiple units.` : ""}
+
+JSON ONLY:
+{
+  "scene": "ENGLISH description of layout for image generation",
+  "imageText": "French text adapted for the brand, matching template structure exactly. Use \\n for line breaks. MUST have exactly ${meta.templateTextCount} elements matching: ${meta.textElements.join(", ")}."
+}`,
+          },
+        ],
+      },
+    ],
+  });
+
+  const textBlock = message.content.find((block) => block.type === "text");
+  const raw = textBlock?.text || "";
+
+  try {
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+
+    return {
+      scene: (parsed.scene as string) || "Product displayed elegantly on a clean surface.",
+      imageText: (parsed.imageText as string) || null,
+      isTextOnly: meta.isTextOnly,
+      templateType: meta.templateType,
+      templateHasPrices: meta.templateHasPrices,
+      templateTextCount: meta.templateTextCount,
+      templateHasHumanModel: meta.templateHasHumanModel,
+      templateHasProductPhoto: meta.templateHasProductPhoto,
+      layout: meta.layout,
+    };
+  } catch {
+    console.error("[describeTemplateSceneWithMetadata] Failed to parse:", raw);
+    return {
+      scene: raw || "Product on clean surface with professional lighting.",
+      imageText: null,
+      isTextOnly: meta.isTextOnly,
+      templateType: meta.templateType,
+      templateHasPrices: meta.templateHasPrices,
+      templateTextCount: meta.templateTextCount,
+      templateHasHumanModel: meta.templateHasHumanModel,
+      templateHasProductPhoto: meta.templateHasProductPhoto,
+      layout: meta.layout,
+    };
   }
 }
 

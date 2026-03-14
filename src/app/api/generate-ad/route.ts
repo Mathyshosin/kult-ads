@@ -80,11 +80,13 @@ export async function POST(request: Request) {
     if (customPrompt) {
       sceneDescription = customPrompt;
     } else if (template) {
-      console.log("[generate-ad] Analyzing template with Claude...");
+      const hasPrecomputedAnalysis = !!template.analysis;
+      console.log(`[generate-ad] ${hasPrecomputedAnalysis ? "Using pre-computed metadata + adapting text" : "Full template analysis"} with Claude...`);
       templateAnalysis = await describeTemplateScene(
         template.imageBase64,
         template.mimeType,
         brandContext,
+        template.analysis,  // Pass pre-computed metadata if available
       );
       sceneDescription = templateAnalysis.scene;
       imageText = templateAnalysis.imageText;
