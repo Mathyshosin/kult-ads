@@ -192,6 +192,9 @@ export async function POST(request: Request) {
     // Only show prices if Claude detected them on the template AND we have real prices
     const showPrices = templateAnalysis?.templateHasPrices && priceInfo;
 
+    // Check if discount is already embedded in imageText (avoid Gemini showing it twice)
+    const discountAlreadyInText = !!(discountStr && imageText && imageText.includes(discountStr));
+
     // ── Gemini prompt ──
     let visualPrompt: string;
     const layout = templateAnalysis?.layout;
@@ -223,8 +226,8 @@ STRICT RULES:
 1. The ONLY brand name is "${brandAnalysis.brandName}".
 2. ${logoInstruction}
 3. Brand colors: ${colors}.
-${discountStr ? `4. DISCOUNT: Show "${discountStr}" prominently. No extra dashes.` : "4. No discount."}
-5. Display ONLY the text provided above. Do NOT add extra text, bullet points, descriptions, or prices not specified above.
+${discountStr && !discountAlreadyInText ? `4. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "4. No extra discount text needed — it's already in the text above (or there is none)."}
+5. Display ONLY the text provided above. Do NOT add extra text, bullet points, descriptions, or prices not specified above. NEVER show any text element twice — each piece of text must appear exactly ONCE.
 6. Match the EXACT proportions and spacing from the layout reference — text sizes, margins, element positions must be faithful to the original template.`;
     } else if (template && layout && !isTextOnly && templateAnalysis?.templateType === "comparison") {
       // ── COMPARISON / VS template ──
@@ -262,10 +265,10 @@ STRICT RULES:
 3. GOOD side: EXACTLY 1 unit of "${product.name}" from PRODUCT reference. Never cropped. Show the actual product, NOT a hand holding a card or logo.
 4. ${logoInstruction}
 5. Brand colors: ${colors}.
-${discountStr ? `6. DISCOUNT: Show "${discountStr}" prominently. No extra dashes.` : "6. No discount."}
+${discountStr && !discountAlreadyInText ? `6. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "6. No extra discount text needed."}
 ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
 8. NEVER add labels or text ON the product.
-9. Display ONLY the text provided above. No extra text, no bullet points, no feature lists.`;
+9. Display ONLY the text provided above. No extra text, no bullet points, no feature lists. NEVER show any text element twice.`;
     } else if (template && layout && !isTextOnly) {
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──
@@ -313,9 +316,9 @@ ${!noProduct ? `1. Show EXACTLY 1 unit of "${product.name}" from the PRODUCT ref
 2. ${logoInstruction}
 3. Brand colors: ${colors}.
 4. The ONLY brand name is "${brandAnalysis.brandName}".
-${discountStr ? `5. DISCOUNT: Show "${discountStr}" prominently. Write it exactly as shown — no extra dashes.` : "5. No discount on this ad."}
+${discountStr && !discountAlreadyInText ? `5. DISCOUNT: Show "${discountStr}" prominently. Write it exactly as shown — no extra dashes. Show it ONLY ONCE.` : "5. No extra discount text needed — it's already in the text above (or there is none)."}
 ${showPrices ? `6. ${priceInfo}` : "6. NO PRICES on this image. Do NOT show any price, € symbol, or monetary amount anywhere."}
-7. Display ONLY the text provided above. Do NOT add extra text, bullet points, feature lists, product descriptions, or any text not specified above.
+7. Display ONLY the text provided above. Do NOT add extra text, bullet points, feature lists, product descriptions, or any text not specified above. NEVER show any text element twice — each piece of text must appear exactly ONCE.
 8. If the text above includes annotations with arrows/lines, each annotation MUST point to the correct part of the product.
 ${!noProduct ? "9. Photorealistic product, professional lighting, high-end advertising quality." : "9. Professional, high-end advertising quality."}
 10. Match the template's proportions EXACTLY — text size ratios, spacing, element positions must be faithful to the described layout.
