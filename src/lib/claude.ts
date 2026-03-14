@@ -159,6 +159,10 @@ RULES:
 Write a scene description that RECREATES the template's exact visual structure for "${brandContext.brandName}".
 Be extremely specific about positions, sizes, and proportions.
 
+CRITICAL: In your scene description, replace ALL products from the template with "${brandContext.productName}" (${brandContext.productDescription || "the brand's product"}).
+For example, if the template shows boxes of supplements, describe "${brandContext.productName}" displayed in the same arrangement instead.
+NEVER describe the template's original products — describe "${brandContext.productName}" in their place.
+
 JSON ONLY (no markdown):
 {
   "isTextOnly": true/false,

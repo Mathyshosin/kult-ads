@@ -109,37 +109,50 @@ export async function POST(request: Request) {
         ? `\nEXACT TEXT TO DISPLAY (in French, with line breaks as shown):\n"${imageText}"\nSpell the brand name "${brandAnalysis.brandName}" EXACTLY.`
         : "";
 
-      visualPrompt = `${aspectRatio} — Create a NEW advertising image for the brand "${brandAnalysis.brandName}".
+      // Build product description for Gemini to know what to generate
+      const productDesc = [
+        product.name,
+        product.description ? `(${product.description})` : "",
+        product.features?.length ? `— ${product.features.slice(0, 3).join(", ")}` : "",
+      ].filter(Boolean).join(" ");
 
-⚠️ IMPORTANT: The LAYOUT REFERENCE image is from a DIFFERENT brand. It is ONLY a structural guide for positioning and visual style. You MUST IGNORE all text, brand names, product names, logos, and product images visible in the LAYOUT REFERENCE. They are NOT for "${brandAnalysis.brandName}".
+      visualPrompt = `${aspectRatio} — Create a professional advertising image for "${brandAnalysis.brandName}".
 
-THE ONLY BRAND IN THIS AD IS: "${brandAnalysis.brandName}"
-THE ONLY PRODUCT IN THIS AD IS: "${product.name}"
-Any other brand name or product you see in the LAYOUT REFERENCE must be completely replaced.
+WHAT THIS AD IS ABOUT:
+- Brand: "${brandAnalysis.brandName}"
+- Product: ${productDesc}
+${offer ? `- Offer: ${offer.title}` : ""}
 
-VISUAL STRUCTURE TO REPRODUCE (from LAYOUT REFERENCE):
-- Background style: ${layout.backgroundStyle}
+THE LAYOUT REFERENCE IMAGE IS FROM A COMPLETELY DIFFERENT BRAND AND PRODUCT CATEGORY.
+It is ONLY a guide for the visual LAYOUT (where things are positioned). You must NOT reproduce its products, packaging, text, or brand.
+
+${!isTextOnly && productImageBase64 ? `PRODUCT TO SHOW: Look at the PRODUCT reference image. This is "${product.name}" by "${brandAnalysis.brandName}".
+Place this product (and ONLY this product) where products appear in the layout.
+The product in the LAYOUT REFERENCE is a DIFFERENT product from a DIFFERENT brand — do NOT reproduce it.
+If the layout shows multiple products, show multiple angles or copies of "${product.name}" instead.` : ""}
+${isTextOnly ? "This is a TEXT-ONLY ad — NO product photos, NO physical objects, NO people. Only typography and graphic elements." : ""}
+
+LAYOUT TO FOLLOW (positions and style only, from LAYOUT REFERENCE):
+- Background: ${layout.backgroundStyle}
 - Decorative elements: ${layout.decorativeElements}
 - Text placement: ${layout.textPosition}
-- Typography style: ${layout.typographyStyle}
-- CTA button style: ${layout.ctaStyle} at ${layout.ctaPosition}
-- Brand name placement: ${layout.brandLogoPosition}
-${!isTextOnly ? `- Product placement: ${layout.productPosition}` : "- NO product photo — this is a pure typographic/graphic design"}
+- Typography: ${layout.typographyStyle}
+- CTA: ${layout.ctaStyle} at ${layout.ctaPosition}
+- Brand name: ${layout.brandLogoPosition}
+${!isTextOnly ? `- Product area: ${layout.productPosition}` : ""}
 
-TEXT TO DISPLAY ON THE IMAGE (in French — this is the ONLY text allowed):
+TEXT ON THE IMAGE (in French):
 ${imageText ? `"${imageText}"` : `Write compelling French ad text for "${brandAnalysis.brandName}" — "${product.name}".`}
-Brand name spelled EXACTLY: "${brandAnalysis.brandName}"
-
-${!isTextOnly && productImageBase64 ? `PRODUCT: Use ONLY the PRODUCT reference image — "${product.name}". Place it at: ${layout.productPosition}. Do NOT use any product from the LAYOUT REFERENCE.` : ""}
-${isTextOnly ? "NO product photos, NO physical objects, NO people. Only typography and graphic elements." : ""}
+Brand name EXACTLY: "${brandAnalysis.brandName}"
 
 SCENE: ${sceneDescription}
 
 RULES:
-1. Reproduce the visual structure (positions, spacing, proportions, background, decorative shapes) from the LAYOUT REFERENCE.
+1. Follow the LAYOUT REFERENCE for positions, spacing, background, and decorative elements.
 2. Brand colors: ${colors}.
-3. ZERO content from the LAYOUT REFERENCE — all text, brand names, and products must be for "${brandAnalysis.brandName}" only.
-${offer ? `4. DISCOUNT: If the layout reference shows a percentage number, replace it with ONLY "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}". Display ONLY the number+symbol, NOT the offer name.` : "4. There is NO discount. If the layout reference shows a percentage, replace with a key benefit."}`;
+3. ALL products must be "${product.name}" from the PRODUCT reference — NOT the layout reference's products.
+4. ALL text must be about "${brandAnalysis.brandName}" — ZERO text from the layout reference.
+${offer ? `5. DISCOUNT: Replace any percentage with ONLY "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}".` : "5. No discount. Replace any percentage with a key benefit."}`;
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
