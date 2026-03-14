@@ -5,6 +5,13 @@ import { generateImage } from "@/lib/gemini";
 import { getRandomTemplateWithImage, getTemplateByIdWithImage } from "@/lib/template-store";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 
+/** Sanitize discount string: fix double dashes and double percent signs */
+function cleanDiscount(raw: string): string {
+  return raw
+    .replace(/--+/g, "-")   // "--60%" → "-60%"
+    .replace(/%%+/g, "%");  // "-60%%" → "-60%"
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseClient();
@@ -93,6 +100,14 @@ export async function POST(request: Request) {
         console.log("[generate-ad] Stripped prices from imageText (template has no prices)");
       }
 
+      // ── Safety filter: fix formatting glitches in discount/percentage text ──
+      if (imageText) {
+        imageText = imageText
+          .replace(/--+(\d)/g, "-$1")   // "--60%" or "---60%" → "-60%"
+          .replace(/%%+/g, "%")          // "-60%%" → "-60%"
+          .replace(/(\d)%%/g, "$1%");    // "60%%" → "60%"
+      }
+
       console.log("[generate-ad] Scene:", sceneDescription);
       console.log("[generate-ad] Image text:", imageText);
       console.log("[generate-ad] Text-only template:", isTextOnly);
@@ -112,7 +127,9 @@ export async function POST(request: Request) {
     }> = [];
 
     // Product photo FIRST so Gemini prioritizes it over the layout reference
-    if (productImageBase64 && !isTextOnly) {
+    // BUT: only include if NOT text-only AND template actually shows a product
+    const templateShowsProduct = templateAnalysis?.templateHasProductPhoto !== false;
+    if (productImageBase64 && !isTextOnly && templateShowsProduct) {
       referenceImages.push({
         base64: productImageBase64,
         mimeType: productImageMimeType || "image/png",
@@ -161,20 +178,26 @@ export async function POST(request: Request) {
       ? `Use the EXACT brand logo from the LOGO reference image for "${brandAnalysis.brandName}". Do NOT generate or invent a logo. Do NOT modify the logo in ANY way — no font change, no color change, no outline, no shadow, no additions. ZERO modifications. Place it as-is.`
       : `If showing a brand name/logo, write "${brandAnalysis.brandName}" in clean typography. Do NOT invent a logo graphic.`;
 
+    // ── Discount string (computed once, sanitized) ──
+    const discountStr = offer
+      ? cleanDiscount(
+          offer.discountValue && offer.discountType === "percentage"
+            ? `-${offer.discountValue}%`
+            : offer.discountValue
+              ? `-${offer.discountValue}€`
+              : (offer.title || "")
+        ) || null
+      : null;
+
+    // Only show prices if Claude detected them on the template AND we have real prices
+    const showPrices = templateAnalysis?.templateHasPrices && priceInfo;
+
     // ── Gemini prompt ──
     let visualPrompt: string;
     const layout = templateAnalysis?.layout;
 
     if (template && layout && isTextOnly) {
       // ── Text-only template: layout reference image IS sent to Gemini ──
-      const discountStr = offer
-        ? (offer.discountValue && offer.discountType === "percentage"
-          ? `-${offer.discountValue}%`
-          : offer.discountValue
-            ? `-${offer.discountValue}€`
-            : offer.title)
-        : null;
-
       visualPrompt = `${aspectRatio} — Create a text-only advertising image for "${brandAnalysis.brandName}".
 
 Reproduce the EXACT layout from the LAYOUT REFERENCE image:
@@ -182,8 +205,12 @@ Reproduce the EXACT layout from the LAYOUT REFERENCE image:
 - Decorative elements: ${layout.decorativeElements}
 - Text placement: ${layout.textPosition}
 - Typography: ${layout.typographyStyle}
+- Headline style: ${layout.headlineStyle}${layout.subheadlineStyle ? `\n- Subheadline style: ${layout.subheadlineStyle}` : ""}
+- Text color: ${layout.textColor}${layout.accentColor ? ` | Accent color: ${layout.accentColor}` : ""}
 - CTA: ${layout.ctaStyle} at ${layout.ctaPosition}
 - Brand name position: ${layout.brandLogoPosition}
+${layout.textAreaPercent ? `- Text area: ${layout.textAreaPercent}` : ""}
+${layout.margins ? `- Margins: ${layout.margins}` : ""}
 
 TEXT ON IMAGE (in French — display ONLY this text, nothing more):
 ${imageText ? `"${imageText}"` : `"${brandAnalysis.brandName}"`}
@@ -197,21 +224,13 @@ STRICT RULES:
 2. ${logoInstruction}
 3. Brand colors: ${colors}.
 ${discountStr ? `4. DISCOUNT: Show "${discountStr}" prominently. No extra dashes.` : "4. No discount."}
-5. Display ONLY the text provided above. Do NOT add extra text, bullet points, descriptions, or prices not specified above.`;
+5. Display ONLY the text provided above. Do NOT add extra text, bullet points, descriptions, or prices not specified above.
+6. Match the EXACT proportions and spacing from the layout reference — text sizes, margins, element positions must be faithful to the original template.`;
     } else if (template && layout && !isTextOnly && templateAnalysis?.templateType === "comparison") {
       // ── COMPARISON / VS template ──
       const competitors = brandAnalysis.competitorProducts?.length
         ? brandAnalysis.competitorProducts.slice(0, 2).join(" ou ")
         : "le produit concurrent traditionnel";
-
-      const showPrices = templateAnalysis?.templateHasPrices && priceInfo;
-      const discountStr = offer
-        ? (offer.discountValue && offer.discountType === "percentage"
-          ? `-${offer.discountValue}%`
-          : offer.discountValue
-            ? `-${offer.discountValue}€`
-            : offer.title)
-        : null;
 
       visualPrompt = `${aspectRatio} — Create a COMPARISON / VS advertising image for "${brandAnalysis.brandName}".
 
@@ -223,7 +242,10 @@ GOOD SIDE: Show EXACTLY 1 unit of "${product.name}" from the PRODUCT reference �
 LAYOUT:
 - Background: ${layout.backgroundStyle}
 - Typography: ${layout.typographyStyle}
+- Headline style: ${layout.headlineStyle}${layout.subheadlineStyle ? `\n- Subheadline style: ${layout.subheadlineStyle}` : ""}
+- Text color: ${layout.textColor}${layout.accentColor ? ` | Accent color: ${layout.accentColor}` : ""}
 - Brand name position: ${layout.brandLogoPosition}
+${layout.margins ? `- Margins: ${layout.margins}` : ""}
 
 TEXT ON IMAGE (in French — display ONLY this text):
 ${imageText ? `"${imageText}"` : `"${brandAnalysis.brandName}"`}
@@ -243,34 +265,38 @@ ${showPrices ? `6. ${priceInfo}` : "6. NO PRICES anywhere on the image."}
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──
 
-      // Only show prices if Claude detected them on the template AND we have real prices
-      const showPrices = templateAnalysis?.templateHasPrices && priceInfo;
+      const noHuman = !templateAnalysis?.templateHasHumanModel;
+      const noProduct = !templateShowsProduct;
 
-      // Build discount string cleanly
-      const discountStr = offer
-        ? (offer.discountValue && offer.discountType === "percentage"
-          ? `-${offer.discountValue}%`
-          : offer.discountValue
-            ? `-${offer.discountValue}€`
-            : offer.title)
-        : null;
-
-      visualPrompt = `${aspectRatio} — Create a professional advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
-
-PRODUCT: Look at the PRODUCT reference image. Show this EXACT product — same shape, same colors, same packaging.
+      const productSection = noProduct
+        ? `This ad does NOT show a product photo — it uses only text, shapes, and graphics to advertise "${product.name}".
+- Do NOT add any product photo, packshot, or physical object.
+- Do NOT add any person, model, or human figure.`
+        : `PRODUCT: Look at the PRODUCT reference image. Show this EXACT product — same shape, same colors, same packaging.
 - Display EXACTLY 1 unit of this product. NOT 2, NOT a stack, NOT multiple colors.
 - The product MUST be FULLY VISIBLE — never cropped or cut off.
 - NEVER create or invent packaging. Use ONLY what's in the reference photo.
 - NEVER add labels, stickers, or text ON the product.
+${layout.productSizePercent ? `- Product size: ${layout.productSizePercent}` : ""}`;
 
-LAYOUT:
+      visualPrompt = `${aspectRatio} — Create a professional advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
+
+${productSection}
+
+LAYOUT (match these proportions precisely):
 - Background: ${layout.backgroundStyle}
 - Decorative elements: ${layout.decorativeElements}
 - Text placement: ${layout.textPosition}
-- Typography: ${layout.typographyStyle}
+${layout.textAreaPercent ? `- Text area: ${layout.textAreaPercent}` : ""}
+${!noProduct ? `- Product area: ${layout.productPosition}` : ""}
+${layout.margins ? `- Margins: ${layout.margins}` : ""}
 - CTA: ${layout.ctaStyle} at ${layout.ctaPosition}
 - Brand name position: ${layout.brandLogoPosition}
-- Product area: ${layout.productPosition}
+
+TYPOGRAPHY (match this style precisely):
+- Headline: ${layout.headlineStyle}${layout.subheadlineStyle ? `\n- Subheadline: ${layout.subheadlineStyle}` : ""}
+- Primary text color: ${layout.textColor}${layout.accentColor ? `\n- Accent/highlight color: ${layout.accentColor}` : ""}
+- General style: ${layout.typographyStyle}
 
 TEXT ON IMAGE (in French — display ONLY this text, nothing more):
 ${imageText ? `"${imageText}"` : `"${brandAnalysis.brandName}"`}
@@ -278,7 +304,7 @@ ${imageText ? `"${imageText}"` : `"${brandAnalysis.brandName}"`}
 SCENE: ${sceneDescription}
 
 STRICT RULES:
-1. Show EXACTLY 1 unit of "${product.name}" from the PRODUCT reference. ONE. Not two, not multiple colors.
+${!noProduct ? `1. Show EXACTLY 1 unit of "${product.name}" from the PRODUCT reference. ONE. Not two, not multiple colors.` : `1. NO product photo, NO packshot, NO physical object on this image.`}
 2. ${logoInstruction}
 3. Brand colors: ${colors}.
 4. The ONLY brand name is "${brandAnalysis.brandName}".
@@ -286,7 +312,9 @@ ${discountStr ? `5. DISCOUNT: Show "${discountStr}" prominently. Write it exactl
 ${showPrices ? `6. ${priceInfo}` : "6. NO PRICES on this image. Do NOT show any price, € symbol, or monetary amount anywhere."}
 7. Display ONLY the text provided above. Do NOT add extra text, bullet points, feature lists, product descriptions, or any text not specified above.
 8. If the text above includes annotations with arrows/lines, each annotation MUST point to the correct part of the product.
-9. Photorealistic product, professional lighting, high-end advertising quality.`;
+${!noProduct ? "9. Photorealistic product, professional lighting, high-end advertising quality." : "9. Professional, high-end advertising quality."}
+10. Match the template's proportions EXACTLY — text size ratios, spacing, element positions must be faithful to the described layout.
+${noHuman ? "11. Do NOT add any person, model, hand, or human figure. The template has NO people — keep it that way." : ""}`.trim();
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText

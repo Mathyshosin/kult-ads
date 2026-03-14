@@ -92,16 +92,27 @@ export interface TemplateAnalysis {
   templateType: "product-showcase" | "comparison" | "text-only" | "lifestyle";
   templateHasPrices: boolean;
   templateTextCount: number;
+  templateHasHumanModel: boolean;    // Does the template show a person/model?
+  templateHasProductPhoto: boolean;  // Does the template show a product photo?
   layout: {
-    textPosition: string;       // e.g. "top-left", "center", "bottom"
-    productPosition: string;    // e.g. "center-right", "bottom-half", "none"
-    ctaPosition: string;        // e.g. "bottom-left", "bottom-center", "none"
+    textPosition: string;       // e.g. "top 15% of image, left-aligned with 10% margin"
+    productPosition: string;    // e.g. "centered in bottom 55% of image", "none"
+    ctaPosition: string;        // e.g. "bottom 10%, centered horizontally", "none"
     ctaStyle: string;           // e.g. "rounded white button", "pill shape dark", "none"
     backgroundStyle: string;    // e.g. "warm peach gradient", "solid white", "photo"
     typographyStyle: string;    // e.g. "bold sans-serif uppercase, dark navy"
-    brandLogoPosition: string;  // e.g. "top-right", "bottom-right", "none"
+    brandLogoPosition: string;  // e.g. "top-right corner, ~5% from edges", "none"
     decorativeElements: string; // e.g. "organic curved shapes", "geometric lines", "none"
-    comparisonLayout?: string;  // e.g. "left-bad right-good split 50/50" (only for comparison templates)
+    comparisonLayout?: string;  // e.g. "left-bad right-good split 50/50"
+    // Typography details
+    headlineStyle: string;      // e.g. "72pt bold uppercase sans-serif, white, ~40% image width"
+    subheadlineStyle?: string;  // e.g. "24pt regular, light gray, ~30% image width"
+    textColor: string;          // e.g. "#FFFFFF" — primary text color
+    accentColor?: string;       // e.g. "#FF5733" — discount/CTA/highlight color
+    // Proportions
+    productSizePercent?: string; // e.g. "product occupies ~45% of image height"
+    textAreaPercent?: string;    // e.g. "text zone = top 30% of image"
+    margins?: string;            // e.g. "~8% margins on all sides"
   };
 }
 
@@ -116,7 +127,7 @@ export async function describeTemplateScene(
 
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
-    max_tokens: 1200,
+    max_tokens: 2000,
     messages: [
       {
         role: "user",
@@ -151,19 +162,35 @@ Before ANYTHING else, count EVERY distinct text element visible on the template:
 
 Write the count as "templateTextCount". Example: if template has headline + discount % + brand name + small date text = 4 text elements.
 
-Also note: does the template show ANY price (€, $, number with currency)? → "templateHasPrices": true/false
-Does the template show bullet points or a feature list? → if no, you MUST NOT create any.
+Also note:
+- Does the template show ANY price (€, $, number with currency)? → "templateHasPrices": true/false
+- Does the template show bullet points or a feature list? → if no, you MUST NOT create any.
+- Does the template show a PERSON / human model? → "templateHasHumanModel": true/false
+- Does the template show a PRODUCT PHOTO (a physical product)? → "templateHasProductPhoto": true/false
+  If the template has NO product photo (just text, shapes, graphics), set to false.
 
 ━━━ STEP 2: CLASSIFY ━━━
-- "text-only": No product photos, only typography/graphics
-- "product-showcase": Shows a product prominently
+- "text-only": No product photos, no people, only typography/graphics
+- "product-showcase": Shows a product prominently (no person)
 - "comparison": VS/split layout comparing two things
-- "lifestyle": Product in real-life context
+- "lifestyle": Product shown with a person or in real-life context
 
-━━━ STEP 3: DETAILED LAYOUT EXTRACTION ━━━
-Describe with PRECISION:
-- textPosition, productPosition, ctaPosition, ctaStyle
-- backgroundStyle, typographyStyle, brandLogoPosition, decorativeElements
+━━━ STEP 3: DETAILED LAYOUT EXTRACTION (USE PERCENTAGES) ━━━
+Describe with EXTREME PRECISION using % of image dimensions:
+- textPosition: WHERE is text placed? Use % from top/left (e.g. "headline at top 10-25% of image, left-aligned with 8% left margin")
+- productPosition: WHERE is the product? (e.g. "centered in bottom 50% of image, occupying ~40% width")
+- productSizePercent: How much of the image does the product occupy? (e.g. "~45% of image height, ~35% of image width")
+- ctaPosition + ctaStyle: Where is the CTA button and what does it look like?
+- backgroundStyle: Exact background description
+- typographyStyle: General font style
+- headlineStyle: PRECISE headline typography — estimated font weight (bold/extrabold/black), case (uppercase/mixed), serif or sans-serif, color hex, approximate size relative to image (e.g. "~8% of image height")
+- subheadlineStyle: Same detail for any subheadline
+- textColor: Primary text color as hex (e.g. "#FFFFFF")
+- accentColor: Color used for highlights/discounts/CTA (e.g. "#FF5733")
+- brandLogoPosition: Where is the logo? Use % (e.g. "top-right, ~5% from top and right edges")
+- decorativeElements: Any shapes, patterns, gradients
+- textAreaPercent: What % of the image is dedicated to text vs product? (e.g. "text zone = top 35%")
+- margins: Approximate margins/padding (e.g. "~8% on all sides")
 
 ━━━ STEP 4: CREATE ADAPTED TEXT — STRICT MATCHING ━━━
 Replace the template's text for "${brandContext.brandName}".
@@ -210,18 +237,27 @@ JSON ONLY (no markdown):
   "templateType": "product-showcase" | "comparison" | "text-only" | "lifestyle",
   "templateHasPrices": true/false,
   "templateTextCount": number,
-  "scene": "ENGLISH description of the layout. Be specific about positions.",
+  "templateHasHumanModel": true/false,
+  "templateHasProductPhoto": true/false,
+  "scene": "ENGLISH description of the layout with PRECISE % positions. Be extremely specific.",
   "imageText": "ONLY the French text for the image, matching template structure exactly. Use \\n for line breaks. null if no text. MUST have exactly templateTextCount elements.",
   "layout": {
-    "textPosition": "...",
-    "productPosition": "...",
-    "ctaPosition": "...",
-    "ctaStyle": "...",
-    "backgroundStyle": "...",
-    "typographyStyle": "...",
-    "brandLogoPosition": "...",
-    "decorativeElements": "...",
-    "comparisonLayout": "only for comparison templates, null otherwise"
+    "textPosition": "use % from top/left edges",
+    "productPosition": "use % of image, or 'none'",
+    "ctaPosition": "use % position",
+    "ctaStyle": "shape + color + text style",
+    "backgroundStyle": "exact description",
+    "typographyStyle": "general font family + weight",
+    "brandLogoPosition": "use % from edges",
+    "decorativeElements": "shapes, patterns, or 'none'",
+    "comparisonLayout": "only for comparison templates, null otherwise",
+    "headlineStyle": "weight + case + serif/sans + color hex + size as % of image height",
+    "subheadlineStyle": "same format, or null",
+    "textColor": "#hex of primary text",
+    "accentColor": "#hex of accent/highlight color, or null",
+    "productSizePercent": "e.g. '~45% height, ~35% width'",
+    "textAreaPercent": "e.g. 'top 30% of image'",
+    "margins": "e.g. '~8% all sides'"
   }
 }`,
           },
@@ -242,6 +278,8 @@ JSON ONLY (no markdown):
     typographyStyle: "bold sans-serif",
     brandLogoPosition: "bottom-right",
     decorativeElements: "none",
+    headlineStyle: "bold sans-serif, large",
+    textColor: "#000000",
   };
 
   const parseResult = (parsed: Record<string, unknown>): TemplateAnalysis => ({
@@ -251,6 +289,8 @@ JSON ONLY (no markdown):
     templateType: (parsed.templateType as TemplateAnalysis["templateType"]) || (parsed.isTextOnly ? "text-only" : "product-showcase"),
     templateHasPrices: parsed.templateHasPrices === true,
     templateTextCount: (parsed.templateTextCount as number) || 3,
+    templateHasHumanModel: parsed.templateHasHumanModel === true,
+    templateHasProductPhoto: parsed.templateHasProductPhoto !== false, // default true for safety
     layout: { ...defaultLayout, ...(parsed.layout as Record<string, string>) },
   });
 
@@ -262,10 +302,10 @@ JSON ONLY (no markdown):
       try {
         return parseResult(JSON.parse(jsonMatch[0]));
       } catch {
-        return { scene: raw, imageText: null, isTextOnly: false, templateType: "product-showcase", templateHasPrices: false, templateTextCount: 3, layout: defaultLayout };
+        return { scene: raw, imageText: null, isTextOnly: false, templateType: "product-showcase", templateHasPrices: false, templateTextCount: 3, templateHasHumanModel: false, templateHasProductPhoto: true, layout: defaultLayout };
       }
     }
-    return { scene: raw, imageText: null, isTextOnly: false, templateType: "product-showcase", templateHasPrices: false, templateTextCount: 3, layout: defaultLayout };
+    return { scene: raw, imageText: null, isTextOnly: false, templateType: "product-showcase", templateHasPrices: false, templateTextCount: 3, templateHasHumanModel: false, templateHasProductPhoto: true, layout: defaultLayout };
   }
 }
 
