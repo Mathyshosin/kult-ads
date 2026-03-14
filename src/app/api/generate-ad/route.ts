@@ -129,7 +129,8 @@ CRITICAL RULES:
 3. Keep the SAME background style, the SAME decorative shapes, the SAME text arrangement.
 4. The output should be indistinguishable from the template in terms of structure — someone should think it's the same designer.
 ${!isTextOnly && productImageBase64 ? `5. Use the PRODUCT reference photo as-is — same shape, colors, packaging. Place it at: ${layout.productPosition}.` : ""}
-${isTextOnly ? "5. NO product photos, NO physical objects, NO people. Only typography and graphic elements." : ""}`;
+${isTextOnly ? "5. NO product photos, NO physical objects, NO people. Only typography and graphic elements." : ""}
+6. DISCOUNT/PERCENTAGE: ${offer ? `The REAL offer is "${offer.title}"${offer.discountValue ? ` (${offer.discountValue}${offer.discountType === "percentage" ? "%" : "€"})` : ""}. If the template shows a percentage like "-10%" or "-20%", you MUST replace it with the REAL discount value. NEVER use the template's original percentage.` : "There is NO discount for this brand. If the template shows a percentage, REMOVE it and replace with a key benefit text."}`;
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText

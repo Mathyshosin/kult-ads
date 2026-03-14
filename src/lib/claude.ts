@@ -140,9 +140,14 @@ Describe with PRECISION:
 ━━━ STEP 3: CREATE ADAPTED CONTENT ━━━
 Replace the template's text with NEW French text for "${brandContext.brandName}":
 - Use ONLY real facts about the brand
-${brandContext.offerTitle ? `- Current offer: "${brandContext.offerTitle}"` : "- No offer available. Use the strongest selling point."}
+${brandContext.offerTitle ? `- Current offer: "${brandContext.offerTitle}"${brandContext.offerDescription ? ` — ${brandContext.offerDescription}` : ""}` : "- No offer available. Use the strongest selling point."}
 ${brandContext.uniqueSellingPoints?.length ? `- USPs: ${brandContext.uniqueSellingPoints.join(", ")}` : ""}
 - Brand name EXACTLY: "${brandContext.brandName}"
+
+CRITICAL RULE FOR DISCOUNTS/PERCENTAGES:
+- If the template shows a percentage (e.g. "-10%", "-20%"), you MUST replace it with the REAL offer value from the brand.
+${brandContext.offerTitle ? `- The REAL discount is: "${brandContext.offerTitle}". Use this EXACT value, not the template's percentage.` : "- There is NO discount/offer. Remove any percentage from the text and replace with a key selling point."}
+- NEVER keep the template's original percentage — it belongs to a different brand.
 
 RULES:
 - NEVER copy text from the template
