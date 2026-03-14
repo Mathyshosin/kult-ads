@@ -60,10 +60,17 @@ export async function generateImage(
         response.candidates?.[0]?.finishReason || "unknown"
       );
     } catch (err) {
-      console.error(
-        `[gemini] Attempt ${attempt} error:`,
-        err instanceof Error ? err.message : err
-      );
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error(`[gemini] Attempt ${attempt} error:`, errMsg);
+
+      // If rate-limited (429), wait longer
+      if (errMsg.includes("429") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("rate")) {
+        console.warn(`[gemini] Rate limited — waiting ${5 * attempt}s before retry`);
+        if (attempt < maxRetries) {
+          await new Promise((r) => setTimeout(r, 5000 * attempt));
+        }
+        continue;
+      }
     }
 
     // Wait a bit before retry (exponential backoff)

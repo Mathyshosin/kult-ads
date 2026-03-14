@@ -77,17 +77,23 @@ async function readLocalImage(filename: string): Promise<{ imageBase64: string; 
 
   // HTTP fallback: fetch from the deployed app's public folder
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
+      ? process.env.NEXT_PUBLIC_SITE_URL
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000";
     const url = `${baseUrl}/templates/${filename}`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
+    console.log(`[template-store] HTTP fallback for ${filename}: ${url}`);
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) {
+      console.error(`[template-store] HTTP fallback failed: ${res.status} for ${url}`);
+      return null;
+    }
     const arrayBuffer = await res.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
     return { imageBase64: base64, mimeType };
-  } catch {
-    console.error(`[template-store] Failed to read image: ${filename}`);
+  } catch (err) {
+    console.error(`[template-store] Failed to read image: ${filename}`, err instanceof Error ? err.message : err);
     return null;
   }
 }

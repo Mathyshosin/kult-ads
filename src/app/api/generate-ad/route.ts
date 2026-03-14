@@ -64,11 +64,13 @@ export async function POST(request: Request) {
     };
 
     // ── Get template image (library mode only) ──
+    console.log(`[generate-ad] Starting generation. templateId=${templateId}, format=${format}, customPrompt=${!!customPrompt}`);
     const template = templateId
       ? await getTemplateByIdWithImage(templateId)
       : customPrompt
         ? null
         : await getRandomTemplateWithImage(format);
+    console.log(`[generate-ad] Template loaded: ${template ? template.id : "none"}`);
 
     // Track the actual template ID used (important for random templates)
     const actualTemplateId = template?.id || templateId || null;
@@ -401,14 +403,17 @@ ${textInstruction}`;
     }
 
     // ── SEQUENTIAL: Image first, then copy ──
+    console.log(`[generate-ad] Calling Gemini with ${referenceImages.length} reference images...`);
     const visualResult = await generateImage(visualPrompt, aspectRatio, referenceImages);
 
     if (!visualResult) {
+      console.error("[generate-ad] Gemini returned null — image generation failed after all retries");
       return NextResponse.json(
         { error: "Échec de la génération de l'image" },
         { status: 500 }
       );
     }
+    console.log("[generate-ad] Gemini image generated successfully");
 
     // Copy angle
     const copyAngle = customPrompt
