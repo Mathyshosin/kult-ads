@@ -33,7 +33,8 @@ export default function GeneratePage() {
   const [selectedOffer, setSelectedOffer] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
 
-  // No extra state needed — productType is derived from brand analysis
+  // Product type toggle
+  const [selectedProductType, setSelectedProductType] = useState<"produit" | "service">("produit");
 
   // Custom prompt (collapsible)
   const [showCustom, setShowCustom] = useState(false);
@@ -90,19 +91,14 @@ export default function GeneratePage() {
     const { product, offer, image } = getSelections();
 
     try {
-      // Step 1: Select a random template (filtered by product type if available)
-      const productObj = brandAnalysis!.products.find((p) => p.id === selectedProduct);
-      const isService = productObj?.description?.toLowerCase().includes("service") ||
-        productObj?.description?.toLowerCase().includes("saas") ||
-        productObj?.description?.toLowerCase().includes("abonnement");
-
+      // Step 1: Select a random template filtered by product type
       const selectRes = await fetch("/api/templates/select", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           format: "square",
           count: 1,
-          productType: isService ? "service" : "produit",
+          productType: selectedProductType,
         }),
       });
 
@@ -293,6 +289,35 @@ export default function GeneratePage() {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Product type toggle */}
+        <div>
+          <label className="block text-xs font-medium text-foreground mb-2">
+            Type
+          </label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSelectedProductType("produit")}
+              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all border ${
+                selectedProductType === "produit"
+                  ? "bg-amber-50 border-amber-300 text-amber-700"
+                  : "border-border text-muted hover:bg-gray-50"
+              }`}
+            >
+              📦 Produit
+            </button>
+            <button
+              onClick={() => setSelectedProductType("service")}
+              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all border ${
+                selectedProductType === "service"
+                  ? "bg-blue-50 border-blue-300 text-blue-700"
+                  : "border-border text-muted hover:bg-gray-50"
+              }`}
+            >
+              💻 Service
+            </button>
           </div>
         </div>
 
