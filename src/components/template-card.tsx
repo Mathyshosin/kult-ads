@@ -22,35 +22,6 @@ const categories = [
   "autre",
 ];
 
-function TagToggle({
-  label,
-  value,
-  active,
-  onToggle,
-}: {
-  label: string;
-  value: string;
-  active: boolean;
-  onToggle: (v: string) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        onToggle(value);
-      }}
-      className={`text-[9px] px-1.5 py-0.5 rounded-full border transition-colors ${
-        active
-          ? "bg-primary/15 border-primary/40 text-primary font-semibold"
-          : "bg-gray-50 border-border text-muted hover:border-primary/30"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
 export default function TemplateCard({
   template,
   onRemove,
@@ -62,18 +33,16 @@ export default function TemplateCard({
   const isStory = template.format === "story";
   const tags = template.tags || { industry: [], adType: [], productType: [] };
 
-  function toggleTag(category: "industry" | "adType" | "productType", value: string) {
-    const current = tags[category] || [];
-    const updated = current.includes(value)
-      ? current.filter((v) => v !== value)
-      : [...current, value];
+  const tagCount = tags.industry.length + tags.adType.length + tags.productType.length;
+
+  function handleTagChange(
+    category: "industry" | "adType" | "productType",
+    value: string
+  ) {
     onUpdate?.({
-      tags: { ...tags, [category]: updated },
+      tags: { ...tags, [category]: value ? [value] : [] },
     } as Partial<AdTemplate>);
   }
-
-  // Count total tags for badge
-  const tagCount = tags.industry.length + tags.adType.length + tags.productType.length;
 
   return (
     <div
@@ -163,53 +132,52 @@ export default function TemplateCard({
               </select>
             </div>
 
-            {/* Tag editing */}
+            {/* Tag dropdowns */}
             <div className="space-y-1.5 pt-1 border-t border-border">
-              {/* Secteur */}
-              <div>
-                <p className="text-[9px] font-semibold text-muted uppercase tracking-wider mb-0.5">Secteur</p>
-                <div className="flex flex-wrap gap-0.5">
-                  {INDUSTRY_TAGS.map((t) => (
-                    <TagToggle
-                      key={t.value}
-                      label={t.label}
-                      value={t.value}
-                      active={tags.industry.includes(t.value)}
-                      onToggle={(v) => toggleTag("industry", v)}
-                    />
-                  ))}
-                </div>
-              </div>
-              {/* Type d'ad */}
-              <div>
-                <p className="text-[9px] font-semibold text-muted uppercase tracking-wider mb-0.5">Type d&apos;ad</p>
-                <div className="flex flex-wrap gap-0.5">
-                  {AD_TYPE_TAGS.map((t) => (
-                    <TagToggle
-                      key={t.value}
-                      label={t.label}
-                      value={t.value}
-                      active={tags.adType.includes(t.value)}
-                      onToggle={(v) => toggleTag("adType", v)}
-                    />
-                  ))}
-                </div>
-              </div>
-              {/* Type produit */}
-              <div>
-                <p className="text-[9px] font-semibold text-muted uppercase tracking-wider mb-0.5">Produit</p>
-                <div className="flex flex-wrap gap-0.5">
-                  {PRODUCT_TYPE_TAGS.map((t) => (
-                    <TagToggle
-                      key={t.value}
-                      label={t.label}
-                      value={t.value}
-                      active={tags.productType.includes(t.value)}
-                      onToggle={(v) => toggleTag("productType", v)}
-                    />
-                  ))}
-                </div>
-              </div>
+              <select
+                value={tags.industry[0] || ""}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  handleTagChange("industry", e.target.value);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full text-[11px] border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/30"
+              >
+                <option value="">-- Secteur --</option>
+                {INDUSTRY_TAGS.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+
+              <select
+                value={tags.adType[0] || ""}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  handleTagChange("adType", e.target.value);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full text-[11px] border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/30"
+              >
+                <option value="">-- Type d&apos;ad --</option>
+                {AD_TYPE_TAGS.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+
+              <select
+                value={tags.productType[0] || ""}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  handleTagChange("productType", e.target.value);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full text-[11px] border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/30"
+              >
+                <option value="">-- Type de produit --</option>
+                {PRODUCT_TYPE_TAGS.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
             </div>
           </div>
         ) : (
