@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: "TEMPLATE REFERENCE — You MUST reproduce this EXACT layout, composition, element positions, background style, typography style, and visual structure. Only change the text content and brand/product. The output must look like a near-identical twin of this template.",
+        label: "LAYOUT REFERENCE — Copy ONLY the visual structure: background colors/gradients, element positioning, text arrangement, decorative shapes, and overall composition. DO NOT copy any text, brand names, logos, product images, or specific content from this reference. All text and products must come from the instructions below.",
       });
     }
 
@@ -109,28 +109,32 @@ export async function POST(request: Request) {
         ? `\nEXACT TEXT TO DISPLAY (in French, with line breaks as shown):\n"${imageText}"\nSpell the brand name "${brandAnalysis.brandName}" EXACTLY.`
         : "";
 
-      visualPrompt = `${aspectRatio} — Reproduce the TEMPLATE REFERENCE image with pixel-perfect fidelity, only changing the brand content.
+      visualPrompt = `${aspectRatio} — Create a NEW advertising image for "${brandAnalysis.brandName}" using the LAYOUT REFERENCE as a structural guide.
 
-YOU MUST COPY FROM THE TEMPLATE:
-- Background: ${layout.backgroundStyle}
+The LAYOUT REFERENCE shows the STRUCTURE to follow. DO NOT copy its text, brand, logos, or products — only its visual layout.
+
+COPY FROM LAYOUT REFERENCE (structure only):
+- Background style: ${layout.backgroundStyle}
 - Decorative elements: ${layout.decorativeElements}
-- Text position: ${layout.textPosition}
-- Typography: ${layout.typographyStyle}
-- CTA button: ${layout.ctaStyle} at ${layout.ctaPosition}
-- Brand logo/name position: ${layout.brandLogoPosition}
-${!isTextOnly ? `- Product position: ${layout.productPosition}` : "- NO product photo — this is a pure typographic/graphic design"}
+- Text placement: ${layout.textPosition}
+- Typography style: ${layout.typographyStyle}
+- CTA button style: ${layout.ctaStyle} at ${layout.ctaPosition}
+- Brand name placement: ${layout.brandLogoPosition}
+${!isTextOnly ? `- Product placement: ${layout.productPosition}` : "- NO product photo — this is a pure typographic/graphic design"}
 
-SCENE: ${sceneDescription}
+NEW CONTENT FOR "${brandAnalysis.brandName}" (replace ALL text from the layout reference):
 ${textContent}
 
+SCENE: ${sceneDescription}
+
 CRITICAL RULES:
-1. The layout, spacing, proportions, and visual hierarchy must be IDENTICAL to the TEMPLATE REFERENCE.
-2. Only replace: text content → "${brandAnalysis.brandName}" content, brand colors → ${colors}.
-3. Keep the SAME background style, the SAME decorative shapes, the SAME text arrangement.
-4. The output should be indistinguishable from the template in terms of structure — someone should think it's the same designer.
-${!isTextOnly && productImageBase64 ? `5. Use the PRODUCT reference photo as-is — same shape, colors, packaging. Place it at: ${layout.productPosition}.` : ""}
+1. The visual structure (positions, spacing, proportions) must match the LAYOUT REFERENCE.
+2. ALL text must be NEW — about "${brandAnalysis.brandName}" ONLY. Zero text from the layout reference.
+3. ALL products shown must be "${product.name}" from the PRODUCT reference — zero products from the layout reference.
+4. Brand colors: ${colors}.
+${!isTextOnly && productImageBase64 ? `5. Use the PRODUCT reference image as-is — same shape, colors, packaging. Place it at: ${layout.productPosition}.` : ""}
 ${isTextOnly ? "5. NO product photos, NO physical objects, NO people. Only typography and graphic elements." : ""}
-6. DISCOUNT/PERCENTAGE: ${offer ? `If the template shows a big percentage number (like "-10%"), replace it with ONLY "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}". Display ONLY the number+symbol (e.g. "-60%"), NOT the offer name. The offer name "${offer.title}" can appear in smaller text elsewhere.` : "There is NO discount for this brand. If the template shows a percentage, REMOVE it and replace with a key benefit text."}`;
+6. DISCOUNT/PERCENTAGE: ${offer ? `If the layout reference shows a percentage number, replace it with ONLY "${offer.discountValue && offer.discountType === "percentage" ? `-${offer.discountValue}%` : offer.discountValue ? `-${offer.discountValue}€` : offer.title}". Display ONLY the number+symbol, NOT the offer name. The offer name "${offer.title}" can appear in smaller text elsewhere.` : "There is NO discount for this brand. If the layout reference shows a percentage, REMOVE it and replace with a key benefit text."}`;
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
