@@ -1,11 +1,18 @@
-// Server-side template storage using local files
-// Metadata: src/data/templates.json
-// Images: public/templates/<id>.png|jpg|webp
-//
-// Works in dev (read + write) and production (read-only, files committed to git)
+// Template storage backed by Supabase (DB + Storage)
+// Metadata: Supabase `templates` table
+// Images: public/templates/<filename> (existing) or Supabase Storage (new uploads)
 
 import fs from "fs";
 import path from "path";
+import {
+  getTemplatesFromDb,
+  getTemplateFromDb,
+  addTemplateToDb,
+  removeTemplateFromDb,
+  updateTemplateInDb,
+  uploadTemplateImage,
+  getTemplateImageFromStorage,
+} from "@/lib/supabase/templates";
 
 // Pre-computed template analysis (fixed fields that don't change per brand)
 export interface TemplateAnalysisData {
@@ -37,9 +44,9 @@ export interface TemplateAnalysisData {
 }
 
 export interface TemplateTags {
-  industry: string[];    // cosmétique, food, mode, tech, santé, sport, maison, boisson, hygiène
-  adType: string[];      // promo, bénéfice-produit, comparaison-vs, avis-client, lancement, lifestyle, urgence
-  productType: string[]; // produit-physique, service, saas, abonnement
+  industry: string[];
+  adType: string[];
+  productType: string[];
 }
 
 export interface TemplateMeta {
@@ -52,86 +59,86 @@ export interface TemplateMeta {
   tags?: TemplateTags;
 }
 
-const DATA_FILE = path.join(process.cwd(), "src/data/templates.json");
 const IMAGES_DIR = path.join(process.cwd(), "public/templates");
 
-// ── Read metadata ──
-function readMeta(): TemplateMeta[] {
+// ── Read local image file as base64 ──
+function readLocalImage(filename: string): { imageBase64: string; mimeType: string } | null {
+  const imagePath = path.join(IMAGES_DIR, filename);
   try {
-    const raw = fs.readFileSync(DATA_FILE, "utf-8");
-    return JSON.parse(raw);
+    const buffer = fs.readFileSync(imagePath);
+    const ext = path.extname(filename).toLowerCase();
+    const mimeType = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
+    return { imageBase64: buffer.toString("base64"), mimeType };
   } catch {
-    return [];
+    return null;
   }
-}
-
-// ── Write metadata ──
-function writeMeta(templates: TemplateMeta[]): void {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(templates, null, 2));
 }
 
 // ── Public: get all templates (for listing) ──
-export function getTemplates(): (TemplateMeta & { previewUrl: string })[] {
-  return readMeta().map((t) => ({
-    ...t,
-    previewUrl: `/templates/${t.filename}`,
+export async function getTemplates(): Promise<(TemplateMeta & { previewUrl: string })[]> {
+  const rows = await getTemplatesFromDb();
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    format: r.format,
+    category: r.category,
+    filename: r.filename,
+    mimeType: r.mime_type,
+    tags: r.tags,
+    previewUrl: r.image_source === "local"
+      ? `/templates/${r.filename}`
+      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/templates/${r.filename}`,
   }));
 }
 
-// ── Public: get random template with base64 image for Gemini ──
-export function getRandomTemplateWithImage(
+// ── Public: get a specific template by ID with base64 image ──
+export async function getTemplateByIdWithImage(
+  id: string
+): Promise<{ id: string; imageBase64: string; mimeType: string } | null> {
+  const row = await getTemplateFromDb(id);
+  if (!row) return null;
+
+  if (row.image_source === "local") {
+    const img = readLocalImage(row.filename);
+    if (!img) return null;
+    return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType };
+  }
+
+  // Supabase Storage
+  const img = await getTemplateImageFromStorage(row.filename);
+  if (!img) return null;
+  return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType };
+}
+
+// ── Public: get random template with base64 image ──
+export async function getRandomTemplateWithImage(
   format: "square" | "story"
-): { id: string; imageBase64: string; mimeType: string } | null {
-  const matching = readMeta().filter((t) => t.format === format);
+): Promise<{ id: string; imageBase64: string; mimeType: string } | null> {
+  const rows = await getTemplatesFromDb();
+  const matching = rows.filter((r) => r.format === format);
   if (matching.length === 0) return null;
 
-  const template = matching[Math.floor(Math.random() * matching.length)];
-  const imagePath = path.join(IMAGES_DIR, template.filename);
+  const row = matching[Math.floor(Math.random() * matching.length)];
 
-  try {
-    const buffer = fs.readFileSync(imagePath);
-    return {
-      id: template.id,
-      imageBase64: buffer.toString("base64"),
-      mimeType: template.mimeType,
-    };
-  } catch {
-    console.error(`Template image not found: ${imagePath}`);
-    return null;
+  if (row.image_source === "local") {
+    const img = readLocalImage(row.filename);
+    if (!img) return null;
+    return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType };
   }
+
+  const img = await getTemplateImageFromStorage(row.filename);
+  if (!img) return null;
+  return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType };
 }
 
-// ── Public: get a specific template by ID with base64 image ──
-export function getTemplateByIdWithImage(
-  id: string
-): { id: string; imageBase64: string; mimeType: string } | null {
-  const templates = readMeta();
-  const template = templates.find((t) => t.id === id);
-  if (!template) return null;
-
-  const imagePath = path.join(IMAGES_DIR, template.filename);
-
-  try {
-    const buffer = fs.readFileSync(imagePath);
-    return {
-      id: template.id,
-      imageBase64: buffer.toString("base64"),
-      mimeType: template.mimeType,
-    };
-  } catch {
-    console.error(`Template image not found: ${imagePath}`);
-    return null;
-  }
-}
-
-// ── Public: add a new template (dev mode only) ──
-export function addTemplate(
+// ── Public: add a new template ──
+export async function addTemplate(
   name: string,
   format: "square" | "story",
   category: string,
   imageBase64: string,
   mimeType: string
-): TemplateMeta & { previewUrl: string } {
+): Promise<(TemplateMeta & { previewUrl: string }) | null> {
   const id = `tpl-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const ext = mimeType.includes("png")
     ? "png"
@@ -140,55 +147,44 @@ export function addTemplate(
       : "jpg";
   const filename = `${id}.${ext}`;
 
-  // Write image file
-  const buffer = Buffer.from(imageBase64, "base64");
-  fs.writeFileSync(path.join(IMAGES_DIR, filename), buffer);
+  // Upload image to Supabase Storage
+  const publicUrl = await uploadTemplateImage(filename, imageBase64, mimeType);
+  if (!publicUrl) return null;
 
-  // Update metadata
-  const templates = readMeta();
-  const newTemplate: TemplateMeta = {
+  // Insert metadata into Supabase DB
+  const row = await addTemplateToDb({
     id,
     name,
     format,
     category,
     filename,
     mimeType,
-  };
-  templates.push(newTemplate);
-  writeMeta(templates);
+    imageSource: "supabase",
+  });
 
-  return { ...newTemplate, previewUrl: `/templates/${filename}` };
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    name: row.name,
+    format: row.format,
+    category: row.category,
+    filename: row.filename,
+    mimeType: row.mime_type,
+    tags: row.tags,
+    previewUrl: publicUrl,
+  };
 }
 
 // ── Public: remove a template ──
-export function removeTemplate(id: string): boolean {
-  const templates = readMeta();
-  const template = templates.find((t) => t.id === id);
-  if (!template) return false;
-
-  // Delete image file
-  const imagePath = path.join(IMAGES_DIR, template.filename);
-  try {
-    fs.unlinkSync(imagePath);
-  } catch {
-    // File might not exist
-  }
-
-  // Update metadata
-  writeMeta(templates.filter((t) => t.id !== id));
-  return true;
+export async function removeTemplate(id: string): Promise<boolean> {
+  return removeTemplateFromDb(id);
 }
 
 // ── Public: update template metadata ──
-export function updateTemplate(
+export async function updateTemplate(
   id: string,
   partial: { name?: string; format?: string; category?: string; tags?: TemplateTags }
-): boolean {
-  const templates = readMeta();
-  const idx = templates.findIndex((t) => t.id === id);
-  if (idx === -1) return false;
-
-  templates[idx] = { ...templates[idx], ...partial } as TemplateMeta;
-  writeMeta(templates);
-  return true;
+): Promise<boolean> {
+  return updateTemplateInDb(id, partial);
 }

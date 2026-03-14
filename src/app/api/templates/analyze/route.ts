@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
     // If a specific template ID is provided, analyze only that one
     if (targetId) {
-      const template = getTemplateByIdWithImage(targetId);
+      const template = await getTemplateByIdWithImage(targetId);
       if (!template) {
         return NextResponse.json({ error: "Template non trouvé" }, { status: 404 });
       }
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     // Get all templates
-    const allTemplates = getTemplates();
+    const allTemplates = await getTemplates();
 
     // Determine which need analysis
     let templatesToAnalyze;
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
     for (const t of templatesToAnalyze) {
       try {
-        const template = getTemplateByIdWithImage(t.id);
+        const template = await getTemplateByIdWithImage(t.id);
         if (!template) continue;
 
         console.log(`[analyze] Analyzing ${t.id} (${t.name})...`);

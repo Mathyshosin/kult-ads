@@ -9,7 +9,7 @@ import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 
 // GET — list all templates
 export async function GET() {
-  const templates = getTemplates();
+  const templates = await getTemplates();
   return NextResponse.json({ templates });
 }
 
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         );
       }
 
-      const template = addTemplate(
+      const template = await addTemplate(
         name || "Template sans nom",
         format || "square",
         category || "promo",
@@ -43,19 +43,26 @@ export async function POST(request: Request) {
         mimeType
       );
 
+      if (!template) {
+        return NextResponse.json(
+          { error: "Échec de l'ajout du template" },
+          { status: 500 }
+        );
+      }
+
       return NextResponse.json({ template });
     }
 
     // Action: remove
     if (body.action === "remove" && body.id) {
-      removeTemplate(body.id);
+      await removeTemplate(body.id);
       return NextResponse.json({ success: true });
     }
 
     // Action: update metadata
     if (body.action === "update" && body.id) {
       const { name, format, category, tags } = body;
-      updateTemplate(body.id, {
+      await updateTemplate(body.id, {
         ...(name !== undefined && { name }),
         ...(format !== undefined && { format }),
         ...(category !== undefined && { category }),

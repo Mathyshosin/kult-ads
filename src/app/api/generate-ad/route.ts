@@ -65,10 +65,10 @@ export async function POST(request: Request) {
 
     // ── Get template image (library mode only) ──
     const template = templateId
-      ? getTemplateByIdWithImage(templateId)
+      ? await getTemplateByIdWithImage(templateId)
       : customPrompt
         ? null
-        : getRandomTemplateWithImage(format);
+        : await getRandomTemplateWithImage(format);
 
     // Track the actual template ID used (important for random templates)
     const actualTemplateId = template?.id || templateId || null;

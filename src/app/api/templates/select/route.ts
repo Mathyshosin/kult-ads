@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     }
 
     // Get all templates
-    const allTemplates = getTemplates();
+    const allTemplates = await getTemplates();
     const targetFormat = format || "square";
 
     // Filter by format first
