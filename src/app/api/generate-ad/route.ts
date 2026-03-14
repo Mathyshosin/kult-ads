@@ -270,7 +270,9 @@ BAD SIDE: Show a generic, unappealing version of the OLD/INFERIOR alternative in
 - CRITICAL: Do NOT copy the template's specific objects (if the template shows a crushed can, a bottle, etc. from another industry — IGNORE those). Instead show a relevant inferior product from "${product.name}"'s actual category.
 - Make it look dull, uncomfortable, outdated, or wasteful — visually unappealing.
 GOOD SIDE: Show EXACTLY 1 unit of "${product.name}" from the PRODUCT reference — clean, premium, desirable. FULLY VISIBLE.
-- Show the product as-is from the reference photo. NEVER invent packaging, bags, or wrappers.
+- Show the product EXACTLY as it appears in the PRODUCT reference photo — same shape, same colors, same appearance.
+- ABSOLUTELY FORBIDDEN: Do NOT invent, create, or add ANY object that is NOT in the PRODUCT reference. No packaging, no bags, no wrappers, no hands holding the product, no hands holding fabric/cloth/material, no additional items whatsoever.
+- ABSOLUTELY FORBIDDEN: Do NOT add any person, hand, arm, or human body part on the GOOD side. The product stands alone — no one touches it, holds it, or interacts with it.
 - NEVER write text or percentages ON the product surface.
 
 LAYOUT:
@@ -289,7 +291,7 @@ SCENE: ${sceneDescription}
 STRICT RULES:
 1. Clear visual comparison — two distinct sides.
 2. BAD side: Must show a product from the SAME CATEGORY as "${product.name}". NOT a random object from the template.
-3. GOOD side: EXACTLY 1 unit of "${product.name}" from PRODUCT reference. Never cropped. Show the actual product, NOT a hand holding a card or logo.
+3. GOOD side: EXACTLY 1 unit of "${product.name}" from PRODUCT reference. Never cropped. Show ONLY the product itself — NO hands, NO arms, NO person holding or touching it. NO invented objects. ONLY what is visible in the PRODUCT reference photo.
 4. ${logoInstruction}
 5. Brand colors: ${colors}.
 ${discountStr && !discountAlreadyInText ? `6. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "6. No extra discount text needed."}
