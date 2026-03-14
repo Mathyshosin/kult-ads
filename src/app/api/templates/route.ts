@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-    // Action: add new template
+    // Action: add new template (legacy — sends base64 through API)
     if (body.action === "add") {
       const { name, format, category, imageBase64, mimeType } = body;
 
@@ -51,6 +51,32 @@ export async function POST(request: Request) {
       }
 
       return NextResponse.json({ template });
+    }
+
+    // Action: add-metadata — image already uploaded to Supabase Storage from client
+    if (body.action === "add-metadata") {
+      const { id, name, format, category, filename, mimeType, imageSource } = body;
+
+      if (!id || !filename) {
+        return NextResponse.json({ error: "Données manquantes" }, { status: 400 });
+      }
+
+      const { addTemplateToDb } = await import("@/lib/supabase/templates");
+      const row = await addTemplateToDb({
+        id,
+        name: name || "Template sans nom",
+        format: format || "square",
+        category: category || "promo",
+        filename,
+        mimeType: mimeType || "image/png",
+        imageSource: imageSource || "supabase",
+      });
+
+      if (!row) {
+        return NextResponse.json({ error: "Échec sauvegarde métadonnées" }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, template: row });
     }
 
     // Action: remove

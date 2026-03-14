@@ -5,6 +5,7 @@ import ImageUploadZone from "@/components/image-upload-zone";
 import TemplateCard from "@/components/template-card";
 import type { AdTemplate } from "@/lib/types";
 import { Loader2, LayoutGrid, AlertCircle } from "lucide-react";
+import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<AdTemplate[]>([]);
@@ -35,49 +36,59 @@ export default function TemplatesPage() {
     setUploading(true);
     setError("");
     try {
-      // First upload images to get base64
-      const formData = new FormData();
-      files.forEach((f) => formData.append("images", f));
+      const supabase = createSupabaseClient();
 
-      const uploadRes = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      if (!uploadRes.ok) {
-        const data = await uploadRes.json();
-        throw new Error(data.error);
-      }
-
-      const { images } = await uploadRes.json();
-
-      // For each image, auto-detect format and save as template
-      for (const img of images) {
+      for (const file of files) {
+        // Auto-detect format from image dimensions
         const format = await new Promise<"square" | "story">((resolve) => {
-          const tempImg = new Image();
+          const tempImg = new window.Image();
           tempImg.onload = () => {
-            resolve(
-              tempImg.height > tempImg.width * 1.3 ? "story" : "square"
-            );
+            resolve(tempImg.height > tempImg.width * 1.3 ? "story" : "square");
           };
           tempImg.onerror = () => resolve("square");
-          tempImg.src = img.dataUrl;
+          tempImg.src = URL.createObjectURL(file);
         });
 
-        await fetch("/api/templates", {
+        // Generate unique filename
+        const id = `tpl-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        const ext = file.type.includes("png") ? "png" : file.type.includes("webp") ? "webp" : "jpg";
+        const filename = `${id}.${ext}`;
+
+        // Upload directly to Supabase Storage (bypasses Vercel 4.5MB limit)
+        const { error: uploadErr } = await supabase.storage
+          .from("templates")
+          .upload(filename, file, { contentType: file.type, upsert: true });
+
+        if (uploadErr) throw new Error(`Upload échoué: ${uploadErr.message}`);
+
+        // Get the public URL
+        const { data: urlData } = supabase.storage
+          .from("templates")
+          .getPublicUrl(filename);
+
+        // Save metadata to DB via API (small JSON, no image)
+        const res = await fetch("/api/templates", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            action: "add",
-            name: img.name.replace(/\.[^.]+$/, ""),
+            action: "add-metadata",
+            id,
+            name: file.name.replace(/\.[^.]+$/, ""),
             format,
             category: "promo",
-            imageBase64: img.base64,
-            mimeType: img.mimeType,
+            filename,
+            mimeType: file.type,
+            imageSource: "supabase",
+            previewUrl: urlData.publicUrl,
           }),
         });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Erreur sauvegarde");
+        }
       }
 
-      // Refresh list
       await fetchTemplates();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur upload");
