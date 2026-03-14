@@ -133,7 +133,14 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: productImageBase64,
         mimeType: productImageMimeType || "image/png",
-        label: `THIS IS THE ONLY PRODUCT FOR "${brandAnalysis.brandName}". Show this EXACT product — same shape, colors, packaging. Do NOT use any other product. NEVER add labels, stickers, tags, text, or any overlay ON the product itself — show it exactly as-is in the photo. NEVER create, invent, or redesign the product packaging — use ONLY the packaging visible in this reference photo. Do NOT add boxes, bottles, containers, or any packaging that is not in this image. Any product visible in the layout reference below is from a DIFFERENT brand and must NOT appear.`,
+        label: `THIS IS THE ONLY PRODUCT FOR "${brandAnalysis.brandName}". Show this EXACT product — same shape, colors, appearance. Do NOT use any other product.
+ABSOLUTE RULES FOR THE PRODUCT:
+- Show the product EXACTLY as it appears in this photo — no modifications whatsoever.
+- NEVER write text, percentages, prices, or ANY overlay ON the product surface. The product must be clean.
+- NEVER create, invent, or add packaging (no box, no bag, no sachet, no wrapper, no container). If the product in this photo has no packaging, show it WITHOUT packaging.
+- NEVER show a person holding a miniature version of the product or a card/flyer with the product on it.
+- The product should be displayed as a standalone item, not wrapped or contained in anything not visible in this reference.
+Any product visible in the layout reference below is from a DIFFERENT brand and must NOT appear.`,
       });
     }
 
@@ -245,6 +252,8 @@ BAD SIDE: Show a generic, unappealing version of the OLD/INFERIOR alternative in
 - CRITICAL: Do NOT copy the template's specific objects (if the template shows a crushed can, a bottle, etc. from another industry — IGNORE those). Instead show a relevant inferior product from "${product.name}"'s actual category.
 - Make it look dull, uncomfortable, outdated, or wasteful — visually unappealing.
 GOOD SIDE: Show EXACTLY 1 unit of "${product.name}" from the PRODUCT reference — clean, premium, desirable. FULLY VISIBLE.
+- Show the product as-is from the reference photo. NEVER invent packaging, bags, or wrappers.
+- NEVER write text or percentages ON the product surface.
 
 LAYOUT:
 - Background: ${layout.backgroundStyle}
@@ -280,11 +289,12 @@ ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
         ? `This ad does NOT show a product photo — it uses only text, shapes, and graphics to advertise "${product.name}".
 - Do NOT add any product photo, packshot, or physical object.
 - Do NOT add any person, model, or human figure.`
-        : `PRODUCT: Look at the PRODUCT reference image. Show this EXACT product — same shape, same colors, same packaging.
+        : `PRODUCT: Look at the PRODUCT reference image. Show this EXACT product — same shape, same colors, same appearance.
 - Display EXACTLY 1 unit of this product. NOT 2, NOT a stack, NOT multiple colors.
 - The product MUST be FULLY VISIBLE — never cropped or cut off.
-- NEVER create or invent packaging. Use ONLY what's in the reference photo.
-- NEVER add labels, stickers, or text ON the product.
+- NEVER create, invent, or add packaging (no box, bag, sachet, wrapper). Show the product as-is.
+- NEVER write text, discount percentages, prices, or ANY text ON the product surface. The product must remain clean.
+- NEVER show a person holding a miniature/card version of the product.
 ${layout.productSizePercent ? `- Product size: ${layout.productSizePercent}` : ""}`;
 
       visualPrompt = `${aspectRatio} — Create a professional advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
