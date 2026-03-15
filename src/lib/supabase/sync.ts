@@ -315,6 +315,30 @@ export async function deleteImage(
   }
 }
 
+export async function deleteBrandLogo(
+  userId: string,
+  brandAnalysisId: string
+): Promise<void> {
+  const sb = supabase();
+
+  // Find logo rows
+  const { data: rows } = await sb
+    .from("uploaded_images")
+    .select("id, storage_path")
+    .eq("user_id", userId)
+    .eq("brand_analysis_id", brandAnalysisId)
+    .eq("is_logo", true);
+
+  if (rows && rows.length > 0) {
+    const paths = rows.map((r) => r.storage_path).filter(Boolean);
+    if (paths.length > 0) {
+      await sb.storage.from("user-images").remove(paths);
+    }
+    const ids = rows.map((r) => r.id);
+    await sb.from("uploaded_images").delete().in("id", ids);
+  }
+}
+
 // ══════════════════════════════════════════
 // Generated Ads
 // ══════════════════════════════════════════

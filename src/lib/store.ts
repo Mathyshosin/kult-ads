@@ -15,6 +15,7 @@ import {
   uploadImage as syncUploadImage,
   uploadBrandLogo as syncUploadBrandLogo,
   deleteImage as syncDeleteImage,
+  deleteBrandLogo as syncDeleteBrandLogo,
   loadUploadedImages,
   saveGeneratedAd,
   loadGeneratedAds,
@@ -66,6 +67,8 @@ interface WizardState {
   syncImage: (userId: string, image: UploadedImage) => Promise<void>;
   syncLogo: (userId: string, logo: BrandLogo) => Promise<void>;
   syncGeneratedAd: (userId: string, ad: GeneratedAd) => Promise<void>;
+  syncDeleteImage: (userId: string, imageId: string) => Promise<void>;
+  syncDeleteLogo: (userId: string) => Promise<void>;
   syncDeleteGeneratedAd: (userId: string, adId: string) => Promise<void>;
   syncClearAds: (userId: string) => Promise<void>;
   hydrateFromSupabase: (userId: string) => Promise<void>;
@@ -231,6 +234,24 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
       await saveGeneratedAd(userId, brandAnalysisId, ad);
     } catch (err) {
       console.error("[sync] Error saving generated ad:", err);
+    }
+  },
+
+  syncDeleteImage: async (userId, imageId) => {
+    try {
+      await syncDeleteImage(userId, imageId);
+    } catch (err) {
+      console.error("[sync] Error deleting image:", err);
+    }
+  },
+
+  syncDeleteLogo: async (userId) => {
+    const { brandAnalysisId } = get();
+    if (!brandAnalysisId) return;
+    try {
+      await syncDeleteBrandLogo(userId, brandAnalysisId);
+    } catch (err) {
+      console.error("[sync] Error deleting logo:", err);
     }
   },
 

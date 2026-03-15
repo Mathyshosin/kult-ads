@@ -119,6 +119,8 @@ export default function BrandPage() {
   const syncBrandAnalysis = useWizardStore((s) => s.syncBrandAnalysis);
   const syncImage = useWizardStore((s) => s.syncImage);
   const syncLogo = useWizardStore((s) => s.syncLogo);
+  const syncDeleteImage = useWizardStore((s) => s.syncDeleteImage);
+  const syncDeleteLogo = useWizardStore((s) => s.syncDeleteLogo);
   const currentUser = useAuthStore((s) => s.currentUser);
 
   // ── Analysis state ──
@@ -622,7 +624,10 @@ export default function BrandPage() {
                       />
                     </div>
                     <button
-                      onClick={() => setBrandLogo(null)}
+                      onClick={() => {
+                        setBrandLogo(null);
+                        if (currentUser) syncDeleteLogo(currentUser.id);
+                      }}
                       className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
                     >
                       Supprimer
@@ -1110,7 +1115,10 @@ export default function BrandPage() {
                                 </button>
                               )}
                             <button
-                              onClick={() => removeImage(img.id)}
+                              onClick={() => {
+                                removeImage(img.id);
+                                if (currentUser) syncDeleteImage(currentUser.id, img.id);
+                              }}
                               className="bg-black/50 hover:bg-red-500 text-white p-1.5 rounded-lg transition-colors"
                               title="Supprimer"
                             >
