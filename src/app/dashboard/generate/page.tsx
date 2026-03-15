@@ -50,12 +50,20 @@ export default function GeneratePage() {
   const [customPrompt, setCustomPrompt] = useState("");
   const [launching, setLaunching] = useState(false);
 
-  // Init first image
+  // Auto-select the correct product image when a product is selected
   useEffect(() => {
-    if (uploadedImages.length > 0 && !selectedImage) {
+    if (!selectedProduct || uploadedImages.length === 0) return;
+    // Find image linked to this product
+    const productImg = uploadedImages.find(
+      (img) => img.productId === selectedProduct.id
+    );
+    if (productImg) {
+      setSelectedImage(productImg.id);
+    } else if (!selectedImage) {
+      // Fallback: first image if nothing selected yet
       setSelectedImage(uploadedImages[0].id);
     }
-  }, [uploadedImages, selectedImage]);
+  }, [selectedProduct, uploadedImages, selectedImage]);
 
   const handleReferenceUpload = useCallback(
     async (files: File[]) => {
@@ -313,15 +321,20 @@ export default function GeneratePage() {
         </div>
 
         <div className="space-y-5">
-          {/* Images */}
-          {uploadedImages.length > 0 && (
+          {/* Images — show only images linked to selected product */}
+          {(() => {
+            const productImages = uploadedImages.filter(
+              (img) => img.productId === selectedProduct.id
+            );
+            const imagesToShow = productImages.length > 0 ? productImages : uploadedImages;
+            return imagesToShow.length > 0 ? (
             <section className="space-y-2.5">
               <h3 className="section-label flex items-center gap-2">
                 <ImageIcon className="w-3.5 h-3.5 text-primary" />
                 Image produit
               </h3>
               <div className="flex gap-2 flex-wrap">
-                {uploadedImages.map((img) => (
+                {imagesToShow.map((img) => (
                   <button
                     key={img.id}
                     onClick={() => setSelectedImage(img.id)}
@@ -336,7 +349,8 @@ export default function GeneratePage() {
                 ))}
               </div>
             </section>
-          )}
+          ) : null;
+          })()}
 
           {/* Type + Format */}
           <section className="space-y-4">
