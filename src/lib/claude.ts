@@ -40,8 +40,9 @@ IMAGES PRODUIT — RÈGLE IMPORTANTE:
 - Utilise le texte "alt", le "context" (texte environnant l'image sur la page) et l'URL pour déterminer quelle image correspond à quel produit.
 - Retourne les matches dans "productImageMatches" avec l'URL exacte de l'image (champ "src" de productImages).
 - confidence: "high" si le alt/context mentionne clairement le nom du produit, "medium" si c'est probable, "low" si c'est une supposition.
-- Choisis UNE SEULE image par produit (la plus représentative — photo produit > lifestyle > ambiance).
-- Ignore les images qui sont clairement des bannières, icônes ou décorations.`;
+- Choisis UNE SEULE image par produit — la photo où le produit est le MIEUX visible (photo produit packshot/studio > photo avec packaging > lifestyle). Privilégie les images où on voit clairement le produit entier.
+- Ignore les images qui sont clairement des bannières, icônes, décorations ou photos d'ambiance sans produit.
+- Ne retourne PAS plusieurs images pour un même produit, juste LA meilleure.`;
 
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
