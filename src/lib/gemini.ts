@@ -12,7 +12,7 @@ export async function generateImage(
   prompt: string,
   aspectRatio: string = "1:1",
   referenceImages: ReferenceImage[] = [],
-  maxRetries: number = 3
+  maxRetries: number = 2
 ): Promise<{ imageBase64: string; mimeType: string } | null> {
   const contents: Array<
     { text: string } | { inlineData: { mimeType: string; data: string } }
