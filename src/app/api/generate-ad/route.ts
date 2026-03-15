@@ -209,15 +209,17 @@ Any product visible in the layout reference below is from a DIFFERENT brand and 
     const discountStr = offer
       ? cleanDiscount(
           offer.discountValue && offer.discountType === "percentage"
-            ? `-${offer.discountValue}%`
+            ? `-${String(offer.discountValue).replace(/%+$/, "")}%`
             : offer.discountValue
-              ? `-${offer.discountValue}€`
+              ? `-${String(offer.discountValue).replace(/€+$/, "")}€`
               : (offer.title || "")
         ) || null
       : null;
 
-    // Only show prices if Claude detected them on the template AND we have real prices
-    const showPrices = templateAnalysis?.templateHasPrices && priceInfo;
+    // Only show prices/discount if Claude detected a price area on the template AND we have real data
+    const templateHasPriceArea = templateAnalysis?.templateHasPrices ?? true; // default true for non-template mode
+    const showPrices = templateHasPriceArea && priceInfo;
+    const showDiscount = templateHasPriceArea && discountStr;
 
     // Check if discount is already embedded in imageText (avoid Gemini showing it twice)
     const discountAlreadyInText = !!(discountStr && imageText && imageText.includes(discountStr));
@@ -253,7 +255,7 @@ STRICT RULES:
 1. The ONLY brand name is "${brandAnalysis.brandName}".
 2. ${logoInstruction}
 3. Brand colors: ${colors}.
-${discountStr && !discountAlreadyInText ? `4. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "4. No extra discount text needed — it's already in the text above (or there is none)."}
+${showDiscount && !discountAlreadyInText ? `4. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "4. No extra discount text needed — it's already in the text above (or there is none)."}
 5. Display ONLY the text provided above. Do NOT add extra text, bullet points, feature lists, star ratings, review counts, statistics, or any text not specified above. NEVER show any text element twice.
 6. Match the EXACT proportions and spacing from the layout reference — text sizes, margins, element positions must be faithful to the original template.
 7. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
@@ -299,7 +301,7 @@ STRICT RULES:
 3. GOOD side: EXACTLY 1 unit of "${product.name}" from PRODUCT reference. Never cropped. Show ONLY the product itself — NO hands, NO arms, NO person holding or touching it. NO invented objects. ONLY what is visible in the PRODUCT reference photo.
 4. ${logoInstruction}
 5. Brand colors: ${colors}.
-${discountStr && !discountAlreadyInText ? `6. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "6. No extra discount text needed."}
+${showDiscount && !discountAlreadyInText ? `6. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "6. No extra discount text needed."}
 ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
 8. NEVER add labels or text ON the product.
 9. Display ONLY the text provided above. No extra text, no bullet points, no feature lists, no star ratings, no review counts, no statistics. NEVER show any text element twice.
@@ -354,7 +356,7 @@ ${!noProduct ? `1. Show EXACTLY 1 unit of "${product.name}" from the PRODUCT ref
 2. ${logoInstruction}
 3. Brand colors: ${colors}.
 4. The ONLY brand name is "${brandAnalysis.brandName}".
-${discountStr && !discountAlreadyInText ? `5. DISCOUNT: Show "${discountStr}" prominently. Write it exactly as shown — no extra dashes. Show it ONLY ONCE.` : "5. No extra discount text needed — it's already in the text above (or there is none)."}
+${showDiscount && !discountAlreadyInText ? `5. DISCOUNT: Show "${discountStr}" prominently. Write it exactly as shown — no extra dashes. Show it ONLY ONCE.` : "5. No extra discount text needed — it's already in the text above (or there is none)."}
 ${showPrices ? `6. ${priceInfo}` : "6. NO PRICES on this image. Do NOT show any price, € symbol, or monetary amount anywhere."}
 7. Display ONLY the text provided above. Do NOT add extra text, bullet points, feature lists, star ratings, review counts, statistics, product descriptions, or any text not specified above. NEVER show any text element twice.
 8. If the text above includes annotations with arrows/lines, each annotation MUST point to the correct part of the product.
