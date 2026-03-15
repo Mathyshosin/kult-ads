@@ -273,6 +273,61 @@ export default function GeneratePage() {
     setGenerating(false);
   }
 
+  // ── Modify existing ad ──
+  async function handleModification(ad: GeneratedAd, prompt: string) {
+    if (!prompt.trim()) return;
+    setGenerating(true);
+    setError("");
+
+    const { product, offer, image } = getSelections();
+
+    const genBody = JSON.stringify({
+      brandAnalysis,
+      product,
+      offer,
+      productImageBase64: image?.base64,
+      productImageMimeType: image?.mimeType,
+      brandLogoBase64: brandLogo?.base64,
+      brandLogoMimeType: brandLogo?.mimeType,
+      format: ad.format,
+      templateId: ad.templateId || undefined,
+      modificationPrompt: prompt.trim(),
+      previousAdBase64: ad.imageBase64,
+      previousAdMimeType: ad.mimeType,
+    });
+
+    try {
+      let res = await fetch("/api/generate-ad", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: genBody,
+      });
+
+      if (!res.ok) {
+        await new Promise((r) => setTimeout(r, 2000));
+        res = await fetch("/api/generate-ad", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: genBody,
+        });
+      }
+
+      if (res.ok) {
+        const newAd = await res.json();
+        addGeneratedAd(newAd);
+        if (currentUser) syncGeneratedAd(currentUser.id, newAd);
+        setModificationPrompt("");
+        setShowModification(false);
+      } else {
+        const errData = await res.json().catch(() => null);
+        setError(errData?.error || "La modification a échoué.");
+      }
+    } catch {
+      setError("Erreur réseau lors de la modification.");
+    }
+    setGenerating(false);
+  }
+
   // ── Download helper ──
   function handleDownloadAd(ad: GeneratedAd) {
     const link = document.createElement("a");
@@ -682,10 +737,18 @@ export default function GeneratePage() {
                     ))}
                   </div>
                   <button
-                    disabled={!modificationPrompt.trim()}
+                    disabled={!modificationPrompt.trim() || generating}
+                    onClick={() => latestAd && handleModification(latestAd, modificationPrompt)}
                     className="w-full flex items-center justify-center gap-2 bg-primary text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Appliquer
+                    {generating ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Modification en cours...
+                      </>
+                    ) : (
+                      "Appliquer"
+                    )}
                   </button>
                 </div>
               )}
