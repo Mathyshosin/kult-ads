@@ -367,14 +367,14 @@ IRON RULES:
 7. Keep text SHORT — each element should be roughly the same length as the template's equivalent.
 8. EVERY text element must be about "${brandContext.productName}" by "${brandContext.brandName}". If the template headline says "WC Japonais" or "Shampoing Bio" — IGNORE it completely and write a headline about "${brandContext.productName}" instead.
 
-TEXT BREVITY — CRITICAL:
-- The ad MUST be simple and easy to understand at a glance. A viewer should understand the message in under 2 seconds.
-- Headlines: MAX 6 words. Short, punchy, impactful.
-- Subheadlines: MAX 8 words.
-- Body text (if any): MAX 15 words. One short sentence, not a paragraph.
-- NEVER write long lists of features, ingredients, or benefits. Pick the 1-2 MOST impactful points only.
-- If the template has a comparison layout, each side should have: 1 short title (2-4 words) + MAX 1 short line of supporting text (8 words max). NOT paragraphs.
-- Think Instagram ad, not product page. Less is more.
+TEXT BREVITY — CRITICAL (THE #1 RULE):
+- The ad MUST be simple and easy to understand at a glance (under 2 seconds).
+- Headlines: MAX 5 words. Subheadlines: MAX 6 words. Body text: MAX 10 words.
+- TOTAL text on the entire ad: MAX 25 words. Count every single word.
+- NEVER write long lists of features, ingredients, or benefits. Pick 1 SINGLE benefit.
+- For comparison layouts: each side = 1 short title (2-3 words) ONLY. No supporting text underneath.
+- Think Instagram ad, not product page. LESS IS ALWAYS MORE.
+- NEVER invent statistics, customer counts, or percentages not in the brand data.
 
 DISCOUNT RULES:
 ${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If the template shows a big percentage, write ONLY the number+% (e.g. "-60%"). The offer name can appear as small text IF the template has small text, but the BIG visible number must be ONLY the percentage.` : "- No offer. Replace any discount area with the brand's strongest selling point in 2-4 words."}
@@ -530,13 +530,17 @@ IRON RULES:
 6. NEVER add body text / descriptions unless the template has them.
 7. ALL text MUST be written in the SAME LANGUAGE as the brand's website/content. Match the brand's communication language exactly.
 8. NEVER invent numbers, percentages, ratings, or customer counts. Only use REAL data from the brand info provided.
+9. NEVER invent a statistic like "X utilisatrices", "X clients satisfaits", "X% de satisfaction". If you don't have a REAL number from the brand data, DO NOT write any number.
+10. Use ONLY simple, common words. Avoid complex/rare vocabulary. The text will be rendered by an AI image generator — simple words render better.
 
-TEXT BREVITY — CRITICAL:
+TEXT BREVITY — CRITICAL (THE #1 RULE):
 - The ad MUST be simple and easy to understand at a glance (under 2 seconds).
-- Headlines: MAX 6 words. Subheadlines: MAX 8 words. Body text: MAX 15 words.
-- NEVER write long lists of features or benefits. Pick 1-2 MOST impactful points only.
-- For comparison layouts: each side = 1 short title (2-4 words) + MAX 1 short line (8 words max). NOT paragraphs.
-- Think Instagram ad, not product page. Less is more.
+- Headlines: MAX 5 words. Subheadlines: MAX 6 words. Body text: MAX 10 words.
+- TOTAL text on the entire ad: MAX 25 words. Count every single word.
+- NEVER write long lists of features or benefits. Pick 1 SINGLE benefit — the most impactful one.
+- For comparison layouts: each side = 1 short title (2-3 words) ONLY. No supporting text underneath.
+- Think Instagram ad, not product page. LESS IS ALWAYS MORE.
+- If in doubt between a short version and a long version, ALWAYS pick the shorter one.
 
 DISCOUNT RULES:
 ${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If the template shows a big percentage, write ONLY the number+% (e.g. "-60%"). The offer name can appear as small text IF the template has small text, but the BIG visible number must be ONLY the percentage.` : "- No offer. Replace any discount area with the brand's strongest selling point in 2-4 words."}

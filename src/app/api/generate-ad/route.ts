@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { generateAdCopy, describeTemplateScene } from "@/lib/claude";
 import type { TemplateAnalysis } from "@/lib/claude";
 import { generateImage } from "@/lib/gemini";
-import { getRandomTemplateWithImage, getTemplateByIdWithImage } from "@/lib/template-store";
+import { getRandomTemplateWithImage, getTemplateByIdWithImage, trackUsedTemplate } from "@/lib/template-store";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 import { getTemplateAnalysisFromDb, saveTemplateAnalysisToDb } from "@/lib/supabase/template-analysis";
 import { analyzeTemplateMetadata } from "@/lib/claude";
@@ -12,6 +12,63 @@ function cleanDiscount(raw: string): string {
   return raw
     .replace(/--+/g, "-")   // "--60%" → "-60%"
     .replace(/%%+/g, "%");  // "-60%%" → "-60%"
+}
+
+/**
+ * Post-process imageText from Claude to prevent common Gemini rendering issues:
+ * - Strip invented statistics (e.g. "300 000 utilisatrices")
+ * - Strip bullet points and long feature lists
+ * - Enforce word count limits per line
+ * - Remove gibberish patterns
+ * - Remove any remaining template concepts
+ */
+function sanitizeImageText(text: string, templateTextCount: number): string {
+  let lines = text.split("\n");
+
+  lines = lines.map((line) => {
+    // Strip invented statistics: large numbers + people/user words
+    // e.g. "300 000 UTILISATRICES", "1 MILLION DE CLIENTS", "+50 000 avis"
+    line = line.replace(
+      /\+?\d[\d\s.,]*\d*\s*(utilisat(eur|rice)s?|clients?|femmes|hommes|personnes|avis|étoiles|stars?|reviews?|customers?|users?|satisfied|satisfait(e)?s?)/gi,
+      ""
+    ).trim();
+
+    // Strip star ratings: "★★★★★", "⭐⭐⭐⭐", "4.8/5", "4,8★"
+    line = line.replace(/[★⭐]{2,}/g, "");
+    line = line.replace(/\d[.,]\d\s*\/\s*5/g, "");
+    line = line.replace(/\d[.,]\d\s*[★⭐]/g, "");
+
+    // Strip bullet point markers
+    line = line.replace(/^[\s]*[•●◆▸▹→➤✓✔☑︎☑️-]\s*/g, "");
+
+    // Strip lines that are just a number (leftover from stat removal)
+    if (/^\s*\+?\d[\d\s.,]*\s*$/.test(line)) return "";
+
+    return line.trim();
+  });
+
+  // Remove empty lines from cleaning
+  lines = lines.filter((line) => line.length > 0);
+
+  // Enforce max words per line (headline ~6 words, other lines ~10 words)
+  lines = lines.map((line, i) => {
+    const words = line.split(/\s+/);
+    // First line (headline): max 8 words
+    // Other lines: max 12 words
+    const maxWords = i === 0 ? 8 : 12;
+    if (words.length > maxWords) {
+      return words.slice(0, maxWords).join(" ");
+    }
+    return line;
+  });
+
+  // Enforce max number of lines to match template
+  const maxLines = Math.max(templateTextCount, 2);
+  if (lines.length > maxLines + 1) {
+    lines = lines.slice(0, maxLines + 1);
+  }
+
+  return lines.join("\n");
 }
 
 // Allow up to 120s for Claude + Gemini chain
@@ -82,12 +139,17 @@ export async function POST(request: Request) {
         ? await getTemplateByIdWithImage(templateId)
         : customPrompt
           ? null
-          : await getRandomTemplateWithImage(format)
+          : await getRandomTemplateWithImage(format, user.id)
     );
     console.log(`[generate-ad] Template loaded: ${template ? template.id : "none"}`);
 
     // Track the actual template ID used (important for random templates)
     const actualTemplateId = template?.id || templateId || null;
+
+    // Track this template as recently used (for randomness)
+    if (actualTemplateId) {
+      trackUsedTemplate(user.id, actualTemplateId);
+    }
 
     // ── Build scene description ──
     let sceneDescription: string;
@@ -140,6 +202,15 @@ export async function POST(request: Request) {
           .replace(/--+(\d)/g, "-$1")   // "--60%" or "---60%" → "-60%"
           .replace(/%%+/g, "%")          // "-60%%" → "-60%"
           .replace(/(\d)%%/g, "$1%");    // "60%%" → "60%"
+      }
+
+      // ── Safety filter: sanitize imageText to remove invented stats, gibberish, enforce brevity ──
+      if (imageText) {
+        const before = imageText;
+        imageText = sanitizeImageText(imageText, templateAnalysis.templateTextCount);
+        if (before !== imageText) {
+          console.log("[generate-ad] imageText sanitized:", { before, after: imageText });
+        }
       }
 
       console.log("[generate-ad] Scene:", sceneDescription);
@@ -295,7 +366,8 @@ ${showDiscount && !discountAlreadyInText ? `4. DISCOUNT: Show "${discountStr}" p
 6. Match the EXACT proportions and spacing from the layout reference — text sizes, margins, element positions must be faithful to the original template.
 7. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
 8. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display on the image. NEVER render position percentages as visible text.
-9. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.`;
+9. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.
+10. TEXT RENDERING QUALITY: Every word on the image MUST be perfectly spelled and readable. If you cannot render a word clearly, OMIT it rather than rendering gibberish. NO random characters, NO garbled text, NO misspelled words. Each text element must be a real word in the brand's language.`;
     } else if (template && layout && !isTextOnly && templateAnalysis?.templateType === "comparison") {
       // ── COMPARISON / VS template ──
       const competitors = brandAnalysis.competitorProducts?.length
@@ -344,7 +416,8 @@ ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
 10. SIMPLICITY: The ad must be instantly understandable in under 2 seconds. Keep text minimal — short headlines, no paragraphs. Think Instagram ad, not product page.
 11. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
 12. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display. NEVER render position percentages as visible text.
-13. NEVER invent statistics, star ratings, review counts, or customer numbers.`;
+13. NEVER invent statistics, star ratings, review counts, or customer numbers.
+14. TEXT RENDERING QUALITY: Every word on the image MUST be perfectly spelled and readable. If you cannot render a word clearly, OMIT it rather than rendering gibberish. NO random characters, NO garbled text, NO misspelled words. Each text element must be a real word in the brand's language.`;
     } else if (template && layout && !isTextOnly) {
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──
@@ -406,7 +479,8 @@ ${noHuman ? "11. Do NOT add any person, model, hand, or human figure. The templa
 13. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display on the image. NEVER render position percentages as visible text.
 14. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.
 15. NEVER place ANY text, label, overlay, badge, sticker, or graphic element ON TOP of the product. The product surface must remain completely clean and untouched.
-16. SIMPLICITY: The ad must be instantly understandable in under 2 seconds. Keep text minimal — short headlines, no paragraphs. Think Instagram ad, not product page.`.trim();
+16. SIMPLICITY: The ad must be instantly understandable in under 2 seconds. Keep text minimal — short headlines, no paragraphs. Think Instagram ad, not product page.
+17. TEXT RENDERING QUALITY: Every word on the image MUST be perfectly spelled and readable. If you cannot render a word clearly, OMIT it rather than rendering gibberish. NO random characters, NO garbled text, NO misspelled words. Each text element must be a real word in the brand's language.`.trim();
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText

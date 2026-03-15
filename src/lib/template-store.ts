@@ -134,15 +134,35 @@ export async function getTemplateByIdWithImage(
   return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType };
 }
 
+// ── Recently used template tracking (avoid repeats) ──
+const recentlyUsedTemplates: Map<string, string[]> = new Map(); // userId → [templateId, ...]
+const MAX_RECENT = 5;
+
+export function trackUsedTemplate(userId: string, templateId: string) {
+  const recent = recentlyUsedTemplates.get(userId) || [];
+  recent.unshift(templateId);
+  recentlyUsedTemplates.set(userId, recent.slice(0, MAX_RECENT));
+}
+
 // ── Public: get random template with base64 image ──
 export async function getRandomTemplateWithImage(
-  format: "square" | "story"
+  format: "square" | "story",
+  userId?: string
 ): Promise<{ id: string; imageBase64: string; mimeType: string } | null> {
   const rows = await getTemplatesFromDb();
   const matching = rows.filter((r) => r.format === format);
   if (matching.length === 0) return null;
 
-  const row = matching[Math.floor(Math.random() * matching.length)];
+  // Exclude recently used templates for this user (if enough templates remain)
+  const recentIds = userId ? (recentlyUsedTemplates.get(userId) || []) : [];
+  let pool = matching.filter((r) => !recentIds.includes(r.id));
+  // If all templates were recently used, fall back to full pool
+  if (pool.length === 0) pool = matching;
+
+  // Use crypto-quality randomness instead of Math.random()
+  const randomBytes = new Uint32Array(1);
+  globalThis.crypto.getRandomValues(randomBytes);
+  const row = pool[randomBytes[0] % pool.length];
 
   if (row.image_source === "local") {
     const img = await readLocalImage(row.filename);
