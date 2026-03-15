@@ -67,7 +67,7 @@ interface WizardState {
   syncImage: (userId: string, image: UploadedImage) => Promise<void>;
   syncLogo: (userId: string, logo: BrandLogo) => Promise<void>;
   syncGeneratedAd: (userId: string, ad: GeneratedAd) => Promise<void>;
-  syncDeleteImage: (userId: string, imageId: string) => Promise<void>;
+  syncDeleteImage: (userId: string, imageId: string, imageName?: string) => Promise<void>;
   syncDeleteLogo: (userId: string) => Promise<void>;
   syncDeleteGeneratedAd: (userId: string, adId: string) => Promise<void>;
   syncClearAds: (userId: string) => Promise<void>;
@@ -237,9 +237,9 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
     }
   },
 
-  syncDeleteImage: async (userId, imageId) => {
+  syncDeleteImage: async (userId, imageId, imageName?) => {
     try {
-      await syncDeleteImage(userId, imageId);
+      await syncDeleteImage(userId, imageId, imageName);
     } catch (err) {
       console.error("[sync] Error deleting image:", err);
     }

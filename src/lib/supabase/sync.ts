@@ -297,21 +297,38 @@ export async function loadUploadedImages(
 
 export async function deleteImage(
   userId: string,
-  imageId: string
+  imageId: string,
+  imageName?: string
 ): Promise<void> {
   const sb = supabase();
 
-  // Get storage path first
-  const { data: row } = await sb
+  // Try by ID first (matches when image was loaded from Supabase)
+  let { data: row } = await sb
     .from("uploaded_images")
-    .select("storage_path")
+    .select("id, storage_path")
     .eq("id", imageId)
     .eq("user_id", userId)
     .single();
 
+  // Fallback: try by name (for images uploaded in current session with local ID)
+  if (!row && imageName) {
+    const { data: byName } = await sb
+      .from("uploaded_images")
+      .select("id, storage_path")
+      .eq("name", imageName)
+      .eq("user_id", userId)
+      .eq("is_logo", false)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    row = byName;
+  }
+
   if (row) {
-    await sb.storage.from("user-images").remove([row.storage_path]);
-    await sb.from("uploaded_images").delete().eq("id", imageId);
+    if (row.storage_path) {
+      await sb.storage.from("user-images").remove([row.storage_path]);
+    }
+    await sb.from("uploaded_images").delete().eq("id", row.id);
   }
 }
 

@@ -1117,7 +1117,7 @@ export default function BrandPage() {
                             <button
                               onClick={() => {
                                 removeImage(img.id);
-                                if (currentUser) syncDeleteImage(currentUser.id, img.id);
+                                if (currentUser) syncDeleteImage(currentUser.id, img.id, img.name);
                               }}
                               className="bg-black/50 hover:bg-red-500 text-white p-1.5 rounded-lg transition-colors"
                               title="Supprimer"
