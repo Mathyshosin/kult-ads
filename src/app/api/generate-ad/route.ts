@@ -175,9 +175,10 @@ CRITICAL FIDELITY RULES — THE PRODUCT MUST BE AN EXACT COPY:
 - Do NOT generalize or simplify the product. A "culotte côtelée" (ribbed) must show visible ribbed texture. A "culotte en dentelle" (lace) must show actual lace patterns.
 - NEVER substitute with a generic version — the viewer must recognize THIS SPECIFIC product.
 - ABSOLUTELY FORBIDDEN: NEVER place ANY element ON TOP of the product — no text, no percentages, no prices, no labels, no badges, no stickers, no overlays, no graphic elements. The product surface must be 100% clean and untouched.
-- NEVER create, invent, or add packaging (no box, bag, wrapper). Show the product as-is.
+- NEVER create, invent, or add ANY physical object that is not in this reference photo. No box, bag, wrapper, jar, pot, tube, container, bottle, sachet, or ANY other object. The ONLY physical object allowed is the product visible in this photo.
 - NEVER show a person holding a miniature version or a card with the product.
-- The product should be displayed as a standalone item.
+- The product should be displayed as a standalone item — floating or on a simple surface.
+- For the brand name/logo: use TEXT ONLY (clean typography) or the LOGO reference image if provided. NEVER create a physical object (jar, container, badge, emblem) to display the brand name.
 Any product visible in the layout reference below is from a DIFFERENT brand and must NOT appear.`,
       });
     }
@@ -312,9 +313,10 @@ BAD SIDE: Show a generic, unappealing version of the OLD/INFERIOR alternative in
 - Make it look dull, uncomfortable, outdated, or wasteful — visually unappealing.
 GOOD SIDE: Show EXACTLY 1 unit of "${product.name}" from the PRODUCT reference — clean, premium, desirable. FULLY VISIBLE.
 - Reproduce the product with PIXEL-PERFECT FIDELITY from the PRODUCT reference photo — same shape, same colors, same textures, same patterns, same proportions. The product must be INDISTINGUISHABLE from the reference.
-- ABSOLUTELY FORBIDDEN: Do NOT invent, create, or add ANY object that is NOT in the PRODUCT reference. No packaging, no bags, no wrappers, no hands holding the product, no hands holding fabric/cloth/material, no additional items whatsoever.
+- ABSOLUTELY FORBIDDEN: Do NOT invent, create, or add ANY object that is NOT in the PRODUCT reference. No packaging, no bags, no wrappers, no jars, no pots, no tubes, no containers, no hands holding the product, no additional items whatsoever. The ONLY physical object on the GOOD side is the product from the reference.
 - ABSOLUTELY FORBIDDEN: Do NOT add any person, hand, arm, or human body part on the GOOD side. The product stands alone — no one touches it, holds it, or interacts with it.
 - NEVER write text or percentages ON the product surface.
+- For the brand name: use TEXT ONLY (typography) or the LOGO reference. NEVER create a physical object (jar, badge, container) to display the brand name.
 
 LAYOUT:
 - Background: ${layout.backgroundStyle}
@@ -358,9 +360,10 @@ ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
 - Display EXACTLY 1 unit of this product. NOT 2, NOT a stack, NOT multiple colors.
 - The product MUST be FULLY VISIBLE — never cropped or cut off.
 - Reproduce EXACT textures and details: if ribbed texture → show ribbed, if lace → show lace, if glossy → show glossy. NEVER substitute with a generic version.
-- NEVER create, invent, or add packaging (no box, bag, sachet, wrapper). Show the product as-is.
+- NEVER create, invent, or add ANY physical object not in the reference (no box, bag, jar, pot, tube, container, sachet, wrapper). The ONLY object is the product from the reference.
 - NEVER write text, discount percentages, prices, or ANY text ON the product surface. The product must remain clean.
 - NEVER show a person holding a miniature/card version of the product.
+- For the brand name: use TEXT ONLY (typography) or the LOGO reference. NEVER invent a physical object (jar, badge, container) to show the brand name.
 ${layout.productSizePercent ? `- Product size: ${layout.productSizePercent}` : ""}`;
 
       visualPrompt = `${aspectRatio} — Create a professional advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
