@@ -22,6 +22,8 @@ import {
   ImageIcon,
   Building2,
   Search,
+  Save,
+  Camera,
 } from "lucide-react";
 
 // ── Scene types for AI generation ──
@@ -1024,6 +1026,14 @@ export default function BrandPage() {
             badge={uploadedImages.length || undefined}
           >
             <div className="space-y-6">
+              {/* Tip */}
+              <div className="flex items-start gap-3 bg-primary/[0.04] border border-primary/10 rounded-xl px-4 py-3">
+                <Camera className="w-4 h-4 text-primary/60 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-muted leading-relaxed">
+                  <span className="font-semibold text-foreground">Conseil :</span> Utilisez des photos de vos produits avec leur packaging réel. Cela permet à l&apos;IA de reproduire fidèlement votre produit sans inventer un packaging fictif.
+                </p>
+              </div>
+
               {/* Upload zone */}
               <div>
                 <ImageUploadZone
@@ -1221,6 +1231,26 @@ export default function BrandPage() {
           </Section>
         )}
       </div>
+
+      {/* Sticky save button */}
+      {brandAnalysis && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+          <button
+            onClick={() => {
+              if (currentUser) {
+                syncBrandAnalysis(currentUser.id);
+                setShowSaved(true);
+                if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+                saveTimerRef.current = setTimeout(() => setShowSaved(false), 2000);
+              }
+            }}
+            className="btn-gradient flex items-center gap-2 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-soft-lg"
+          >
+            <Save className="w-4 h-4" />
+            Sauvegarder les modifications
+          </button>
+        </div>
+      )}
     </div>
   );
 }
