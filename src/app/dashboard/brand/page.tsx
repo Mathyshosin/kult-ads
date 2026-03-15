@@ -59,16 +59,18 @@ function Section({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-white rounded-2xl border border-border overflow-hidden">
+    <div className="card-tech overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-6 py-4 hover:bg-surface/50 transition-colors cursor-pointer"
+        className="w-full flex items-center justify-between px-6 py-4 hover:bg-surface/30 transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-3">
-          <Icon className="w-5 h-5 text-primary" />
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+            <Icon className="w-4 h-4 text-primary" />
+          </div>
           <span className="text-sm font-semibold text-foreground">{title}</span>
           {badge !== undefined && (
-            <span className="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full">
+            <span className="text-[10px] bg-primary/8 text-primary font-semibold px-2 py-0.5 rounded-full">
               {badge}
             </span>
           )}
@@ -94,7 +96,7 @@ function Section({
 function SaveIndicator({ show }: { show: boolean }) {
   if (!show) return null;
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-foreground text-white px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg animate-fade-in">
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium shadow-glow animate-scale-in">
       <CheckCircle2 className="w-4 h-4" />
       Sauvegardé
     </div>
@@ -497,7 +499,7 @@ export default function BrandPage() {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://votre-site.com"
-                  className="w-full pl-11 pr-4 py-3 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  className="w-full pl-11 pr-4 py-3 input-tech text-sm"
                   disabled={isLoading}
                   required
                 />
@@ -1252,7 +1254,7 @@ export default function BrandPage() {
                 saveTimerRef.current = setTimeout(() => setShowSaved(false), 2000);
               }
             }}
-            className="btn-gradient flex items-center gap-2 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-soft-lg"
+            className="btn-gradient flex items-center gap-2 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-glow-lg"
           >
             <Save className="w-4 h-4" />
             Sauvegarder les modifications

@@ -47,12 +47,12 @@ export default function GrowthTips() {
         transform: visible ? "translateY(0)" : "translateY(12px)",
       }}
     >
-      <div className="bg-white rounded-2xl border border-amber-100/80 shadow-soft px-5 py-4 flex items-start gap-3.5">
+      <div className="card-tech px-5 py-4 flex items-start gap-3.5 shadow-glow">
         <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center">
           <Lightbulb className="w-4 h-4 text-amber-500" />
         </div>
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold text-amber-500 uppercase tracking-wider mb-1">
+          <p className="text-[11px] font-semibold text-amber-500/80 uppercase tracking-wider mb-1">
             Le saviez-vous ?
           </p>
           <p className="text-sm text-muted leading-relaxed">{TIPS[currentIndex]}</p>

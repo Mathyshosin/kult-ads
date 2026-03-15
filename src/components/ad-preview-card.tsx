@@ -163,7 +163,7 @@ export default function AdPreviewCard({
         ref={cardRef}
         className={`relative ${
           isStory ? "aspect-[9/16]" : "aspect-square"
-        } rounded-2xl overflow-hidden bg-black shadow-soft-lg`}
+        } rounded-2xl overflow-hidden bg-black shadow-glow-lg`}
       >
         <img
           src={`data:${ad.mimeType};base64,${ad.imageBase64}`}
@@ -189,7 +189,7 @@ export default function AdPreviewCard({
         {!isExporting && (
           <div className="absolute top-3 right-3 flex gap-1.5 z-30">
             {ad.conversionAngle && (
-              <span className="bg-primary/80 backdrop-blur-sm text-white text-[9px] font-semibold px-2 py-0.5 rounded-full">
+              <span className="bg-gradient-to-r from-primary/80 to-accent/80 backdrop-blur-sm text-white text-[9px] font-semibold px-2.5 py-0.5 rounded-full">
                 {ad.conversionAngle}
               </span>
             )}
@@ -217,7 +217,7 @@ export default function AdPreviewCard({
           <button
             onClick={onConvertToStory}
             disabled={isConvertingToStory}
-            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-border/60 bg-white text-xs font-medium text-muted hover:text-foreground hover:border-border transition-all shadow-soft disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-border/60 bg-white text-xs font-medium text-muted hover:text-foreground hover:border-primary/20 transition-all shadow-soft disabled:opacity-50"
             title="Format Story"
           >
             {isConvertingToStory ? (
@@ -234,7 +234,7 @@ export default function AdPreviewCard({
           className={`p-2.5 rounded-xl border text-xs transition-all ${
             isEditing
               ? "bg-emerald-500 border-emerald-500 text-white shadow-soft"
-              : "border-border/60 bg-white text-muted hover:text-foreground hover:border-border shadow-soft"
+              : "border-border/60 bg-white text-muted hover:text-foreground hover:border-primary/20 shadow-soft"
           }`}
           title={isEditing ? "Sauvegarder" : "Modifier le texte"}
         >
@@ -246,8 +246,8 @@ export default function AdPreviewCard({
           onClick={() => setShowTextOverlay(!showTextOverlay)}
           className={`p-2.5 rounded-xl border text-xs transition-all ${
             !showTextOverlay
-              ? "bg-gray-100 border-gray-200 text-foreground"
-              : "border-border/60 bg-white text-muted hover:text-foreground hover:border-border shadow-soft"
+              ? "bg-surface border-border text-foreground"
+              : "border-border/60 bg-white text-muted hover:text-foreground hover:border-primary/20 shadow-soft"
           }`}
           title={showTextOverlay ? "Masquer le texte" : "Afficher le texte"}
         >
@@ -257,7 +257,7 @@ export default function AdPreviewCard({
         {/* Cycle style */}
         <button
           onClick={cycleStyle}
-          className="p-2.5 rounded-xl border border-border/60 bg-white text-muted hover:text-foreground hover:border-border transition-all shadow-soft"
+          className="p-2.5 rounded-xl border border-border/60 bg-white text-muted hover:text-foreground hover:border-primary/20 transition-all shadow-soft"
           title={`Style: ${style.label}`}
         >
           <span className="text-[10px] font-bold w-3.5 h-3.5 flex items-center justify-center">

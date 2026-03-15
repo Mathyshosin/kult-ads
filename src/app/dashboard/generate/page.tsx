@@ -361,18 +361,20 @@ export default function GeneratePage() {
   return (
     <div className="-mt-8 flex h-[calc(100vh-3.5rem)]">
       {/* ═══ LEFT PANEL ═══ */}
-      <div className="w-[360px] flex-shrink-0 border-r border-border/60 bg-white flex flex-col h-full">
+      <div className="w-[360px] flex-shrink-0 border-r border-border/50 bg-white flex flex-col h-full">
         <div className="flex-1 overflow-y-auto scrollbar-thin px-5 pt-6 pb-4 space-y-5">
           {/* ─ Section: Produit ─ */}
           <section className="space-y-3">
             <div className="flex items-center gap-2">
-              <Package className="w-3.5 h-3.5 text-primary" />
-              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">Produit</h3>
+              <div className="w-5 h-5 rounded-md bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                <Package className="w-3 h-3 text-primary" />
+              </div>
+              <h3 className="section-label">Produit</h3>
             </div>
             <select
               value={selectedProduct}
               onChange={(e) => setSelectedProduct(e.target.value)}
-              className="select-clean w-full px-3.5 py-2.5 border border-border/60 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+              className="select-clean w-full px-3.5 py-2.5 input-tech text-sm"
             >
               {brandAnalysis.products.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -390,7 +392,7 @@ export default function GeneratePage() {
                     onClick={() => setSelectedImage(img.id)}
                     className={`w-11 h-11 rounded-xl overflow-hidden border-2 transition-all duration-200 flex-shrink-0 ${
                       selectedImage === img.id
-                        ? "border-primary shadow-soft ring-2 ring-primary/20"
+                        ? "border-primary shadow-glow ring-1 ring-primary/20"
                         : "border-border/40 hover:border-primary/30"
                     }`}
                   >
@@ -404,13 +406,15 @@ export default function GeneratePage() {
           {/* ─ Section: Offre ─ */}
           <section className="space-y-3">
             <div className="flex items-center gap-2">
-              <Tag className="w-3.5 h-3.5 text-primary" />
-              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">Offre</h3>
+              <div className="w-5 h-5 rounded-md bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                <Tag className="w-3 h-3 text-primary" />
+              </div>
+              <h3 className="section-label">Offre</h3>
             </div>
             <select
               value={selectedOffer}
               onChange={(e) => setSelectedOffer(e.target.value)}
-              className="select-clean w-full px-3.5 py-2.5 border border-border/60 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+              className="select-clean w-full px-3.5 py-2.5 input-tech text-sm"
             >
               <option value="">Sans offre</option>
               {brandAnalysis.offers.map((o) => (
@@ -423,26 +427,28 @@ export default function GeneratePage() {
           </section>
 
           {/* ─ Divider ─ */}
-          <div className="border-t border-border/40" />
+          <div className="border-t border-border/30" />
 
           {/* ─ Type + Format ─ */}
           <section className="space-y-4">
             <div className="flex items-center gap-2">
-              <Layers className="w-3.5 h-3.5 text-primary" />
-              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">Options</h3>
+              <div className="w-5 h-5 rounded-md bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                <Layers className="w-3 h-3 text-primary" />
+              </div>
+              <h3 className="section-label">Options</h3>
             </div>
 
             {/* Type toggle */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted">Type de produit</label>
-              <div className="flex gap-1.5 bg-surface rounded-xl p-1">
+              <label className="text-[11px] font-medium text-muted">Type</label>
+              <div className="toggle-pill flex gap-0.5">
                 {(["produit", "service"] as const).map((type) => (
                   <button
                     key={type}
                     onClick={() => setSelectedProductType(type)}
-                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    className={`flex-1 py-2 rounded-[10px] text-xs font-medium transition-all duration-200 ${
                       selectedProductType === type
-                        ? "bg-white text-foreground shadow-soft"
+                        ? "toggle-pill-active"
                         : "text-muted hover:text-foreground"
                     }`}
                   >
@@ -455,7 +461,7 @@ export default function GeneratePage() {
             {/* Format toggle */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-medium text-muted">Format</label>
-              <div className="flex gap-1.5 bg-surface rounded-xl p-1">
+              <div className="toggle-pill flex gap-0.5">
                 {([
                   { key: "square" as const, label: "Carré", icon: RectangleHorizontal },
                   { key: "story" as const, label: "Story", icon: Smartphone },
@@ -463,9 +469,9 @@ export default function GeneratePage() {
                   <button
                     key={key}
                     onClick={() => setSelectedFormat(key)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-xs font-medium transition-all duration-200 ${
                       selectedFormat === key
-                        ? "bg-white text-foreground shadow-soft"
+                        ? "toggle-pill-active"
                         : "text-muted hover:text-foreground"
                     }`}
                   >
@@ -478,27 +484,29 @@ export default function GeneratePage() {
           </section>
 
           {/* ─ Divider ─ */}
-          <div className="border-t border-border/40" />
+          <div className="border-t border-border/30" />
 
           {/* ─ Generation mode ─ */}
           <section className="space-y-3">
             <div className="flex items-center gap-2">
-              <Wand2 className="w-3.5 h-3.5 text-primary" />
-              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">Mode</h3>
+              <div className="w-5 h-5 rounded-md bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                <Wand2 className="w-3 h-3 text-primary" />
+              </div>
+              <h3 className="section-label">Mode</h3>
             </div>
 
-            <div className="flex gap-1 bg-surface rounded-xl p-1">
+            <div className="toggle-pill flex gap-0.5">
               {([
                 { key: "auto" as const, label: "Auto", icon: Shuffle },
                 { key: "custom" as const, label: "Prompt", icon: Pencil },
-                { key: "reference" as const, label: "Référence", icon: ImageIcon },
+                { key: "reference" as const, label: "Réf.", icon: ImageIcon },
               ]).map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
                   onClick={() => setGenerationMode(key)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-xs font-medium transition-all duration-200 ${
                     generationMode === key
-                      ? "bg-white text-foreground shadow-soft"
+                      ? "toggle-pill-active"
                       : "text-muted hover:text-foreground"
                   }`}
                 >
@@ -511,10 +519,10 @@ export default function GeneratePage() {
             {/* Mode content */}
             <div>
               {generationMode === "auto" && (
-                <div className="flex items-center gap-2.5 bg-primary/[0.04] rounded-xl px-3.5 py-3 border border-primary/10">
+                <div className="flex items-center gap-2.5 bg-gradient-to-r from-primary/[0.04] to-accent/[0.04] rounded-xl px-3.5 py-3 border border-primary/10">
                   <Sparkles className="w-4 h-4 text-primary/60 flex-shrink-0" />
                   <p className="text-xs text-muted leading-relaxed">
-                    L&apos;IA choisit le meilleur template et génère automatiquement.
+                    L&apos;IA choisit le meilleur template automatiquement.
                   </p>
                 </div>
               )}
@@ -525,7 +533,7 @@ export default function GeneratePage() {
                   onChange={(e) => setCustomPrompt(e.target.value)}
                   placeholder="Ex: Le produit posé sur une table en marbre blanc avec un fond rose doux..."
                   rows={3}
-                  className="w-full px-3.5 py-3 border border-border/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 placeholder:text-muted/40 resize-none transition-all"
+                  className="w-full px-3.5 py-3 input-tech text-sm placeholder:text-muted/40 resize-none"
                 />
               )}
 
@@ -553,7 +561,7 @@ export default function GeneratePage() {
                     onChange={(e) => setCustomPrompt(e.target.value)}
                     placeholder="Instructions pour adapter la référence..."
                     rows={2}
-                    className="w-full px-3.5 py-3 border border-border/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 placeholder:text-muted/40 resize-none transition-all"
+                    className="w-full px-3.5 py-3 input-tech text-sm placeholder:text-muted/40 resize-none"
                   />
                 </div>
               )}
@@ -562,7 +570,7 @@ export default function GeneratePage() {
 
           {/* Error */}
           {error && (
-            <div className="flex items-start gap-2.5 bg-red-50 border border-red-100 rounded-xl p-3.5 animate-scale-in">
+            <div className="flex items-start gap-2.5 bg-red-50 border border-red-200/60 rounded-xl p-3.5 animate-scale-in">
               <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-red-600 leading-relaxed">{error}</p>
             </div>
@@ -570,7 +578,7 @@ export default function GeneratePage() {
         </div>
 
         {/* ─ Generate button ─ */}
-        <div className="p-4 border-t border-border/40">
+        <div className="p-4 border-t border-border/30 bg-white">
           <button
             onClick={handleGenerate}
             disabled={generating || !canGenerate}
@@ -592,15 +600,15 @@ export default function GeneratePage() {
       </div>
 
       {/* ═══ RIGHT PANEL ═══ */}
-      <div className="flex-1 h-full overflow-y-auto bg-surface/50 scrollbar-thin">
+      <div className="flex-1 h-full overflow-y-auto bg-surface/60 bg-dots scrollbar-thin">
         {generating ? (
           /* ── Loading state ── */
           <div className="flex flex-col items-center justify-center h-full gap-8 animate-fade-in-up">
             <div className="relative">
-              <div className="w-20 h-20 rounded-3xl btn-gradient flex items-center justify-center shadow-soft-lg">
+              <div className="w-20 h-20 rounded-3xl btn-gradient flex items-center justify-center shadow-glow-lg animate-pulse-glow">
                 <Sparkles className="w-10 h-10 text-white animate-pulse" />
               </div>
-              <div className="absolute -inset-2 rounded-[28px] border-2 border-primary/15 animate-ping" />
+              <div className="absolute -inset-3 rounded-[28px] border border-primary/10 animate-spin-slow" style={{ borderTopColor: 'rgba(99,102,241,0.3)' }} />
             </div>
             <div className="text-center space-y-2">
               <h3 className="text-base font-semibold text-foreground">
@@ -617,7 +625,8 @@ export default function GeneratePage() {
           <div className="p-8 space-y-8 animate-fade-in-up">
             <div className="max-w-md mx-auto space-y-4">
               {/* Title */}
-              <h2 className="text-sm font-semibold text-foreground">
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-primary to-accent" />
                 Dernière création
               </h2>
 
@@ -640,8 +649,8 @@ export default function GeneratePage() {
                   onClick={() => setShowModification(!showModification)}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 ${
                     showModification
-                      ? "bg-primary/10 text-primary border border-primary/20"
-                      : "bg-white border border-border/60 text-muted hover:text-foreground hover:border-border shadow-soft"
+                      ? "bg-primary/8 text-primary border border-primary/20 shadow-glow"
+                      : "bg-white border border-border/60 text-muted hover:text-foreground hover:border-primary/20 shadow-soft"
                   }`}
                 >
                   <Pencil className="w-3.5 h-3.5" />
@@ -650,7 +659,7 @@ export default function GeneratePage() {
                 <button
                   onClick={() => handleRegenerate(latestAd)}
                   disabled={generating}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/60 bg-white text-xs font-medium text-muted hover:text-foreground hover:border-border transition-all duration-200 shadow-soft disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/60 bg-white text-xs font-medium text-muted hover:text-foreground hover:border-primary/20 transition-all duration-200 shadow-soft disabled:opacity-50"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   Regénérer
@@ -659,20 +668,20 @@ export default function GeneratePage() {
 
               {/* Modification panel */}
               {showModification && (
-                <div className="bg-white rounded-2xl border border-border/60 p-4 space-y-3 shadow-soft animate-scale-in">
+                <div className="card-tech p-4 space-y-3 animate-scale-in">
                   <textarea
                     value={modificationPrompt}
                     onChange={(e) => setModificationPrompt(e.target.value)}
                     placeholder="Décrivez la modification souhaitée..."
                     rows={2}
-                    className="w-full px-3.5 py-3 border border-border/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 placeholder:text-muted/40 resize-none transition-all"
+                    className="w-full px-3.5 py-3 input-tech text-sm placeholder:text-muted/40 resize-none"
                   />
                   <div className="flex flex-wrap gap-1.5">
                     {modificationChips.map((chip) => (
                       <button
                         key={chip}
                         onClick={() => setModificationPrompt(chip)}
-                        className="px-3 py-1.5 rounded-full bg-surface border border-border/50 text-[11px] font-medium text-muted hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all duration-200"
+                        className="chip-tech px-3 py-1.5 text-[11px] font-medium text-muted"
                       >
                         {chip}
                       </button>
@@ -703,8 +712,9 @@ export default function GeneratePage() {
             {historyAds.length > 0 && (
               <div className="max-w-4xl mx-auto">
                 <div className="flex items-center gap-2 mb-4">
+                  <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-primary to-accent" />
                   <h3 className="text-sm font-semibold text-foreground">Historique</h3>
-                  <span className="text-[10px] font-medium text-muted bg-surface px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-medium text-primary bg-primary/8 px-2 py-0.5 rounded-full">
                     {historyAds.length}
                   </span>
                 </div>
@@ -714,7 +724,7 @@ export default function GeneratePage() {
                       <div
                         className={`relative ${
                           ad.format === "story" ? "aspect-[9/16]" : "aspect-square"
-                        } rounded-xl overflow-hidden bg-black shadow-soft`}
+                        } rounded-xl overflow-hidden bg-black shadow-soft transition-all duration-300 group-hover:shadow-glow`}
                       >
                         <img
                           src={`data:${ad.mimeType};base64,${ad.imageBase64}`}
@@ -737,15 +747,18 @@ export default function GeneratePage() {
         ) : (
           /* ── Empty state ── */
           <div className="flex flex-col items-center justify-center h-full gap-5 animate-fade-in-up">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center animate-float">
-              <Wand2 className="w-9 h-9 text-primary/40" />
+            <div className="relative">
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 flex items-center justify-center animate-float">
+                <Wand2 className="w-9 h-9 text-primary/40" />
+              </div>
+              <div className="absolute -inset-1 rounded-[28px] border border-dashed border-primary/15" />
             </div>
             <div className="text-center space-y-2">
               <h2 className="text-lg font-semibold text-foreground">
                 Prêt à créer
               </h2>
               <p className="text-sm text-muted max-w-xs leading-relaxed">
-                Configure ton produit et clique sur <span className="font-medium text-primary">Générer</span> pour créer ta première publicité.
+                Configure ton produit et clique sur <span className="font-semibold text-gradient">Générer</span> pour créer ta première publicité.
               </p>
             </div>
           </div>
