@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import type { GeneratedAd } from "@/lib/types";
-import { Download, RefreshCw, Pencil, Check, Type, Smartphone, Loader2 } from "lucide-react";
+import { Download, Pencil, Check, Type, Smartphone, Loader2 } from "lucide-react";
 import { toPng } from "html-to-image";
 
 interface AdPreviewCardProps {
@@ -13,7 +13,6 @@ interface AdPreviewCardProps {
   isConvertingToStory?: boolean;
 }
 
-// Text overlay styles
 const AD_STYLES = [
   {
     id: "gradient-bottom",
@@ -65,7 +64,6 @@ const AD_STYLES = [
 
 export default function AdPreviewCard({
   ad,
-  onRegenerate,
   onUpdateAd,
   onConvertToStory,
   isConvertingToStory,
@@ -73,15 +71,12 @@ export default function AdPreviewCard({
   const isStory = ad.format === "story";
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Text state
   const [isEditing, setIsEditing] = useState(false);
   const [headline, setHeadline] = useState(ad.headline);
   const [bodyText, setBodyText] = useState(ad.bodyText);
   const [callToAction, setCallToAction] = useState(ad.callToAction);
   const [styleIndex, setStyleIndex] = useState(0);
   const [showTextOverlay, setShowTextOverlay] = useState(true);
-
-  // Export state
   const [isExporting, setIsExporting] = useState(false);
 
   const style = AD_STYLES[styleIndex];
@@ -119,12 +114,6 @@ export default function AdPreviewCard({
     setIsExporting(false);
   }
 
-  function handleCopyText() {
-    const text = `${headline}\n${bodyText}\n${callToAction}`;
-    navigator.clipboard.writeText(text);
-  }
-
-  // Font sizes based on format
   const headlineSize = isStory ? "text-xl" : "text-lg";
   const bodySize = isStory ? "text-sm" : "text-xs";
   const ctaSize = isStory ? "text-sm" : "text-xs";
@@ -168,94 +157,84 @@ export default function AdPreviewCard({
   );
 
   return (
-    <div className="space-y-2">
-      {/* === THE AD (exported as PNG) === */}
+    <div className="space-y-3">
+      {/* ── The Ad ── */}
       <div
         ref={cardRef}
         className={`relative ${
           isStory ? "aspect-[9/16]" : "aspect-square"
-        } rounded-2xl overflow-hidden bg-black`}
+        } rounded-2xl overflow-hidden bg-black shadow-soft-lg`}
       >
-        {/* Full scene image from Gemini */}
         <img
           src={`data:${ad.mimeType};base64,${ad.imageBase64}`}
           alt="Ad"
           className="absolute inset-0 w-full h-full object-cover"
         />
-
-        {/* Text overlay (CSS) */}
         {showTextOverlay && (
           <>
             {style.overlay && (
               <div className={`absolute inset-0 ${style.overlay} z-10`} />
             )}
-            <div
-              className={`absolute inset-0 flex flex-col ${style.textPosition} ${padding} z-20`}
-            >
+            <div className={`absolute inset-0 flex flex-col ${style.textPosition} ${padding} z-20`}>
               {style.hasBox ? (
                 <div className="bg-black/70 backdrop-blur-sm rounded-xl p-4 space-y-2">
                   {renderTextContent()}
                 </div>
               ) : (
-                <div className="space-y-2 max-w-[90%]">
-                  {renderTextContent()}
-                </div>
+                <div className="space-y-2 max-w-[90%]">{renderTextContent()}</div>
               )}
             </div>
           </>
         )}
-
-        {/* Badges */}
         {!isExporting && (
           <div className="absolute top-3 right-3 flex gap-1.5 z-30">
             {ad.conversionAngle && (
-              <span className="bg-primary/80 text-white text-[9px] font-semibold px-2 py-0.5 rounded-full">
+              <span className="bg-primary/80 backdrop-blur-sm text-white text-[9px] font-semibold px-2 py-0.5 rounded-full">
                 {ad.conversionAngle}
               </span>
             )}
-            <span className="bg-black/50 text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
+            <span className="bg-black/40 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
               {isStory ? "Story" : "Carré"}
             </span>
           </div>
         )}
       </div>
 
-      {/* === CONTROLS === */}
+      {/* ── Controls ── */}
       <div className="flex items-center gap-1.5">
         {/* Download */}
         <button
           onClick={handleDownload}
           disabled={isExporting}
-          className="flex-1 flex items-center justify-center gap-1.5 bg-primary text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50"
+          className="btn-gradient flex-1 flex items-center justify-center gap-1.5 text-white py-2.5 rounded-xl text-xs font-semibold"
         >
           <Download className="w-3.5 h-3.5" />
           {isExporting ? "Export..." : "Télécharger"}
         </button>
 
-        {/* Convert to Story */}
+        {/* Story */}
         {onConvertToStory && (
           <button
             onClick={onConvertToStory}
             disabled={isConvertingToStory}
-            className="flex items-center gap-1 px-3 py-2.5 rounded-xl border border-border text-xs font-medium text-muted hover:bg-gray-100 transition-colors disabled:opacity-50"
-            title="Adapter en format Story"
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-border/60 bg-white text-xs font-medium text-muted hover:text-foreground hover:border-border transition-all shadow-soft disabled:opacity-50"
+            title="Format Story"
           >
             {isConvertingToStory ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
               <Smartphone className="w-3.5 h-3.5" />
             )}
-            Story
           </button>
         )}
 
         {/* Edit text */}
         <button
           onClick={isEditing ? handleSave : () => setIsEditing(true)}
-          className={`p-2.5 rounded-xl border text-xs transition-colors ${
+          className={`p-2.5 rounded-xl border text-xs transition-all ${
             isEditing
-              ? "bg-green-500 border-green-500 text-white"
-              : "border-border text-muted hover:bg-gray-100"
+              ? "bg-emerald-500 border-emerald-500 text-white shadow-soft"
+              : "border-border/60 bg-white text-muted hover:text-foreground hover:border-border shadow-soft"
           }`}
           title={isEditing ? "Sauvegarder" : "Modifier le texte"}
         >
@@ -265,10 +244,10 @@ export default function AdPreviewCard({
         {/* Toggle text */}
         <button
           onClick={() => setShowTextOverlay(!showTextOverlay)}
-          className={`p-2.5 rounded-xl border text-xs transition-colors ${
+          className={`p-2.5 rounded-xl border text-xs transition-all ${
             !showTextOverlay
-              ? "bg-gray-200 border-gray-300 text-foreground"
-              : "border-border text-muted hover:bg-gray-100"
+              ? "bg-gray-100 border-gray-200 text-foreground"
+              : "border-border/60 bg-white text-muted hover:text-foreground hover:border-border shadow-soft"
           }`}
           title={showTextOverlay ? "Masquer le texte" : "Afficher le texte"}
         >
@@ -278,33 +257,13 @@ export default function AdPreviewCard({
         {/* Cycle style */}
         <button
           onClick={cycleStyle}
-          className="p-2.5 rounded-xl border border-border text-muted hover:bg-gray-100 transition-colors"
+          className="p-2.5 rounded-xl border border-border/60 bg-white text-muted hover:text-foreground hover:border-border transition-all shadow-soft"
           title={`Style: ${style.label}`}
         >
           <span className="text-[10px] font-bold w-3.5 h-3.5 flex items-center justify-center">
             S{styleIndex + 1}
           </span>
         </button>
-
-        {/* Copy text */}
-        <button
-          onClick={handleCopyText}
-          className="p-2.5 rounded-xl border border-border text-muted hover:bg-gray-100 transition-colors"
-          title="Copier le texte"
-        >
-          <span className="text-[10px]">📋</span>
-        </button>
-
-        {/* Regenerate */}
-        {onRegenerate && (
-          <button
-            onClick={onRegenerate}
-            className="p-2.5 rounded-xl border border-border text-muted hover:bg-gray-100 transition-colors"
-            title="Régénérer"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
-        )}
       </div>
     </div>
   );

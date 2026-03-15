@@ -19,8 +19,12 @@ import {
   Download,
   Smartphone,
   RefreshCw,
-  ChevronDown,
   X,
+  Wand2,
+  Package,
+  Tag,
+  Layers,
+  RectangleHorizontal,
 } from "lucide-react";
 
 export default function GeneratePage() {
@@ -54,7 +58,7 @@ export default function GeneratePage() {
   const [error, setError] = useState("");
   const [convertingId, setConvertingId] = useState<string | null>(null);
 
-  // Right panel
+  // Modification
   const [showModification, setShowModification] = useState(false);
   const [modificationPrompt, setModificationPrompt] = useState("");
 
@@ -72,7 +76,6 @@ export default function GeneratePage() {
     }
   }, [brandAnalysis, uploadedImages, router, selectedProduct, selectedImage]);
 
-  // Helpers
   const getSelections = useCallback(() => {
     return {
       product:
@@ -86,7 +89,6 @@ export default function GeneratePage() {
     };
   }, [brandAnalysis, selectedProduct, selectedOffer, selectedImage, uploadedImages]);
 
-  // Reference ad upload handler
   const handleReferenceUpload = useCallback(
     async (files: File[]) => {
       const file = files[0];
@@ -106,13 +108,10 @@ export default function GeneratePage() {
   async function handleGenerate() {
     setGenerating(true);
     setError("");
-
     const { product, offer, image } = getSelections();
 
     try {
       let templateId: string | undefined;
-
-      // In auto mode, select a random template
       if (generationMode === "auto") {
         const selectRes = await fetch("/api/templates/select", {
           method: "POST",
@@ -123,13 +122,11 @@ export default function GeneratePage() {
             productType: selectedProductType,
           }),
         });
-
         if (!selectRes.ok) {
           setError("Impossible de sélectionner un template.");
           setGenerating(false);
           return;
         }
-
         const { templateIds } = await selectRes.json();
         if (!templateIds || templateIds.length === 0) {
           setError("Aucun template disponible.");
@@ -165,7 +162,6 @@ export default function GeneratePage() {
         body: genBody,
       });
 
-      // Auto-retry once on failure
       if (!res.ok) {
         console.warn("[generate] First attempt failed, retrying...");
         await new Promise((r) => setTimeout(r, 2000));
@@ -188,7 +184,6 @@ export default function GeneratePage() {
       console.error("[generate] Error:", err);
       setError("Erreur réseau. Vérifie ta connexion et réessaie.");
     }
-
     setGenerating(false);
   }
 
@@ -204,7 +199,6 @@ export default function GeneratePage() {
           mimeType: ad.mimeType,
         }),
       });
-
       if (res.ok) {
         const data = await res.json();
         const storyAd: GeneratedAd = {
@@ -219,7 +213,7 @@ export default function GeneratePage() {
         if (currentUser) syncGeneratedAd(currentUser.id, storyAd);
       }
     } catch {
-      // Silent fail
+      // Silent
     }
     setConvertingId(null);
   }
@@ -228,12 +222,9 @@ export default function GeneratePage() {
   async function handleRegenerate(ad: GeneratedAd) {
     setGenerating(true);
     setError("");
-
     const { product, offer, image } = getSelections();
     const genBody = JSON.stringify({
-      brandAnalysis,
-      product,
-      offer,
+      brandAnalysis, product, offer,
       productImageBase64: image?.base64,
       productImageMimeType: image?.mimeType,
       brandLogoBase64: brandLogo?.base64,
@@ -249,7 +240,6 @@ export default function GeneratePage() {
         headers: { "Content-Type": "application/json" },
         body: genBody,
       });
-
       if (!res.ok) {
         await new Promise((r) => setTimeout(r, 2000));
         res = await fetch("/api/generate-ad", {
@@ -258,7 +248,6 @@ export default function GeneratePage() {
           body: genBody,
         });
       }
-
       if (res.ok) {
         const newAd = await res.json();
         addGeneratedAd(newAd);
@@ -273,18 +262,15 @@ export default function GeneratePage() {
     setGenerating(false);
   }
 
-  // ── Modify existing ad ──
+  // ── Modify ──
   async function handleModification(ad: GeneratedAd, prompt: string) {
     if (!prompt.trim()) return;
     setGenerating(true);
     setError("");
-
     const { product, offer, image } = getSelections();
 
     const genBody = JSON.stringify({
-      brandAnalysis,
-      product,
-      offer,
+      brandAnalysis, product, offer,
       productImageBase64: image?.base64,
       productImageMimeType: image?.mimeType,
       brandLogoBase64: brandLogo?.base64,
@@ -302,7 +288,6 @@ export default function GeneratePage() {
         headers: { "Content-Type": "application/json" },
         body: genBody,
       });
-
       if (!res.ok) {
         await new Promise((r) => setTimeout(r, 2000));
         res = await fetch("/api/generate-ad", {
@@ -311,7 +296,6 @@ export default function GeneratePage() {
           body: genBody,
         });
       }
-
       if (res.ok) {
         const newAd = await res.json();
         addGeneratedAd(newAd);
@@ -328,7 +312,7 @@ export default function GeneratePage() {
     setGenerating(false);
   }
 
-  // ── Download helper ──
+  // ── Download ──
   function handleDownloadAd(ad: GeneratedAd) {
     const link = document.createElement("a");
     link.href = `data:${ad.mimeType};base64,${ad.imageBase64}`;
@@ -339,14 +323,16 @@ export default function GeneratePage() {
   if (!brandAnalysis) {
     return (
       <div className="-mt-8 flex items-center justify-center h-[calc(100vh-3.5rem)]">
-        <div className="text-center space-y-3">
-          <AlertCircle className="w-10 h-10 text-border mx-auto" />
+        <div className="text-center space-y-4 animate-fade-in-up">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/5 flex items-center justify-center">
+            <AlertCircle className="w-7 h-7 text-muted" />
+          </div>
           <p className="text-sm text-muted">
             Configure d&apos;abord ta marque dans &quot;Ma Marque&quot;
           </p>
           <button
             onClick={() => router.push("/dashboard/brand")}
-            className="text-sm text-primary font-medium hover:underline"
+            className="text-sm text-primary font-semibold hover:underline"
           >
             Aller à Ma Marque
           </button>
@@ -375,209 +361,186 @@ export default function GeneratePage() {
   return (
     <div className="-mt-8 flex h-[calc(100vh-3.5rem)]">
       {/* ═══ LEFT PANEL ═══ */}
-      <div className="w-[380px] flex-shrink-0 border-r border-border bg-white flex flex-col h-full">
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
-          {/* Product selector */}
-          <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">
-              Produit
-            </label>
-            <div className="relative">
-              <select
-                value={selectedProduct}
-                onChange={(e) => setSelectedProduct(e.target.value)}
-                className="w-full appearance-none px-3 py-2.5 border border-border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary pr-8"
-              >
-                {brandAnalysis.products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                    {p.price ? ` — ${p.price}` : ""}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+      <div className="w-[360px] flex-shrink-0 border-r border-border/60 bg-white flex flex-col h-full">
+        <div className="flex-1 overflow-y-auto scrollbar-thin px-5 pt-6 pb-4 space-y-5">
+          {/* ─ Section: Produit ─ */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Package className="w-3.5 h-3.5 text-primary" />
+              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">Produit</h3>
             </div>
-            {/* Product thumbnail */}
+            <select
+              value={selectedProduct}
+              onChange={(e) => setSelectedProduct(e.target.value)}
+              className="select-clean w-full px-3.5 py-2.5 border border-border/60 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+            >
+              {brandAnalysis.products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}{p.price ? ` — ${p.price}` : ""}
+                </option>
+              ))}
+            </select>
+
+            {/* Product images */}
             {uploadedImages.length > 0 && (
-              <div className="flex gap-1.5 mt-2">
+              <div className="flex gap-2">
                 {uploadedImages.map((img) => (
                   <button
                     key={img.id}
                     onClick={() => setSelectedImage(img.id)}
-                    className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition-colors flex-shrink-0 ${
+                    className={`w-11 h-11 rounded-xl overflow-hidden border-2 transition-all duration-200 flex-shrink-0 ${
                       selectedImage === img.id
-                        ? "border-primary"
-                        : "border-border hover:border-primary/40"
+                        ? "border-primary shadow-soft ring-2 ring-primary/20"
+                        : "border-border/40 hover:border-primary/30"
                     }`}
                   >
-                    <img
-                      src={img.previewUrl}
-                      alt={img.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={img.previewUrl} alt={img.name} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
             )}
-          </div>
+          </section>
 
-          {/* Offer selector */}
-          <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">
-              Offre
-            </label>
-            <div className="relative">
-              <select
-                value={selectedOffer}
-                onChange={(e) => setSelectedOffer(e.target.value)}
-                className="w-full appearance-none px-3 py-2.5 border border-border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary pr-8"
-              >
-                <option value="">Sans offre</option>
-                {brandAnalysis.offers.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.title}
-                    {o.salePrice
-                      ? ` — ${o.salePrice}`
-                      : o.discountValue
-                        ? ` (${o.discountValue})`
-                        : ""}
-                  </option>
+          {/* ─ Section: Offre ─ */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Tag className="w-3.5 h-3.5 text-primary" />
+              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">Offre</h3>
+            </div>
+            <select
+              value={selectedOffer}
+              onChange={(e) => setSelectedOffer(e.target.value)}
+              className="select-clean w-full px-3.5 py-2.5 border border-border/60 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+            >
+              <option value="">Sans offre</option>
+              {brandAnalysis.offers.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.title}
+                  {o.salePrice ? ` — ${o.salePrice}` : o.discountValue ? ` (${o.discountValue})` : ""}
+                </option>
+              ))}
+            </select>
+          </section>
+
+          {/* ─ Divider ─ */}
+          <div className="border-t border-border/40" />
+
+          {/* ─ Type + Format ─ */}
+          <section className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Layers className="w-3.5 h-3.5 text-primary" />
+              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">Options</h3>
+            </div>
+
+            {/* Type toggle */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-muted">Type de produit</label>
+              <div className="flex gap-1.5 bg-surface rounded-xl p-1">
+                {(["produit", "service"] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setSelectedProductType(type)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      selectedProductType === type
+                        ? "bg-white text-foreground shadow-soft"
+                        : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    {type === "produit" ? "Produit" : "Service"}
+                  </button>
                 ))}
-              </select>
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+              </div>
             </div>
-          </div>
 
-          {/* Product type toggle */}
-          <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">
-              Type de produit
-            </label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setSelectedProductType("produit")}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
-                  selectedProductType === "produit"
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 text-muted hover:bg-gray-200"
-                }`}
-              >
-                Produit
-              </button>
-              <button
-                onClick={() => setSelectedProductType("service")}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
-                  selectedProductType === "service"
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 text-muted hover:bg-gray-200"
-                }`}
-              >
-                Service
-              </button>
+            {/* Format toggle */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-muted">Format</label>
+              <div className="flex gap-1.5 bg-surface rounded-xl p-1">
+                {([
+                  { key: "square" as const, label: "Carré", icon: RectangleHorizontal },
+                  { key: "story" as const, label: "Story", icon: Smartphone },
+                ]).map(({ key, label, icon: Icon }) => (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedFormat(key)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      selectedFormat === key
+                        ? "bg-white text-foreground shadow-soft"
+                        : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          </section>
 
-          {/* Format toggle */}
-          <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">
-              Format
-            </label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setSelectedFormat("square")}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
-                  selectedFormat === "square"
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 text-muted hover:bg-gray-200"
-                }`}
-              >
-                Carré
-              </button>
-              <button
-                onClick={() => setSelectedFormat("story")}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
-                  selectedFormat === "story"
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 text-muted hover:bg-gray-200"
-                }`}
-              >
-                Story
-              </button>
+          {/* ─ Divider ─ */}
+          <div className="border-t border-border/40" />
+
+          {/* ─ Generation mode ─ */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Wand2 className="w-3.5 h-3.5 text-primary" />
+              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">Mode</h3>
             </div>
-          </div>
 
-          {/* Generation mode tabs */}
-          <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">
-              Mode de génération
-            </label>
-            <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-              <button
-                onClick={() => setGenerationMode("auto")}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all ${
-                  generationMode === "auto"
-                    ? "bg-white text-foreground shadow-sm"
-                    : "text-muted hover:text-foreground"
-                }`}
-              >
-                <Shuffle className="w-3.5 h-3.5" />
-                Auto
-              </button>
-              <button
-                onClick={() => setGenerationMode("custom")}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all ${
-                  generationMode === "custom"
-                    ? "bg-white text-foreground shadow-sm"
-                    : "text-muted hover:text-foreground"
-                }`}
-              >
-                <Pencil className="w-3.5 h-3.5" />
-                Prompt
-              </button>
-              <button
-                onClick={() => setGenerationMode("reference")}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all ${
-                  generationMode === "reference"
-                    ? "bg-white text-foreground shadow-sm"
-                    : "text-muted hover:text-foreground"
-                }`}
-              >
-                <ImageIcon className="w-3.5 h-3.5" />
-                Référence
-              </button>
+            <div className="flex gap-1 bg-surface rounded-xl p-1">
+              {([
+                { key: "auto" as const, label: "Auto", icon: Shuffle },
+                { key: "custom" as const, label: "Prompt", icon: Pencil },
+                { key: "reference" as const, label: "Référence", icon: ImageIcon },
+              ]).map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setGenerationMode(key)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    generationMode === key
+                      ? "bg-white text-foreground shadow-soft"
+                      : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {label}
+                </button>
+              ))}
             </div>
 
             {/* Mode content */}
-            <div className="mt-3">
+            <div>
               {generationMode === "auto" && (
-                <p className="text-xs text-muted bg-surface rounded-xl px-3 py-2.5">
-                  Template aléatoire — l&apos;IA sélectionne le meilleur template
-                  pour votre produit.
-                </p>
+                <div className="flex items-center gap-2.5 bg-primary/[0.04] rounded-xl px-3.5 py-3 border border-primary/10">
+                  <Sparkles className="w-4 h-4 text-primary/60 flex-shrink-0" />
+                  <p className="text-xs text-muted leading-relaxed">
+                    L&apos;IA choisit le meilleur template et génère automatiquement.
+                  </p>
+                </div>
               )}
 
               {generationMode === "custom" && (
                 <textarea
                   value={customPrompt}
                   onChange={(e) => setCustomPrompt(e.target.value)}
-                  placeholder="Ex: Le produit posé sur une table en marbre blanc avec un fond rose doux, ambiance luxe et minimaliste."
-                  rows={4}
-                  className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted/50 resize-none"
+                  placeholder="Ex: Le produit posé sur une table en marbre blanc avec un fond rose doux..."
+                  rows={3}
+                  className="w-full px-3.5 py-3 border border-border/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 placeholder:text-muted/40 resize-none transition-all"
                 />
               )}
 
               {generationMode === "reference" && (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {referenceAd ? (
-                    <div className="relative">
+                    <div className="relative group">
                       <img
                         src={`data:${referenceAd.mimeType};base64,${referenceAd.base64}`}
                         alt="Référence"
-                        className="w-full rounded-xl border border-border"
+                        className="w-full rounded-xl border border-border/60"
                       />
                       <button
                         onClick={() => setReferenceAd(null)}
-                        className="absolute top-2 right-2 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black/80 transition-colors"
+                        className="absolute top-2 right-2 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -588,30 +551,30 @@ export default function GeneratePage() {
                   <textarea
                     value={customPrompt}
                     onChange={(e) => setCustomPrompt(e.target.value)}
-                    placeholder="Instructions optionnelles pour adapter la référence..."
+                    placeholder="Instructions pour adapter la référence..."
                     rows={2}
-                    className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted/50 resize-none"
+                    className="w-full px-3.5 py-3 border border-border/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 placeholder:text-muted/40 resize-none transition-all"
                   />
                 </div>
               )}
             </div>
-          </div>
+          </section>
 
           {/* Error */}
           {error && (
-            <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl p-3">
-              <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-700">{error}</p>
+            <div className="flex items-start gap-2.5 bg-red-50 border border-red-100 rounded-xl p-3.5 animate-scale-in">
+              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-red-600 leading-relaxed">{error}</p>
             </div>
           )}
         </div>
 
-        {/* Generate button — sticky at bottom */}
-        <div className="sticky bottom-0 p-4 bg-white border-t border-border">
+        {/* ─ Generate button ─ */}
+        <div className="p-4 border-t border-border/40">
           <button
             onClick={handleGenerate}
             disabled={generating || !canGenerate}
-            className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-xl text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-gradient w-full flex items-center justify-center gap-2.5 text-white py-3.5 rounded-xl text-sm font-semibold"
           >
             {generating ? (
               <>
@@ -629,36 +592,36 @@ export default function GeneratePage() {
       </div>
 
       {/* ═══ RIGHT PANEL ═══ */}
-      <div className="flex-1 h-full overflow-y-auto bg-surface">
+      <div className="flex-1 h-full overflow-y-auto bg-surface/50 scrollbar-thin">
         {generating ? (
-          /* State 2: Loading */
-          <div className="flex flex-col items-center justify-center h-full gap-6">
+          /* ── Loading state ── */
+          <div className="flex flex-col items-center justify-center h-full gap-8 animate-fade-in-up">
             <div className="relative">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+              <div className="w-20 h-20 rounded-3xl btn-gradient flex items-center justify-center shadow-soft-lg">
+                <Sparkles className="w-10 h-10 text-white animate-pulse" />
               </div>
-              <div className="absolute inset-0 rounded-2xl border-2 border-primary/20 animate-ping" />
+              <div className="absolute -inset-2 rounded-[28px] border-2 border-primary/15 animate-ping" />
             </div>
-            <div className="text-center space-y-1">
-              <p className="text-sm font-semibold text-foreground">
-                Génération en cours...
-              </p>
-              <p className="text-xs text-muted">
+            <div className="text-center space-y-2">
+              <h3 className="text-base font-semibold text-foreground">
+                Création en cours...
+              </h3>
+              <p className="text-sm text-muted">
                 Cela prend généralement 30 à 60 secondes
               </p>
             </div>
             <GrowthTips />
           </div>
         ) : latestAd ? (
-          /* State 3: Result */
-          <div className="p-6 space-y-6">
-            {/* Latest ad — prominent */}
-            <div className="max-w-md mx-auto">
-              <div className="mb-3">
-                <h2 className="text-sm font-semibold text-foreground">
-                  Dernière création
-                </h2>
-              </div>
+          /* ── Result state ── */
+          <div className="p-8 space-y-8 animate-fade-in-up">
+            <div className="max-w-md mx-auto space-y-4">
+              {/* Title */}
+              <h2 className="text-sm font-semibold text-foreground">
+                Dernière création
+              </h2>
+
+              {/* Ad preview with built-in controls */}
               <AdPreviewCard
                 ad={latestAd}
                 onUpdateAd={(id, updates) => updateGeneratedAd(id, updates)}
@@ -671,35 +634,14 @@ export default function GeneratePage() {
                 onRegenerate={() => handleRegenerate(latestAd)}
               />
 
-              {/* Action buttons row */}
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={() => handleDownloadAd(latestAd)}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-primary text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-primary-dark transition-colors"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  Télécharger
-                </button>
-                {latestAd.format === "square" && (
-                  <button
-                    onClick={() => handleConvertToStory(latestAd)}
-                    disabled={convertingId === latestAd.id}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-border text-xs font-medium text-muted hover:bg-white transition-colors disabled:opacity-50"
-                  >
-                    {convertingId === latestAd.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Smartphone className="w-3.5 h-3.5" />
-                    )}
-                    Format Story
-                  </button>
-                )}
+              {/* Extra actions (modify / regenerate) */}
+              <div className="flex gap-2">
                 <button
                   onClick={() => setShowModification(!showModification)}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl border text-xs font-medium transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 ${
                     showModification
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-border text-muted hover:bg-white"
+                      ? "bg-primary/10 text-primary border border-primary/20"
+                      : "bg-white border border-border/60 text-muted hover:text-foreground hover:border-border shadow-soft"
                   }`}
                 >
                   <Pencil className="w-3.5 h-3.5" />
@@ -708,7 +650,7 @@ export default function GeneratePage() {
                 <button
                   onClick={() => handleRegenerate(latestAd)}
                   disabled={generating}
-                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-border text-xs font-medium text-muted hover:bg-white transition-colors disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/60 bg-white text-xs font-medium text-muted hover:text-foreground hover:border-border transition-all duration-200 shadow-soft disabled:opacity-50"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   Regénérer
@@ -717,20 +659,20 @@ export default function GeneratePage() {
 
               {/* Modification panel */}
               {showModification && (
-                <div className="mt-4 bg-white rounded-xl border border-border p-4 space-y-3">
+                <div className="bg-white rounded-2xl border border-border/60 p-4 space-y-3 shadow-soft animate-scale-in">
                   <textarea
                     value={modificationPrompt}
                     onChange={(e) => setModificationPrompt(e.target.value)}
                     placeholder="Décrivez la modification souhaitée..."
                     rows={2}
-                    className="w-full px-3 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted/50 resize-none"
+                    className="w-full px-3.5 py-3 border border-border/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 placeholder:text-muted/40 resize-none transition-all"
                   />
                   <div className="flex flex-wrap gap-1.5">
                     {modificationChips.map((chip) => (
                       <button
                         key={chip}
                         onClick={() => setModificationPrompt(chip)}
-                        className="px-3 py-1.5 rounded-full bg-surface border border-border text-xs text-muted hover:bg-gray-100 hover:text-foreground transition-colors"
+                        className="px-3 py-1.5 rounded-full bg-surface border border-border/50 text-[11px] font-medium text-muted hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all duration-200"
                       >
                         {chip}
                       </button>
@@ -739,7 +681,7 @@ export default function GeneratePage() {
                   <button
                     disabled={!modificationPrompt.trim() || generating}
                     onClick={() => latestAd && handleModification(latestAd, modificationPrompt)}
-                    className="w-full flex items-center justify-center gap-2 bg-primary text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-gradient w-full flex items-center justify-center gap-2 text-white py-2.5 rounded-xl text-xs font-semibold"
                   >
                     {generating ? (
                       <>
@@ -747,45 +689,45 @@ export default function GeneratePage() {
                         Modification en cours...
                       </>
                     ) : (
-                      "Appliquer"
+                      <>
+                        <Wand2 className="w-3.5 h-3.5" />
+                        Appliquer la modification
+                      </>
                     )}
                   </button>
                 </div>
               )}
             </div>
 
-            {/* History gallery */}
+            {/* History */}
             {historyAds.length > 0 && (
               <div className="max-w-4xl mx-auto">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    Historique ({historyAds.length})
-                  </h3>
+                <div className="flex items-center gap-2 mb-4">
+                  <h3 className="text-sm font-semibold text-foreground">Historique</h3>
+                  <span className="text-[10px] font-medium text-muted bg-surface px-2 py-0.5 rounded-full">
+                    {historyAds.length}
+                  </span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {historyAds.map((ad) => (
-                    <div key={ad.id} className="space-y-1.5">
+                    <div key={ad.id} className="group cursor-pointer" onClick={() => handleDownloadAd(ad)}>
                       <div
                         className={`relative ${
                           ad.format === "story" ? "aspect-[9/16]" : "aspect-square"
-                        } rounded-xl overflow-hidden bg-black cursor-pointer group`}
-                        onClick={() => handleDownloadAd(ad)}
+                        } rounded-xl overflow-hidden bg-black shadow-soft`}
                       >
                         <img
                           src={`data:${ad.mimeType};base64,${ad.imageBase64}`}
                           alt="Ad"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                          <Download className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                          <Download className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         </div>
-                        <span className="absolute top-1.5 right-1.5 bg-black/50 text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full">
+                        <span className="absolute top-2 right-2 bg-black/40 backdrop-blur-sm text-white text-[9px] font-medium px-2 py-0.5 rounded-full">
                           {ad.format === "story" ? "Story" : "Carré"}
                         </span>
                       </div>
-                      <p className="text-[10px] text-muted truncate">
-                        {ad.headline}
-                      </p>
                     </div>
                   ))}
                 </div>
@@ -793,18 +735,17 @@ export default function GeneratePage() {
             )}
           </div>
         ) : (
-          /* State 1: Empty */
-          <div className="flex flex-col items-center justify-center h-full gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-primary/30" />
+          /* ── Empty state ── */
+          <div className="flex flex-col items-center justify-center h-full gap-5 animate-fade-in-up">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center animate-float">
+              <Wand2 className="w-9 h-9 text-primary/40" />
             </div>
-            <div className="text-center space-y-1">
+            <div className="text-center space-y-2">
               <h2 className="text-lg font-semibold text-foreground">
                 Prêt à créer
               </h2>
-              <p className="text-sm text-muted max-w-xs">
-                Configure ton produit et clique sur Générer pour créer ta
-                première publicité.
+              <p className="text-sm text-muted max-w-xs leading-relaxed">
+                Configure ton produit et clique sur <span className="font-medium text-primary">Générer</span> pour créer ta première publicité.
               </p>
             </div>
           </div>
