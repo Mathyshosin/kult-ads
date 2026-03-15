@@ -62,6 +62,11 @@ interface WizardState {
   setSelectedFormat: (format: "square" | "story") => void;
   setReferenceAd: (ad: { base64: string; mimeType: string } | null) => void;
 
+  // Generation lifecycle
+  startGeneration: (meta: { format: "square" | "story"; productId?: string }) => string;
+  completeGeneration: (id: string, data: Omit<GeneratedAd, "id" | "status" | "timestamp">) => void;
+  failGeneration: (id: string, error: string) => void;
+
   // Supabase sync
   syncBrandAnalysis: (userId: string) => Promise<void>;
   syncImage: (userId: string, image: UploadedImage) => Promise<void>;
@@ -193,6 +198,40 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
   setGenerationMode: (mode) => set({ generationMode: mode }),
   setSelectedFormat: (format) => set({ selectedFormat: format }),
   setReferenceAd: (ad) => set({ referenceAd: ad }),
+
+  // ── Generation lifecycle ──
+
+  startGeneration: (meta) => {
+    const id = `gen-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const placeholder: GeneratedAd = {
+      id,
+      format: meta.format,
+      imageBase64: "",
+      mimeType: "image/png",
+      headline: "",
+      bodyText: "",
+      callToAction: "",
+      productId: meta.productId,
+      timestamp: Date.now(),
+      status: "generating",
+    };
+    set((state) => ({ generatedAds: [placeholder, ...state.generatedAds] }));
+    return id;
+  },
+
+  completeGeneration: (id, data) =>
+    set((state) => ({
+      generatedAds: state.generatedAds.map((ad) =>
+        ad.id === id ? { ...ad, ...data, id, status: "completed" as const, timestamp: ad.timestamp } : ad
+      ),
+    })),
+
+  failGeneration: (id, error) =>
+    set((state) => ({
+      generatedAds: state.generatedAds.map((ad) =>
+        ad.id === id ? { ...ad, status: "failed" as const, error } : ad
+      ),
+    })),
 
   // ── Supabase sync methods ──
 

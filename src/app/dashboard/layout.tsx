@@ -7,6 +7,7 @@ import AuthGuard from "@/components/auth-guard";
 import { useWizardStore } from "@/lib/store";
 import { useAuthStore } from "@/lib/auth-store";
 import { Loader2 } from "lucide-react";
+import { ToastContainer } from "@/components/toast";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -41,6 +42,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       ) : (
         <div className="py-8">{children}</div>
       )}
+      <ToastContainer />
     </div>
   );
 }

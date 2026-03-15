@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sparkles, Building2, LogOut, Wand2 } from "lucide-react";
+import { Sparkles, Building2, LogOut, Wand2, LayoutGrid } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 
@@ -19,6 +19,7 @@ export default function DashboardHeader() {
   const tabs = [
     { href: "/dashboard/brand", label: "Ma Marque", icon: Building2 },
     { href: "/dashboard/generate", label: "Générateur", icon: Wand2 },
+    { href: "/dashboard/ads", label: "Mes Ads", icon: LayoutGrid },
   ];
 
   return (

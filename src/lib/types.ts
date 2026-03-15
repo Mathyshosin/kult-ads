@@ -57,6 +57,8 @@ export interface GeneratedAd {
   conversionAngle?: string;
   templateId?: string;          // Template used for this ad (library mode)
   timestamp: number;
+  status?: "generating" | "completed" | "failed";
+  error?: string;
 }
 
 export interface AdTemplate {
