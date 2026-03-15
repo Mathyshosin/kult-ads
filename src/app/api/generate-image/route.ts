@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { generateImage } from "@/lib/gemini";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 
+export const maxDuration = 120;
+
 export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseClient();

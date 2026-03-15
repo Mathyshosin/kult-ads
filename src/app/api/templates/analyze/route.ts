@@ -7,6 +7,8 @@ import {
   getAnalyzedTemplateIds,
 } from "@/lib/supabase/template-analysis";
 
+export const maxDuration = 120;
+
 export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseClient();

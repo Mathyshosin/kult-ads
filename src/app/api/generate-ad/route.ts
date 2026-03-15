@@ -14,6 +14,9 @@ function cleanDiscount(raw: string): string {
     .replace(/%%+/g, "%");  // "-60%%" → "-60%"
 }
 
+// Allow up to 120s for Claude + Gemini chain
+export const maxDuration = 120;
+
 export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseClient();

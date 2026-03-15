@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { analyzeWithClaude } from "@/lib/claude";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseClient();

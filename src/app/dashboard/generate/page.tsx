@@ -116,32 +116,47 @@ export default function GeneratePage() {
         return;
       }
 
-      // Step 2: Generate 1 ad
-      const res = await fetch("/api/generate-ad", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          brandAnalysis,
-          product,
-          offer,
-          productImageBase64: image?.base64,
-          productImageMimeType: image?.mimeType,
-          brandLogoBase64: brandLogo?.base64,
-          brandLogoMimeType: brandLogo?.mimeType,
-          format: "square",
-          templateId: templateIds[0],
-        }),
+      // Step 2: Generate 1 ad (with 1 automatic retry)
+      const genBody = JSON.stringify({
+        brandAnalysis,
+        product,
+        offer,
+        productImageBase64: image?.base64,
+        productImageMimeType: image?.mimeType,
+        brandLogoBase64: brandLogo?.base64,
+        brandLogoMimeType: brandLogo?.mimeType,
+        format: "square",
+        templateId: templateIds[0],
       });
 
+      let res = await fetch("/api/generate-ad", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: genBody,
+      });
+
+      // Auto-retry once on failure
       if (!res.ok) {
-        setError("La génération a échoué. Réessaie.");
+        console.warn("[generate] First attempt failed, retrying...");
+        await new Promise((r) => setTimeout(r, 2000));
+        res = await fetch("/api/generate-ad", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: genBody,
+        });
+      }
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        setError(errData?.error || "La génération a échoué. Réessaie.");
       } else {
         const ad = await res.json();
         addGeneratedAd(ad);
         if (currentUser) syncGeneratedAd(currentUser.id, ad);
       }
-    } catch {
-      setError("Erreur lors de la génération.");
+    } catch (err) {
+      console.error("[generate] Error:", err);
+      setError("Erreur réseau. Vérifie ta connexion et réessaie.");
     }
 
     setGenerating(false);
@@ -154,31 +169,46 @@ export default function GeneratePage() {
     const { product, offer, image } = getSelections();
 
     try {
-      const res = await fetch("/api/generate-ad", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          brandAnalysis,
-          product,
-          offer,
-          productImageBase64: image?.base64,
-          productImageMimeType: image?.mimeType,
-          brandLogoBase64: brandLogo?.base64,
-          brandLogoMimeType: brandLogo?.mimeType,
-          format: "square",
-          customPrompt: customPrompt.trim(),
-        }),
+      const genBody = JSON.stringify({
+        brandAnalysis,
+        product,
+        offer,
+        productImageBase64: image?.base64,
+        productImageMimeType: image?.mimeType,
+        brandLogoBase64: brandLogo?.base64,
+        brandLogoMimeType: brandLogo?.mimeType,
+        format: "square",
+        customPrompt: customPrompt.trim(),
       });
 
+      let res = await fetch("/api/generate-ad", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: genBody,
+      });
+
+      // Auto-retry once on failure
       if (!res.ok) {
-        setError("La génération a échoué. Réessaie.");
+        console.warn("[generate] First attempt failed, retrying...");
+        await new Promise((r) => setTimeout(r, 2000));
+        res = await fetch("/api/generate-ad", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: genBody,
+        });
+      }
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        setError(errData?.error || "La génération a échoué. Réessaie.");
       } else {
         const ad = await res.json();
         addGeneratedAd(ad);
         if (currentUser) syncGeneratedAd(currentUser.id, ad);
       }
-    } catch {
-      setError("La génération a échoué. Réessaie.");
+    } catch (err) {
+      console.error("[generate] Error:", err);
+      setError("Erreur réseau. Vérifie ta connexion et réessaie.");
     }
 
     setGenerating(false);
@@ -400,32 +430,46 @@ export default function GeneratePage() {
                 }
                 onRegenerate={async () => {
                   const { product, offer, image } = getSelections();
+                  const genBody = JSON.stringify({
+                    brandAnalysis,
+                    product,
+                    offer,
+                    productImageBase64: image?.base64,
+                    productImageMimeType: image?.mimeType,
+                    brandLogoBase64: brandLogo?.base64,
+                    brandLogoMimeType: brandLogo?.mimeType,
+                    format: ad.format,
+                    templateId: ad.templateId || undefined,
+                    customPrompt: customPrompt.trim() || undefined,
+                  });
 
                   try {
-                    const res = await fetch("/api/generate-ad", {
+                    let res = await fetch("/api/generate-ad", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        brandAnalysis,
-                        product,
-                        offer,
-                        productImageBase64: image?.base64,
-                        productImageMimeType: image?.mimeType,
-                        brandLogoBase64: brandLogo?.base64,
-                        brandLogoMimeType: brandLogo?.mimeType,
-                        format: ad.format,
-                        templateId: ad.templateId || undefined,
-                        customPrompt: customPrompt.trim() || undefined,
-                      }),
+                      body: genBody,
                     });
+
+                    // Auto-retry once
+                    if (!res.ok) {
+                      await new Promise((r) => setTimeout(r, 2000));
+                      res = await fetch("/api/generate-ad", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: genBody,
+                      });
+                    }
 
                     if (res.ok) {
                       const newAd = await res.json();
                       addGeneratedAd(newAd);
                       if (currentUser) syncGeneratedAd(currentUser.id, newAd);
+                    } else {
+                      const errData = await res.json().catch(() => null);
+                      setError(errData?.error || "La regénération a échoué.");
                     }
                   } catch {
-                    // Silent fail
+                    setError("Erreur réseau lors de la regénération.");
                   }
                 }}
               />

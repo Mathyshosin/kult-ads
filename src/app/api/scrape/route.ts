@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { scrapeUrl } from "@/lib/scraper";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 
+export const maxDuration = 30;
+
 export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseClient();
