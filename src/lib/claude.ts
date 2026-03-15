@@ -348,7 +348,14 @@ Describe with EXTREME PRECISION using % of image dimensions:
 ━━━ STEP 4: CREATE ADAPTED TEXT — STRICT MATCHING ━━━
 Replace the template's text for "${brandContext.brandName}".
 
-CRITICAL: The template is from a COMPLETELY DIFFERENT brand/product. You must REPLACE ALL text with content about "${brandContext.brandName}" and "${brandContext.productName}". NEVER copy, reuse, or keep ANY word or phrase from the template's original text. The template text is irrelevant — only the STRUCTURE matters (how many elements, their sizes, their positions).
+⚠️ ABSOLUTE RULE — READ THIS FIRST ⚠️
+The template is from a COMPLETELY DIFFERENT brand selling a COMPLETELY DIFFERENT product.
+You must IGNORE the template's MESSAGE, CONCEPT, and TOPIC entirely.
+- If the template talks about NFC, QR codes, reviews, tapping phones → IGNORE ALL OF THAT
+- If the template talks about cooking, fitness, skincare → IGNORE ALL OF THAT
+- The ONLY thing you copy from the template is its VISUAL STRUCTURE (how many text elements, their sizes, their positions)
+- ALL text content must be 100% about "${brandContext.productName}" by "${brandContext.brandName}"
+- NEVER copy, reuse, adapt, or translate ANY concept from the template's text
 
 IRON RULES:
 1. You MUST produce EXACTLY the same number of text elements as the template (templateTextCount). Not one more.
@@ -378,6 +385,7 @@ ${brandContext.uniqueSellingPoints?.length ? `- USPs (use only if template has s
 
 ━━━ STEP 5: SCENE DESCRIPTION ━━━
 Describe the visual layout for Gemini to reproduce.
+CRITICAL: The scene must make sense for "${brandContext.productName}". NEVER include template-specific objects (QR codes, NFC icons, phone icons, specific props from the template). Replace them with elements relevant to "${brandContext.productName}".
 
 IF COMPARISON: describe split layout adapted to "${brandContext.productName}"'s CATEGORY.
 - BAD SIDE: Show a generic product from the SAME CATEGORY as "${brandContext.productName}" — NOT the template's product. The template may show a drink can, a shampoo bottle, etc. — IGNORE those objects. Instead, show the typical inferior alternative in "${brandContext.productName}"'s actual product category.
@@ -508,11 +516,18 @@ PRE-ANALYZED TEMPLATE METADATA (these are FACTS — do NOT override them):
 
 YOUR TASK: Create ONLY the adapted text and scene description for "${brandContext.brandName}".
 
-CRITICAL: The template is from a COMPLETELY DIFFERENT brand/product. You must REPLACE ALL text with content about "${brandContext.brandName}" and "${brandContext.productName}". NEVER copy, reuse, or keep ANY word or phrase from the template's original text.
+⚠️ ABSOLUTE RULE — READ THIS FIRST ⚠️
+The template is from a COMPLETELY DIFFERENT brand selling a COMPLETELY DIFFERENT product.
+You must IGNORE the template's MESSAGE, CONCEPT, and TOPIC entirely.
+- If the template talks about NFC, QR codes, reviews, tapping phones → IGNORE ALL OF THAT
+- If the template talks about cooking, fitness, skincare → IGNORE ALL OF THAT
+- The ONLY thing you copy from the template is its VISUAL STRUCTURE (how many text elements, their sizes, their positions)
+- ALL text content must be 100% about "${brandContext.productName}" by "${brandContext.brandName}"
+- NEVER copy, reuse, adapt, or translate ANY concept from the template's text
 
 IRON RULES:
 1. You MUST produce EXACTLY ${meta.templateTextCount} text elements matching: ${meta.textElements.join(", ")}. Not one more.
-2. EVERY text element must be about "${brandContext.productName}" by "${brandContext.brandName}".
+2. EVERY text element must be about "${brandContext.productName}" by "${brandContext.brandName}" — using the brand's REAL selling points and features.
 3. ${meta.templateHasPrices ? "Template has prices — use real prices if available." : "Template has NO prices — ZERO prices in imageText."}
 4. NEVER add bullet points, feature lists, star ratings, review counts, or statistics. Keep it clean.
 5. Keep text SHORT — match the template's text length roughly.
@@ -527,14 +542,17 @@ ${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If th
 PRICE RULES:
 ${meta.templateHasPrices ? (brandContext.productOriginalPrice && brandContext.productSalePrice ? `Use real prices: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}` : brandContext.productPrice ? `Use real price: ${brandContext.productPrice}` : "No prices available → do NOT show any price.") : "ZERO prices. No exceptions."}
 
-SCENE: Describe the visual layout for image generation.
+SCENE DESCRIPTION — CRITICAL:
+Describe the visual layout for image generation. You MUST describe a scene that makes sense for "${brandContext.productName}".
+- NEVER include template-specific objects in the scene (QR codes, NFC icons, phone icons, specific props from the template). Replace them with elements relevant to "${brandContext.productName}".
+- Describe a clean, professional layout that showcases "${brandContext.productName}".
 ${meta.templateType === "comparison" ? `COMPARISON: Describe split layout. BAD SIDE: Show a generic inferior product from the SAME CATEGORY as "${brandContext.productName}" — NOT the template's product. GOOD SIDE: Show "${brandContext.productName}".` : ""}
 ${meta.templateType === "product-showcase" || meta.templateType === "lifestyle" ? `Describe ONLY 1 unit of "${brandContext.productName}" displayed simply and cleanly. NEVER describe multiple units.` : ""}
 
 JSON ONLY:
 {
-  "scene": "ENGLISH description of layout for image generation",
-  "imageText": "Text adapted for the brand in the brand's language, matching template structure exactly. Use \\n for line breaks. MUST have exactly ${meta.templateTextCount} elements matching: ${meta.textElements.join(", ")}."
+  "scene": "ENGLISH description of layout for image generation — must be about ${brandContext.productName}, NO template-specific objects",
+  "imageText": "Text adapted for the brand in the brand's language, matching template structure exactly. Use \\n for line breaks. MUST have exactly ${meta.templateTextCount} elements matching: ${meta.textElements.join(", ")}. MUST be 100% about ${brandContext.productName} — zero words from the template's original message."
 }`,
           },
         ],

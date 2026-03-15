@@ -23,6 +23,7 @@ import {
   RectangleHorizontal,
   Package,
   ArrowRight,
+  Tag,
 } from "lucide-react";
 
 export default function GeneratePage() {
@@ -319,6 +320,39 @@ export default function GeneratePage() {
             </div>
           </div>
         </div>
+
+        {/* Linked promotion */}
+        {(() => {
+          const offer = brandAnalysis.offers.find((o) => o.productId === selectedProduct.id);
+          if (!offer) return null;
+          const discount = offer.discountValue
+            ? `${offer.discountType === "percentage" ? "-" : ""}${String(offer.discountValue).replace(/%+$/, "").replace(/€+$/, "")}${offer.discountType === "percentage" ? "%" : "€"}`
+            : null;
+          return (
+            <div className="flex items-center gap-3 card-tech px-4 py-3 mb-5 border-emerald-200/60 bg-emerald-50/30">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <Tag className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-emerald-700 truncate">
+                  {offer.title}
+                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  {discount && (
+                    <span className="text-xs font-bold text-emerald-600">{discount}</span>
+                  )}
+                  {offer.originalPrice && offer.salePrice && (
+                    <span className="text-[11px] text-muted">
+                      <span className="line-through">{offer.originalPrice}</span>
+                      {" → "}
+                      <span className="font-semibold text-emerald-600">{offer.salePrice}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="space-y-5">
           {/* Images — show only images linked to selected product */}
