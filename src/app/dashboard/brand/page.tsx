@@ -217,7 +217,12 @@ export default function BrandPage() {
 
       setBrandAnalysis({ ...cleanAnalysis, url: url.trim() });
 
-      // ── Auto-import scraped product images ──
+      // ── Sync brand analysis FIRST to get brandAnalysisId (required for image uploads) ──
+      if (currentUser) {
+        await syncBrandAnalysis(currentUser.id);
+      }
+
+      // ── Auto-import scraped product images (AFTER brandAnalysisId is set) ──
       if (downloadedProductImages.length > 0) {
         for (const img of downloadedProductImages) {
           const filename = img.imageUrl.split("/").pop()?.split("?")[0] || "product.jpg";
@@ -231,13 +236,9 @@ export default function BrandPage() {
             isAiGenerated: false,
           };
           addImage(newImage);
-          if (currentUser) syncImage(currentUser.id, newImage);
+          if (currentUser) await syncImage(currentUser.id, newImage);
         }
         console.log(`[brand] Auto-imported ${downloadedProductImages.length} product images`);
-      }
-
-      if (currentUser) {
-        await syncBrandAnalysis(currentUser.id);
       }
 
       setPhase(-1);
@@ -314,7 +315,7 @@ export default function BrandPage() {
           isAiGenerated: false,
         };
         addImage(newImage);
-        if (currentUser) syncImage(currentUser.id, newImage);
+        if (currentUser) await syncImage(currentUser.id, newImage);
       }
     } catch (err) {
       setImageError(err instanceof Error ? err.message : "Erreur upload");
@@ -449,7 +450,7 @@ export default function BrandPage() {
         prompt,
       };
       addImage(newImage);
-      if (currentUser) syncImage(currentUser.id, newImage);
+      if (currentUser) await syncImage(currentUser.id, newImage);
     } catch (err) {
       setImageError(err instanceof Error ? err.message : "Erreur génération");
     } finally {
@@ -745,7 +746,7 @@ export default function BrandPage() {
                                     isAiGenerated: false,
                                   };
                                   addImage(newImg);
-                                  if (currentUser) syncImage(currentUser.id, newImg);
+                                  if (currentUser) await syncImage(currentUser.id, newImg);
                                 }
                               } catch (err) {
                                 console.error("Quick upload error:", err);
