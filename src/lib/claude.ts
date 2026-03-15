@@ -457,7 +457,7 @@ JSON ONLY (no markdown):
   }
 }
 
-// ── Faster adaptation when pre-computed metadata exists ──
+// ── Faster adaptation when pre-computed metadata exists (uses Haiku for speed) ──
 async function describeTemplateSceneWithMetadata(
   templateBase64: string,
   templateMimeType: string,
@@ -467,7 +467,7 @@ async function describeTemplateSceneWithMetadata(
   const context = buildBrandContext(brandContext);
 
   const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-haiku-4-5-20251001",
     max_tokens: 1000,
     messages: [
       {
@@ -589,7 +589,7 @@ JSON UNIQUEMENT (pas de markdown) :
 }`;
 
   const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-haiku-4-5-20251001",
     max_tokens: 500,
     system: systemPrompt,
     messages: [

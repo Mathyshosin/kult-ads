@@ -472,9 +472,19 @@ STRICT RULES:
 3. Professional advertising quality.`;
     }
 
-    // ── SEQUENTIAL: Image first, then copy ──
-    console.log(`[generate-ad] Calling Gemini with ${referenceImages.length} reference images...`);
-    const visualResult = await generateImage(visualPrompt, aspectRatio, referenceImages);
+    // ── PARALLEL: Image + copy at the same time (saves 2-5s) ──
+    console.log(`[generate-ad] Calling Gemini (${referenceImages.length} refs) + Claude copy in PARALLEL...`);
+
+    const copyAngle = customPrompt
+      ? `Adapte le texte à cette direction créative : ${customPrompt}`
+      : imageText
+        ? `Le texte "${imageText}" est déjà sur l'image. Complète avec un body text et CTA cohérents qui renforcent ce message.`
+        : "Mets en avant le bénéfice le plus fort du produit avec les vrais arguments de la marque.";
+
+    const [visualResult, copyRaw] = await Promise.all([
+      generateImage(visualPrompt, aspectRatio, referenceImages),
+      generateAdCopy(brandContext, format, copyAngle),
+    ]);
 
     if (!visualResult) {
       console.error("[generate-ad] Gemini returned null — image generation failed after all retries");
@@ -483,20 +493,7 @@ STRICT RULES:
         { status: 500 }
       );
     }
-    console.log("[generate-ad] Gemini image generated successfully");
-
-    // Copy angle
-    const copyAngle = customPrompt
-      ? `Adapte le texte à cette direction créative : ${customPrompt}`
-      : imageText
-        ? `Le texte "${imageText}" est déjà sur l'image. Complète avec un body text et CTA cohérents qui renforcent ce message.`
-        : "Mets en avant le bénéfice le plus fort du produit avec les vrais arguments de la marque.";
-
-    const copyRaw = await generateAdCopy(
-      brandContext,
-      format,
-      copyAngle,
-    );
+    console.log("[generate-ad] Gemini image + Claude copy done");
 
     // Parse copy
     let copy;
