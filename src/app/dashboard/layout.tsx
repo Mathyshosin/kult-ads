@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import DashboardHeader from "@/components/dashboard-header";
-import StepIndicator from "@/components/step-indicator";
 import AuthGuard from "@/components/auth-guard";
 import { useWizardStore } from "@/lib/store";
 import { useAuthStore } from "@/lib/auth-store";
@@ -33,19 +32,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-surface">
       <DashboardHeader />
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <StepIndicator />
-        <div className="mt-10">{children}</div>
-      </div>
+      <div className="py-8">{children}</div>
     </div>
   );
 }
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
       <DashboardContent>{children}</DashboardContent>

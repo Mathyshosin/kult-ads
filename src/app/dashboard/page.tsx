@@ -2,11 +2,18 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useWizardStore } from "@/lib/store";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const brandAnalysis = useWizardStore((s) => s.brandAnalysis);
+  const isHydrated = useWizardStore((s) => s.isHydrated);
+
   useEffect(() => {
-    router.replace("/dashboard/analyze");
-  }, [router]);
+    if (isHydrated) {
+      router.replace(brandAnalysis ? "/dashboard/generate" : "/dashboard/brand");
+    }
+  }, [router, brandAnalysis, isHydrated]);
+
   return null;
 }

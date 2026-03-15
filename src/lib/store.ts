@@ -7,7 +7,7 @@ import type {
   Offer,
   UploadedImage,
   GeneratedAd,
-  WizardStep,
+  GenerationMode,
 } from "./types";
 import {
   saveBrandAnalysis,
@@ -29,7 +29,6 @@ export interface BrandLogo {
 }
 
 interface WizardState {
-  currentStep: WizardStep;
   isAnalyzing: boolean;
   brandAnalysis: BrandAnalysis | null;
   brandAnalysisId: string | null;
@@ -37,8 +36,10 @@ interface WizardState {
   generatedAds: GeneratedAd[];
   brandLogo: BrandLogo | null;
   isHydrated: boolean;
+  generationMode: GenerationMode;
+  selectedFormat: "square" | "story";
+  referenceAd: { base64: string; mimeType: string } | null;
 
-  setStep: (step: WizardStep) => void;
   setAnalyzing: (v: boolean) => void;
   setBrandAnalysis: (data: BrandAnalysis) => void;
   updateBrandAnalysis: (partial: Partial<BrandAnalysis>) => void;
@@ -56,6 +57,9 @@ interface WizardState {
   removeGeneratedAd: (id: string) => void;
   clearAds: () => void;
   reset: () => void;
+  setGenerationMode: (mode: GenerationMode) => void;
+  setSelectedFormat: (format: "square" | "story") => void;
+  setReferenceAd: (ad: { base64: string; mimeType: string } | null) => void;
 
   // Supabase sync
   syncBrandAnalysis: (userId: string) => Promise<void>;
@@ -69,7 +73,6 @@ interface WizardState {
 
 // ── Wizard store (Supabase is the source of truth) ──
 export const useWizardStore = create<WizardState>()((set, get) => ({
-  currentStep: 1,
   isAnalyzing: false,
   brandAnalysis: null,
   brandAnalysisId: null,
@@ -77,11 +80,13 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
   generatedAds: [],
   brandLogo: null,
   isHydrated: false,
+  generationMode: "auto",
+  selectedFormat: "square",
+  referenceAd: null,
 
-  setStep: (step) => set({ currentStep: step }),
   setAnalyzing: (v) => set({ isAnalyzing: v }),
   setBrandAnalysis: (data) =>
-    set({ brandAnalysis: data, currentStep: 2 }),
+    set({ brandAnalysis: data }),
   updateBrandAnalysis: (partial) =>
     set((state) => ({
       brandAnalysis: state.brandAnalysis
@@ -172,14 +177,19 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
   clearAds: () => set({ generatedAds: [] }),
   reset: () =>
     set({
-      currentStep: 1,
       isAnalyzing: false,
       brandAnalysis: null,
       brandAnalysisId: null,
       uploadedImages: [],
       generatedAds: [],
       brandLogo: null,
+      generationMode: "auto",
+      selectedFormat: "square",
+      referenceAd: null,
     }),
+  setGenerationMode: (mode) => set({ generationMode: mode }),
+  setSelectedFormat: (format) => set({ selectedFormat: format }),
+  setReferenceAd: (ad) => set({ referenceAd: ad }),
 
   // ── Supabase sync methods ──
 
@@ -249,7 +259,6 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
         set({
           brandAnalysis: result.analysis,
           brandAnalysisId: result.id,
-          currentStep: 2,
         });
 
         const { images, logo } = await loadUploadedImages(userId, result.id);
@@ -257,9 +266,7 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
 
         const ads = await loadGeneratedAds(userId, result.id);
         if (ads.length > 0) {
-          set({ generatedAds: ads, currentStep: 4 });
-        } else if (images.length > 0) {
-          set({ currentStep: 3 });
+          set({ generatedAds: ads });
         }
       }
     } catch (err) {

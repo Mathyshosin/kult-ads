@@ -17,7 +17,7 @@ export default function ReviewPage() {
   const updateOffer = useWizardStore((s) => s.updateOffer);
   const removeOffer = useWizardStore((s) => s.removeOffer);
   const addOffer = useWizardStore((s) => s.addOffer);
-  const setStep = useWizardStore((s) => s.setStep);
+
   const syncBrandAnalysis = useWizardStore((s) => s.syncBrandAnalysis);
   const currentUser = useAuthStore((s) => s.currentUser);
 
@@ -34,7 +34,6 @@ export default function ReviewPage() {
     if (currentUser) {
       await syncBrandAnalysis(currentUser.id);
     }
-    setStep(3);
     router.push("/dashboard/images");
   }
 

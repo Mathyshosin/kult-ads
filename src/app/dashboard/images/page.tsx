@@ -30,7 +30,7 @@ export default function ImagesPage() {
   const uploadedImages = useWizardStore((s) => s.uploadedImages);
   const addImage = useWizardStore((s) => s.addImage);
   const removeImage = useWizardStore((s) => s.removeImage);
-  const setStep = useWizardStore((s) => s.setStep);
+
   const brandLogo = useWizardStore((s) => s.brandLogo);
   const setBrandLogo = useWizardStore((s) => s.setBrandLogo);
   const syncImage = useWizardStore((s) => s.syncImage);
@@ -218,7 +218,6 @@ export default function ImagesPage() {
   }
 
   function handleContinue() {
-    setStep(4);
     router.push("/dashboard/generate");
   }
 
