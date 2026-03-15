@@ -167,13 +167,17 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: productImageBase64,
         mimeType: productImageMimeType || "image/png",
-        label: `THIS IS THE ONLY PRODUCT FOR "${brandAnalysis.brandName}". Show this EXACT product — same shape, colors, appearance. Do NOT use any other product.
-ABSOLUTE RULES FOR THE PRODUCT:
-- Show the product EXACTLY as it appears in this photo — no modifications whatsoever.
-- NEVER write text, percentages, prices, or ANY overlay ON the product surface. The product must be clean.
-- NEVER create, invent, or add packaging (no box, no bag, no sachet, no wrapper, no container). If the product in this photo has no packaging, show it WITHOUT packaging.
-- NEVER show a person holding a miniature version of the product or a card/flyer with the product on it.
-- The product should be displayed as a standalone item, not wrapped or contained in anything not visible in this reference.
+        label: `THIS IS THE ONLY PRODUCT FOR "${brandAnalysis.brandName}". You MUST reproduce this product with PIXEL-PERFECT FIDELITY.
+
+CRITICAL FIDELITY RULES — THE PRODUCT MUST BE AN EXACT COPY:
+- Reproduce the EXACT shape, proportions, colors, textures, and details from this photo. The product in the ad must be INDISTINGUISHABLE from this reference.
+- If the product is black, it stays black. If it has a pattern, reproduce that EXACT pattern. If it has a specific texture (ribbed, lace, matte, glossy), reproduce it faithfully.
+- Do NOT generalize or simplify the product. A "culotte côtelée" (ribbed) must show visible ribbed texture. A "culotte en dentelle" (lace) must show actual lace patterns.
+- NEVER substitute with a generic version — the viewer must recognize THIS SPECIFIC product.
+- NEVER write text, percentages, prices, or ANY overlay ON the product surface.
+- NEVER create, invent, or add packaging (no box, bag, wrapper). Show the product as-is.
+- NEVER show a person holding a miniature version or a card with the product.
+- The product should be displayed as a standalone item.
 Any product visible in the layout reference below is from a DIFFERENT brand and must NOT appear.`,
       });
     }
@@ -307,7 +311,7 @@ BAD SIDE: Show a generic, unappealing version of the OLD/INFERIOR alternative in
 - CRITICAL: Do NOT copy the template's specific objects (if the template shows a crushed can, a bottle, etc. from another industry — IGNORE those). Instead show a relevant inferior product from "${product.name}"'s actual category.
 - Make it look dull, uncomfortable, outdated, or wasteful — visually unappealing.
 GOOD SIDE: Show EXACTLY 1 unit of "${product.name}" from the PRODUCT reference — clean, premium, desirable. FULLY VISIBLE.
-- Show the product EXACTLY as it appears in the PRODUCT reference photo — same shape, same colors, same appearance.
+- Reproduce the product with PIXEL-PERFECT FIDELITY from the PRODUCT reference photo — same shape, same colors, same textures, same patterns, same proportions. The product must be INDISTINGUISHABLE from the reference.
 - ABSOLUTELY FORBIDDEN: Do NOT invent, create, or add ANY object that is NOT in the PRODUCT reference. No packaging, no bags, no wrappers, no hands holding the product, no hands holding fabric/cloth/material, no additional items whatsoever.
 - ABSOLUTELY FORBIDDEN: Do NOT add any person, hand, arm, or human body part on the GOOD side. The product stands alone — no one touches it, holds it, or interacts with it.
 - NEVER write text or percentages ON the product surface.
@@ -349,9 +353,10 @@ ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
         ? `This ad does NOT show a product photo — it uses only text, shapes, and graphics to advertise "${product.name}".
 - Do NOT add any product photo, packshot, or physical object.
 - Do NOT add any person, model, or human figure.`
-        : `PRODUCT: Look at the PRODUCT reference image. Show this EXACT product — same shape, same colors, same appearance.
+        : `PRODUCT: Look at the PRODUCT reference image. Reproduce this product with PIXEL-PERFECT FIDELITY — same shape, same colors, same textures, same patterns, same proportions. The product must be INDISTINGUISHABLE from the reference.
 - Display EXACTLY 1 unit of this product. NOT 2, NOT a stack, NOT multiple colors.
 - The product MUST be FULLY VISIBLE — never cropped or cut off.
+- Reproduce EXACT textures and details: if ribbed texture → show ribbed, if lace → show lace, if glossy → show glossy. NEVER substitute with a generic version.
 - NEVER create, invent, or add packaging (no box, bag, sachet, wrapper). Show the product as-is.
 - NEVER write text, discount percentages, prices, or ANY text ON the product surface. The product must remain clean.
 - NEVER show a person holding a miniature/card version of the product.

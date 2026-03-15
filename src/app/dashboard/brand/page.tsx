@@ -707,7 +707,7 @@ export default function BrandPage() {
                       }
                       className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface/50 transition-colors"
                     >
-                      {productImage && (
+                      {productImage ? (
                         <div className="w-10 h-10 rounded-lg overflow-hidden border border-border flex-shrink-0">
                           <img
                             src={productImage.previewUrl}
@@ -715,6 +715,44 @@ export default function BrandPage() {
                             className="w-full h-full object-cover"
                           />
                         </div>
+                      ) : (
+                        <label
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-10 h-10 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 flex-shrink-0 flex items-center justify-center cursor-pointer hover:border-amber-400 hover:bg-amber-100 transition-colors"
+                          title="Ajouter une image produit"
+                        >
+                          <Camera className="w-4 h-4 text-amber-500" />
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            className="hidden"
+                            onChange={async (e) => {
+                              if (!e.target.files?.length) return;
+                              const formData = new FormData();
+                              formData.append("images", e.target.files[0]);
+                              try {
+                                const res = await fetch("/api/upload", { method: "POST", body: formData });
+                                if (!res.ok) return;
+                                const { images } = await res.json();
+                                if (images[0]) {
+                                  const newImg = {
+                                    id: images[0].id,
+                                    previewUrl: images[0].dataUrl,
+                                    base64: images[0].base64,
+                                    mimeType: images[0].mimeType,
+                                    name: images[0].name,
+                                    productId: product.id,
+                                    isAiGenerated: false,
+                                  };
+                                  addImage(newImg);
+                                  if (currentUser) syncImage(currentUser.id, newImg);
+                                }
+                              } catch (err) {
+                                console.error("Quick upload error:", err);
+                              }
+                            }}
+                          />
+                        </label>
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">
