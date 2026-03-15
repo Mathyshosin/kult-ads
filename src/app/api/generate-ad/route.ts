@@ -36,6 +36,11 @@ export async function POST(request: Request) {
       format,
       templateId,
       customPrompt,
+      referenceAdBase64,
+      referenceAdMimeType,
+      modificationPrompt,
+      previousAdBase64,
+      previousAdMimeType,
     } = await request.json();
 
     if (!brandAnalysis || !product || !format) {
@@ -66,13 +71,19 @@ export async function POST(request: Request) {
       offerDescription: offer?.description,
     };
 
-    // ── Get template image (library mode only) ──
-    console.log(`[generate-ad] Starting generation. templateId=${templateId}, format=${format}, customPrompt=${!!customPrompt}`);
-    const template = templateId
-      ? await getTemplateByIdWithImage(templateId)
-      : customPrompt
-        ? null
-        : await getRandomTemplateWithImage(format);
+    // ── Mode detection ──
+    const isModification = !!(modificationPrompt && previousAdBase64);
+    const isReference = !!(referenceAdBase64 && !isModification);
+    console.log(`[generate-ad] Starting generation. templateId=${templateId}, format=${format}, customPrompt=${!!customPrompt}, isReference=${isReference}, isModification=${isModification}`);
+
+    // ── Get template image (library mode only, skip if reference/modification mode) ──
+    const template = (isReference || isModification) ? null : (
+      templateId
+        ? await getTemplateByIdWithImage(templateId)
+        : customPrompt
+          ? null
+          : await getRandomTemplateWithImage(format)
+    );
     console.log(`[generate-ad] Template loaded: ${template ? template.id : "none"}`);
 
     // Track the actual template ID used (important for random templates)
@@ -177,13 +188,29 @@ Any product visible in the layout reference below is from a DIFFERENT brand and 
     }
 
     // Layout reference — ONLY for text-only templates (no products to confuse Gemini)
-    // For product templates, Gemini copies the template's products visually no matter what
-    // the prompt says, so we rely on Claude's detailed layout description instead.
     if (template && isTextOnly) {
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
         label: `LAYOUT REFERENCE (from a DIFFERENT brand — NOT "${brandAnalysis.brandName}"). Copy ONLY the visual structure: background, element positions, text arrangement, decorative shapes. IGNORE all text, brand names, and logos in this image.`,
+      });
+    }
+
+    // Reference ad — user uploaded an ad to copy/adapt
+    if (isReference && referenceAdBase64) {
+      referenceImages.push({
+        base64: referenceAdBase64,
+        mimeType: referenceAdMimeType || "image/png",
+        label: `REFERENCE AD to copy. Reproduce the EXACT same visual layout, composition, color scheme, and style — but adapt ALL text and branding for "${brandAnalysis.brandName}" selling "${product.name}". Replace ALL text, logos, and brand elements. Keep the visual structure identical.`,
+      });
+    }
+
+    // Modification mode — previous ad as base + modification instructions
+    if (isModification && previousAdBase64) {
+      referenceImages.push({
+        base64: previousAdBase64,
+        mimeType: previousAdMimeType || "image/png",
+        label: `PREVIOUS AD to modify. This is the base image. Apply the following modification while keeping everything else identical: "${modificationPrompt}"`,
       });
     }
 
@@ -405,6 +432,44 @@ RULES:
 - NEVER add labels, stickers, tags, text, or ANY overlay directly ON the product — show it exactly as-is.
 - Colors: ${colors}. Photorealistic, professional camera, high-end lighting.
 ${textInstruction}`;
+    }
+
+    // ── Reference ad mode: override prompt to copy the reference layout ──
+    if (isReference) {
+      visualPrompt = `${aspectRatio} — Create a professional advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
+
+Look at the REFERENCE AD image and reproduce the EXACT same visual layout, composition, color scheme, typography style, and element positions — but replace ALL text, branding, and products with "${brandAnalysis.brandName}" content.
+
+${productImageBase64 ? `Show the product from the PRODUCT reference — same shape, colors, appearance.` : ""}
+Brand colors: ${colors}.
+${logoInstruction}
+
+STRICT RULES:
+1. Copy the reference ad's LAYOUT and VISUAL STYLE precisely.
+2. Replace ALL text with content about "${product.name}" by "${brandAnalysis.brandName}" in the brand's language.
+3. Replace ALL logos and brand elements with "${brandAnalysis.brandName}".
+4. Do NOT copy any text from the reference — only copy the visual structure.
+5. NEVER invent statistics, star ratings, or customer numbers.
+6. Professional advertising quality.
+${customPrompt ? `\nADDITIONAL INSTRUCTIONS: ${customPrompt}` : ""}`;
+    }
+
+    // ── Modification mode: tweak the previous ad ──
+    if (isModification) {
+      visualPrompt = `${aspectRatio} — Modify the PREVIOUS AD image according to these instructions:
+
+MODIFICATION REQUESTED: "${modificationPrompt}"
+
+Keep everything else from the previous ad IDENTICAL — same layout, same product, same colors, same text positioning. Only apply the specific modification requested above.
+
+Brand: "${brandAnalysis.brandName}"
+Product: "${product.name}"
+${logoInstruction}
+
+STRICT RULES:
+1. Start from the PREVIOUS AD and make ONLY the requested modification.
+2. Keep ALL other elements unchanged.
+3. Professional advertising quality.`;
     }
 
     // ── SEQUENTIAL: Image first, then copy ──
