@@ -494,24 +494,18 @@ async function describeTemplateSceneWithMetadata(
 ): Promise<TemplateAnalysis> {
   const context = buildBrandContext(brandContext);
 
+  // NOTE: We intentionally do NOT send the template image to Haiku.
+  // The pre-computed metadata contains ALL needed layout info.
+  // Sending the image causes Haiku to copy template text/concepts despite instructions.
+  // No image = no contamination source = clean adapted text every time.
+
   const message = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 1000,
     messages: [
       {
         role: "user",
-        content: [
-          {
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: templateMimeType as "image/png" | "image/jpeg" | "image/webp" | "image/gif",
-              data: templateBase64,
-            },
-          },
-          {
-            type: "text",
-            text: `You are an elite creative director. Your job: adapt an ad template's TEXT for a different brand. The template's visual structure has already been analyzed — you only need to create the adapted text and scene description.
+        content: `You are an elite creative director. Your job: create ad text for a brand based on a template's STRUCTURE (described below as metadata). You do NOT see the template — only its structural analysis.
 
 TARGET BRAND:
 ${context}
@@ -523,16 +517,9 @@ PRE-ANALYZED TEMPLATE METADATA (these are FACTS — do NOT override them):
 - Has human model: ${meta.templateHasHumanModel}
 - Has product photo: ${meta.templateHasProductPhoto}
 
-YOUR TASK: Create ONLY the adapted text and scene description for "${brandContext.brandName}".
-
-⚠️ ABSOLUTE RULE — READ THIS FIRST ⚠️
-The template is from a COMPLETELY DIFFERENT brand selling a COMPLETELY DIFFERENT product.
-You must IGNORE the template's MESSAGE, CONCEPT, and TOPIC entirely.
-- If the template talks about NFC, QR codes, reviews, tapping phones → IGNORE ALL OF THAT
-- If the template talks about cooking, fitness, skincare → IGNORE ALL OF THAT
-- The ONLY thing you copy from the template is its VISUAL STRUCTURE (how many text elements, their sizes, their positions)
-- ALL text content must be 100% about "${brandContext.productName}" by "${brandContext.brandName}"
-- NEVER copy, reuse, adapt, or translate ANY concept from the template's text
+YOUR TASK: Create ad text and scene description for "${brandContext.brandName}" selling "${brandContext.productName}".
+You are working from METADATA ONLY — you have no knowledge of the original template's content.
+ALL text must be 100% original content about "${brandContext.productName}" by "${brandContext.brandName}".
 
 IRON RULES:
 1. You MUST produce EXACTLY ${meta.templateTextCount} text elements matching: ${meta.textElements.join(", ")}. Not one more.
@@ -568,10 +555,8 @@ ${meta.templateType === "product-showcase" || meta.templateType === "lifestyle" 
 JSON ONLY:
 {
   "scene": "ENGLISH description of layout for image generation — must be about ${brandContext.productName}, NO template-specific objects",
-  "imageText": "Text adapted for the brand in the brand's language, matching template structure exactly. Use \\n for line breaks. MUST have exactly ${meta.templateTextCount} elements matching: ${meta.textElements.join(", ")}. MUST be 100% about ${brandContext.productName} — zero words from the template's original message."
+  "imageText": "Text adapted for the brand in the brand's language, matching template structure exactly. Use \\n for line breaks. MUST have exactly ${meta.templateTextCount} elements matching: ${meta.textElements.join(", ")}. MUST be 100% about ${brandContext.productName} — zero words from any other brand."
 }`,
-          },
-        ],
       },
     ],
   });
