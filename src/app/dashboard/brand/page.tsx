@@ -38,8 +38,8 @@ const sceneTypes = [
 // ── Analysis phases ──
 const phases = [
   "Chargement du site...",
-  "Analyse IA en cours...",
-  "Extraction des données...",
+  "Analyse IA & récupération des images...",
+  "Finalisation...",
 ];
 
 // ── Collapsible Section wrapper ──
@@ -210,7 +210,31 @@ export default function BrandPage() {
       const analysis = await analyzeRes.json();
       setPhase(2);
 
-      setBrandAnalysis({ ...analysis, url: url.trim() });
+      // Extract downloaded product images before setting brand analysis
+      const downloadedProductImages = analysis.downloadedProductImages || [];
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { downloadedProductImages: _imgs, ...cleanAnalysis } = analysis;
+
+      setBrandAnalysis({ ...cleanAnalysis, url: url.trim() });
+
+      // ── Auto-import scraped product images ──
+      if (downloadedProductImages.length > 0) {
+        for (const img of downloadedProductImages) {
+          const filename = img.imageUrl.split("/").pop()?.split("?")[0] || "product.jpg";
+          const newImage = {
+            id: `scraped-${img.productId}-${Date.now()}`,
+            previewUrl: `data:${img.mimeType};base64,${img.base64}`,
+            base64: img.base64,
+            mimeType: img.mimeType,
+            name: filename,
+            productId: img.productId,
+            isAiGenerated: false,
+          };
+          addImage(newImage);
+          if (currentUser) syncImage(currentUser.id, newImage);
+        }
+        console.log(`[brand] Auto-imported ${downloadedProductImages.length} product images`);
+      }
 
       if (currentUser) {
         await syncBrandAnalysis(currentUser.id);

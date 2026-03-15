@@ -19,7 +19,8 @@ Le JSON doit suivre exactement cette structure:
   "offers": [{"id":"offer-1","title":"...","description":"...","discountType":"percentage|fixed|freeShipping|other","discountValue":"...","originalPrice":"...","salePrice":"...","productId":"prod-1"}],
   "targetAudience": "string",
   "uniqueSellingPoints": ["string", "string"],
-  "competitorProducts": ["string", "string"]
+  "competitorProducts": ["string", "string"],
+  "productImageMatches": [{"productId":"prod-1","imageUrl":"https://...","confidence":"high|medium|low"}]
 }
 
 Règles:
@@ -31,7 +32,16 @@ Règles:
 - Les couleurs doivent être en format hex
 - Sois précis et fidèle aux informations du site
 - Pour les prix: "price" = prix affiché principal, "originalPrice" = prix avant réduction (prix barré), "salePrice" = prix après réduction. Si pas de promo, originalPrice et salePrice sont null. UTILISE UNIQUEMENT les prix réels affichés sur le site — JAMAIS de prix inventés.
-- Pour competitorProducts: identifie les produits CONCURRENTS / alternatives traditionnelles que cette marque cherche à remplacer. Exemples: si la marque vend des culottes menstruelles → ["tampons", "serviettes hygiéniques", "cups menstruelles"]. Si la marque vend des boissons énergisantes saines → ["Red Bull", "Monster", "sodas sucrés"]. Si la marque vend des compléments bio → ["compléments classiques", "médicaments"]. Déduis-le du positionnement marketing du site.`;
+- Pour competitorProducts: identifie les produits CONCURRENTS / alternatives traditionnelles que cette marque cherche à remplacer. Exemples: si la marque vend des culottes menstruelles → ["tampons", "serviettes hygiéniques", "cups menstruelles"]. Si la marque vend des boissons énergisantes saines → ["Red Bull", "Monster", "sodas sucrés"]. Si la marque vend des compléments bio → ["compléments classiques", "médicaments"]. Déduis-le du positionnement marketing du site.
+
+IMAGES PRODUIT — RÈGLE IMPORTANTE:
+- Dans les données scrapées, tu trouveras un champ "productImages" avec des images extraites du site (URL + alt text + contexte textuel environnant).
+- Pour CHAQUE produit identifié, essaie de matcher la MEILLEURE image produit depuis cette liste.
+- Utilise le texte "alt", le "context" (texte environnant l'image sur la page) et l'URL pour déterminer quelle image correspond à quel produit.
+- Retourne les matches dans "productImageMatches" avec l'URL exacte de l'image (champ "src" de productImages).
+- confidence: "high" si le alt/context mentionne clairement le nom du produit, "medium" si c'est probable, "low" si c'est une supposition.
+- Choisis UNE SEULE image par produit (la plus représentative — photo produit > lifestyle > ambiance).
+- Ignore les images qui sont clairement des bannières, icônes ou décorations.`;
 
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
