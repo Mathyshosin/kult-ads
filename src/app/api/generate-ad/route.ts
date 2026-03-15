@@ -174,7 +174,7 @@ CRITICAL FIDELITY RULES — THE PRODUCT MUST BE AN EXACT COPY:
 - If the product is black, it stays black. If it has a pattern, reproduce that EXACT pattern. If it has a specific texture (ribbed, lace, matte, glossy), reproduce it faithfully.
 - Do NOT generalize or simplify the product. A "culotte côtelée" (ribbed) must show visible ribbed texture. A "culotte en dentelle" (lace) must show actual lace patterns.
 - NEVER substitute with a generic version — the viewer must recognize THIS SPECIFIC product.
-- NEVER write text, percentages, prices, or ANY overlay ON the product surface.
+- ABSOLUTELY FORBIDDEN: NEVER place ANY element ON TOP of the product — no text, no percentages, no prices, no labels, no badges, no stickers, no overlays, no graphic elements. The product surface must be 100% clean and untouched.
 - NEVER create, invent, or add packaging (no box, bag, wrapper). Show the product as-is.
 - NEVER show a person holding a miniature version or a card with the product.
 - The product should be displayed as a standalone item.
@@ -337,11 +337,12 @@ STRICT RULES:
 5. Brand colors: ${colors}.
 ${showDiscount && !discountAlreadyInText ? `6. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "6. No extra discount text needed."}
 ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
-8. NEVER add labels or text ON the product.
+8. NEVER place ANY text, label, overlay, badge, sticker, or graphic element ON TOP of the product. The product surface must remain completely clean and untouched.
 9. Display ONLY the text provided above. No extra text, no bullet points, no feature lists, no star ratings, no review counts, no statistics. NEVER show any text element twice.
-10. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
-11. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display. NEVER render position percentages as visible text.
-12. NEVER invent statistics, star ratings, review counts, or customer numbers.`;
+10. SIMPLICITY: The ad must be instantly understandable in under 2 seconds. Keep text minimal — short headlines, no paragraphs. Think Instagram ad, not product page.
+11. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
+12. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display. NEVER render position percentages as visible text.
+13. NEVER invent statistics, star ratings, review counts, or customer numbers.`;
     } else if (template && layout && !isTextOnly) {
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──
@@ -400,7 +401,9 @@ ${!noProduct ? "9. Photorealistic product, professional lighting, high-end adver
 ${noHuman ? "11. Do NOT add any person, model, hand, or human figure. The template has NO people — keep it that way." : ""}
 12. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
 13. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display on the image. NEVER render position percentages as visible text.
-14. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.`.trim();
+14. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.
+15. NEVER place ANY text, label, overlay, badge, sticker, or graphic element ON TOP of the product. The product surface must remain completely clean and untouched.
+16. SIMPLICITY: The ad must be instantly understandable in under 2 seconds. Keep text minimal — short headlines, no paragraphs. Think Instagram ad, not product page.`.trim();
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
@@ -434,8 +437,9 @@ RULES:
 - The ONLY product allowed in this image is "${product.name}" from the PRODUCT reference. No other brand's products.
 - Keep the product IDENTICAL to the PRODUCT reference — same shape, colors, packaging. Do NOT redesign it.
 - The product must be FULLY VISIBLE and well-positioned — NEVER cropped, cut off, or bleeding past image edges. Leave clear margins.
-- NEVER add labels, stickers, tags, text, or ANY overlay directly ON the product — show it exactly as-is.
+- NEVER place ANY text, label, overlay, badge, sticker, or graphic element ON TOP of the product. The product surface must remain completely clean and untouched.
 - Colors: ${colors}. Photorealistic, professional camera, high-end lighting.
+- SIMPLICITY: The ad must be instantly understandable in under 2 seconds. Minimal text, no paragraphs.
 ${textInstruction}`;
     }
 
