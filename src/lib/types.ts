@@ -62,6 +62,7 @@ export interface GeneratedAd {
   _debug?: {
     geminiPrompt: string;
     imageText: string | null;
+    overlayText: { headline: string; ctaText: string } | null;
     sceneDescription: string;
     templateType: string | null;
     referenceImageLabels: string[];

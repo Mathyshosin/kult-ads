@@ -6,77 +6,10 @@ import { getRandomTemplateWithImage, getTemplateByIdWithImage, trackUsedTemplate
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 import { getTemplateAnalysisFromDb, saveTemplateAnalysisToDb } from "@/lib/supabase/template-analysis";
 import { analyzeTemplateMetadata } from "@/lib/claude";
+import { compositeTextOverlay } from "@/lib/text-overlay";
+import type { OverlayConfig, OverlayStyle } from "@/lib/text-overlay";
 
-/** Sanitize discount string: fix double dashes and double percent signs */
-function cleanDiscount(raw: string): string {
-  return raw
-    .replace(/--+/g, "-")   // "--60%" → "-60%"
-    .replace(/%%+/g, "%");  // "-60%%" → "-60%"
-}
-
-/**
- * Light sanitizer for imageText — catches common Haiku mistakes:
- * - Invented statistics ("300 000 utilisatrices", "4.8/5")
- * - Feature lists with separators ("|")
- * - Excessive word count
- */
-function sanitizeImageText(text: string, maxLines: number): string {
-  let lines = text.split("\n");
-
-  lines = lines.map((line) => {
-    // Strip invented statistics: large numbers + people words
-    line = line.replace(
-      /\+?\d[\d\s.,]*\d*\s*(utilisat(eur|rice)s?|clients?|femmes|hommes|personnes|avis|étoiles|stars?|reviews?|customers?|users?|satisfait(e)?s?)/gi,
-      ""
-    ).trim();
-
-    // Strip star ratings
-    line = line.replace(/[★⭐]{2,}/g, "");
-    line = line.replace(/\d[.,]\d\s*\/\s*5/g, "");
-
-    // Strip pipe-separated feature lists → keep only first item
-    if (line.includes("|")) {
-      line = line.split("|")[0].trim();
-    }
-
-    // Strip bullet markers
-    line = line.replace(/^[\s]*[•●◆▸▹→➤✓✔-]\s*/g, "");
-
-    // Cap each line at 6 words
-    const words = line.split(/\s+/).filter(Boolean);
-    if (words.length > 6) {
-      line = words.slice(0, 6).join(" ");
-    }
-
-    return line.trim();
-  });
-
-  // Remove empty lines
-  lines = lines.filter((l) => l.length > 0);
-
-  // Cap total lines
-  if (lines.length > maxLines) {
-    lines = lines.slice(0, maxLines);
-  }
-
-  // Cap total words at 20
-  let totalWords = 0;
-  lines = lines.map((line) => {
-    const words = line.split(/\s+/);
-    const remaining = 20 - totalWords;
-    if (remaining <= 0) return "";
-    if (words.length > remaining) {
-      totalWords += remaining;
-      return words.slice(0, remaining).join(" ");
-    }
-    totalWords += words.length;
-    return line;
-  }).filter((l) => l.length > 0);
-
-  return lines.join("\n");
-}
-
-// Allow up to 120s for Claude + Gemini chain
+// Allow up to 120s for Claude + Gemini + Satori chain
 export const maxDuration = 120;
 
 export async function POST(request: Request) {
@@ -113,7 +46,6 @@ export async function POST(request: Request) {
     }
 
     const aspectRatio = format === "square" ? "1:1" : "9:16";
-    const colors = brandAnalysis.colors?.length ? brandAnalysis.colors.join(", ") : "modern, clean";
 
     // ── Full brand context (shared between Claude calls) ──
     const brandContext = {
@@ -158,9 +90,9 @@ export async function POST(request: Request) {
 
     // ── Build scene description ──
     let sceneDescription: string;
-    let imageText: string | null = null;
     let isTextOnly = false;
     let templateAnalysis: TemplateAnalysis | null = null;
+    let overlayText: { headline: string; ctaText: string } | null = null;
 
     if (customPrompt) {
       sceneDescription = customPrompt;
@@ -169,10 +101,8 @@ export async function POST(request: Request) {
       let precomputedAnalysis = await getTemplateAnalysisFromDb(template.id);
 
       if (!precomputedAnalysis) {
-        // First time using this template → analyze and save to Supabase for future use
         console.log(`[generate-ad] No cached metadata for ${template.id}, analyzing and caching...`);
         precomputedAnalysis = await analyzeTemplateMetadata(template.imageBase64, template.mimeType);
-        // Save in background (don't block ad generation)
         saveTemplateAnalysisToDb(template.id, precomputedAnalysis).catch((err) =>
           console.error("[generate-ad] Failed to cache template analysis:", err)
         );
@@ -188,44 +118,13 @@ export async function POST(request: Request) {
         precomputedAnalysis,
       );
       sceneDescription = templateAnalysis.scene;
-      imageText = templateAnalysis.imageText;
       isTextOnly = templateAnalysis.isTextOnly;
-
-      // ── Safety filter: strip prices from imageText if template has no price area ──
-      if (imageText && !templateAnalysis.templateHasPrices) {
-        // Remove lines containing price patterns: "Price: XX", "Prix: XX", "XX€", "XX,XX€"
-        imageText = imageText
-          .split("\n")
-          .filter((line) => !/(?:price|prix)\s*[:：]/i.test(line) && !/\d+[.,]?\d*\s*€/.test(line))
-          .join("\n");
-        console.log("[generate-ad] Stripped prices from imageText (template has no prices)");
-      }
-
-      // ── Safety filter: fix formatting glitches in discount/percentage text ──
-      if (imageText) {
-        imageText = imageText
-          .replace(/--+(\d)/g, "-$1")   // "--60%" or "---60%" → "-60%"
-          .replace(/%%+/g, "%")          // "-60%%" → "-60%"
-          .replace(/(\d)%%/g, "$1%");    // "60%%" → "60%"
-      }
-
-      // ── Safety filter: sanitize imageText (strip invented stats, cap word count) ──
-      if (imageText) {
-        const maxLines = Math.min(templateAnalysis.templateTextCount, 5);
-        const before = imageText;
-        imageText = sanitizeImageText(imageText, maxLines);
-        if (before !== imageText) {
-          console.log("[generate-ad] imageText sanitized:", { before, after: imageText });
-        }
-      }
+      overlayText = templateAnalysis.overlayText || null;
 
       console.log("[generate-ad] Scene:", sceneDescription);
-      console.log("[generate-ad] Image text:", imageText);
+      console.log("[generate-ad] Overlay text:", JSON.stringify(overlayText));
       console.log("[generate-ad] Text-only template:", isTextOnly);
-      console.log("[generate-ad] Template has prices:", templateAnalysis.templateHasPrices);
-      console.log("[generate-ad] Template text count:", templateAnalysis.templateTextCount);
       console.log("[generate-ad] Template type:", templateAnalysis.templateType);
-      console.log("[generate-ad] Layout:", JSON.stringify(templateAnalysis.layout));
     } else {
       sceneDescription = "Product displayed on a clean minimal surface with soft professional studio lighting.";
     }
@@ -238,356 +137,173 @@ export async function POST(request: Request) {
     }> = [];
 
     // Product photo FIRST so Gemini prioritizes it over the layout reference
-    // BUT: only include if NOT text-only AND template actually shows a product
     const templateShowsProduct = templateAnalysis?.templateHasProductPhoto !== false;
     if (productImageBase64 && !isTextOnly && templateShowsProduct) {
       referenceImages.push({
         base64: productImageBase64,
         mimeType: productImageMimeType || "image/png",
-        label: `THIS IS THE ONLY PRODUCT FOR "${brandAnalysis.brandName}". You MUST reproduce this product with PIXEL-PERFECT FIDELITY.
-
-CRITICAL FIDELITY RULES — THE PRODUCT MUST BE AN EXACT COPY:
-- Reproduce the EXACT shape, proportions, colors, textures, and details from this photo. The product in the ad must be INDISTINGUISHABLE from this reference.
-- If the product is black, it stays black. If it has a pattern, reproduce that EXACT pattern. If it has a specific texture (ribbed, lace, matte, glossy), reproduce it faithfully.
-- Do NOT generalize or simplify the product. A "culotte côtelée" (ribbed) must show visible ribbed texture. A "culotte en dentelle" (lace) must show actual lace patterns.
-- NEVER substitute with a generic version — the viewer must recognize THIS SPECIFIC product.
-- NEVER write text, percentages, prices, or ANY overlay ON the product surface.
-- NEVER create, invent, or add packaging (no box, bag, wrapper). Show the product as-is.
-- NEVER show a person holding a miniature version or a card with the product.
-- The product should be displayed as a standalone item.
-Any product visible in the layout reference below is from a DIFFERENT brand and must NOT appear.`,
+        label: `THIS IS THE ONLY PRODUCT for "${brandAnalysis.brandName}". Reproduce with PIXEL-PERFECT FIDELITY.
+- Exact shape, proportions, colors, textures, details. Must be INDISTINGUISHABLE from this reference.
+- NEVER substitute with a generic version.
+- NEVER add packaging, boxes, bags, or wrappers.
+- NEVER show a person holding or touching the product.
+- Show the product as a standalone item.
+Any product in the layout reference is from a DIFFERENT brand and must NOT appear.`,
       });
     }
 
-    // Brand logo reference — so Gemini uses the real logo instead of generating one
+    // Brand logo
     if (brandLogoBase64) {
       referenceImages.push({
         base64: brandLogoBase64,
         mimeType: brandLogoMimeType || "image/png",
-        label: `OFFICIAL LOGO for "${brandAnalysis.brandName}". Reproduce this logo with ZERO modifications.
-ABSOLUTE RULES — NEVER VIOLATE:
-- NEVER add a background shape behind the logo (no banner, no rectangle, no circle, no badge)
-- NEVER change the logo's colors, font, or style
-- NEVER add outlines, shadows, or effects to the logo
-- NEVER resize or distort the logo
-- Place the logo EXACTLY as-is on the ad background — if it's hard to see, move it to a contrasting area instead of modifying it
-- The logo must look IDENTICAL to this reference image with ZERO additions`,
+        label: `OFFICIAL LOGO for "${brandAnalysis.brandName}". ZERO modifications.
+- NEVER add a background shape behind it (no banner, rectangle, circle, badge)
+- NEVER change colors, font, or style. NEVER add outlines/shadows/effects.
+- Place as-is on the ad background.`,
       });
     }
 
-    // Layout reference template — sent for ALL template types so Gemini has a visual reference
+    // Layout reference template
     if (template) {
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: `LAYOUT REFERENCE — create the SAME ad but for "${brandAnalysis.brandName}" selling "${product.name}".
-
-Reproduce this ad's STYLE: same background colors/gradients, same layout positions, same typography style, same spacing, same visual mood.
-
-What you CHANGE (adapt for the brand):
-1. The product → replace with "${product.name}" (from PRODUCT reference)
-2. All text → replace with the text provided in the prompt
-3. The brand name/logo → "${brandAnalysis.brandName}"
-4. Decorative objects (if any) → replace with objects that make sense for "${product.name}" while keeping the same arrangement/style
-
-What you KEEP exactly:
-- Background colors and gradients
-- Element positions and proportions
-- Typography style (font weight, size, case)
-- Overall visual mood and energy
-- Number and arrangement of decorative elements (but adapt WHAT they are to fit "${product.name}")`,
+        label: `LAYOUT REFERENCE — create the SAME visual style for "${brandAnalysis.brandName}".
+Reproduce: background colors/gradients, composition, spacing, mood, decorative elements.
+Replace: product (use PRODUCT reference), brand logo.
+DO NOT include ANY text, headlines, prices, CTA buttons, or words in the image. Text will be added separately.`,
       });
     }
 
-    // Reference ad — user uploaded an ad to copy/adapt
+    // Reference ad mode
     if (isReference && referenceAdBase64) {
       referenceImages.push({
         base64: referenceAdBase64,
         mimeType: referenceAdMimeType || "image/png",
-        label: `REFERENCE AD to copy. Reproduce the EXACT same visual layout, composition, color scheme, and style — but adapt ALL text and branding for "${brandAnalysis.brandName}" selling "${product.name}". Replace ALL text, logos, and brand elements. Keep the visual structure identical.`,
+        label: `REFERENCE AD to copy. Reproduce EXACT visual layout and style for "${brandAnalysis.brandName}". Replace ALL products and branding. DO NOT include any text — text will be added separately.`,
       });
     }
 
-    // Modification mode — previous ad as base + modification instructions
+    // Modification mode
     if (isModification && previousAdBase64) {
       referenceImages.push({
         base64: previousAdBase64,
         mimeType: previousAdMimeType || "image/png",
-        label: `PREVIOUS AD to modify. This is the base image. Apply the following modification while keeping everything else identical: "${modificationPrompt}"`,
+        label: `PREVIOUS AD to modify. Apply: "${modificationPrompt}". Keep everything else identical.`,
       });
     }
 
-    // ── Price info: offer prices take priority over product prices ──
-    const priceInfo = (() => {
-      // If offer has its own pricing, use that (e.g. pack pricing)
-      const origPrice = offer?.originalPrice || product.originalPrice;
-      const saleP = offer?.salePrice || product.salePrice;
-
-      if (origPrice && saleP) {
-        return `PRICING (from the brand's website — use these EXACT numbers): Original price: ${origPrice} → Sale price: ${saleP}. Show both prices: the original price crossed out and the sale price highlighted.`;
-      } else if (saleP) {
-        return `PRICING (from the brand's website — use this EXACT number): Sale price: ${saleP}.`;
-      } else if (product.price) {
-        return `PRICING (from the brand's website — use this EXACT number): Price: ${product.price}.`;
-      }
-      return null;
-    })();
-
-    // ── Logo instruction ──
-    const logoInstruction = brandLogoBase64
-      ? `Use the EXACT brand logo from the LOGO reference image for "${brandAnalysis.brandName}". Do NOT generate or invent a logo. Do NOT modify the logo in ANY way — no font change, no color change, no outline, no shadow, no additions. ZERO modifications. Place it as-is.`
-      : `If showing a brand name/logo, write "${brandAnalysis.brandName}" in clean typography. Do NOT invent a logo graphic.`;
-
-    // ── Discount string (computed once, sanitized) ──
+    // ── Discount / price data for overlay ──
     const discountStr = offer
-      ? cleanDiscount(
-          offer.discountValue && offer.discountType === "percentage"
-            ? `-${String(offer.discountValue).replace(/%+$/, "")}%`
-            : offer.discountValue
-              ? `-${String(offer.discountValue).replace(/€+$/, "")}€`
-              : (offer.title || "")
-        ) || null
+      ? (() => {
+          if (offer.discountValue && offer.discountType === "percentage") {
+            return `-${String(offer.discountValue).replace(/%+$/, "")}%`;
+          } else if (offer.discountValue) {
+            return `-${String(offer.discountValue).replace(/€+$/, "")}€`;
+          }
+          return offer.title || null;
+        })()
       : null;
 
-    // Only show prices/discount if Claude detected a price area on the template AND we have real data
-    const templateHasPriceArea = templateAnalysis?.templateHasPrices ?? true; // default true for non-template mode
-    const showPrices = templateHasPriceArea && priceInfo;
-    const showDiscount = templateHasPriceArea && discountStr;
+    const origPrice = offer?.originalPrice || product.originalPrice;
+    const salePrice = offer?.salePrice || product.salePrice;
+    const templateHasPriceArea = templateAnalysis?.templateHasPrices ?? false;
 
-    // Check if discount is already embedded in imageText (avoid Gemini showing it twice)
-    const discountAlreadyInText = !!(discountStr && imageText && imageText.includes(discountStr));
+    // ── Logo instruction (for Gemini prompt) ──
+    const logoInstruction = brandLogoBase64
+      ? `Use the EXACT logo from the LOGO reference for "${brandAnalysis.brandName}". ZERO modifications.`
+      : `If showing a brand name, write "${brandAnalysis.brandName}" in clean typography.`;
 
-    // ── Gemini prompt ──
+    // ── Build simplified Gemini prompt (NO TEXT) ──
     let visualPrompt: string;
     const layout = templateAnalysis?.layout;
 
-    if (template && layout && isTextOnly) {
-      // ── Text-only template: layout reference image IS sent to Gemini ──
-      visualPrompt = `${aspectRatio} — Create a text-only advertising image for "${brandAnalysis.brandName}".
+    if (isModification) {
+      // Modification mode: keep current behavior (Gemini handles everything)
+      visualPrompt = `${aspectRatio} — Modify the PREVIOUS AD image:
+MODIFICATION: "${modificationPrompt}"
+Keep everything else IDENTICAL. Brand: "${brandAnalysis.brandName}", Product: "${product.name}".
+${logoInstruction}`;
+    } else if (isReference) {
+      // Reference mode: copy the reference layout, no text
+      visualPrompt = `${aspectRatio} — Create an advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
+Copy the REFERENCE AD's exact visual layout, composition, and style.
+${productImageBase64 ? `Show the product from PRODUCT reference.` : ""}
+${logoInstruction}
 
-Reproduce this ad's STYLE: same background, same positions, same visual mood. Change only the text and brand name. If there are decorative objects, adapt them to fit "${product.name}" while keeping the same arrangement.
-
-Layout details:
-- Background: ${layout.backgroundStyle}
-- Decorative elements: Same arrangement as LAYOUT REFERENCE, adapted to fit "${product.name}".
-- Text placement: ${layout.textPosition}
-- Typography: ${layout.typographyStyle}
-- Headline style: ${layout.headlineStyle}${layout.subheadlineStyle ? `\n- Subheadline style: ${layout.subheadlineStyle}` : ""}
-- Text color: ${layout.textColor}${layout.accentColor ? ` | Accent color: ${layout.accentColor}` : ""}
-- CTA: ${layout.ctaStyle} at ${layout.ctaPosition}
-- Brand name position: ${layout.brandLogoPosition}
-${layout.textAreaPercent ? `- Text area: ${layout.textAreaPercent}` : ""}
-${layout.margins ? `- Margins: ${layout.margins}` : ""}
-
-TEXT ON IMAGE (in the brand's language — display ONLY this text, nothing more):
-${imageText ? `"${imageText}"` : `"${brandAnalysis.brandName}"`}
-
-This is a TEXT-ONLY ad — NO product photos, NO physical objects, NO people.
-
-SCENE: ${sceneDescription}
-
-STRICT RULES:
-1. The ONLY brand name is "${brandAnalysis.brandName}".
-2. ${logoInstruction}
-3. Brand colors: ${colors}.
-${showDiscount && !discountAlreadyInText ? `4. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "4. No extra discount text needed — it's already in the text above (or there is none)."}
-5. Display ONLY the text provided above. Do NOT add extra text, bullet points, feature lists, star ratings, review counts, statistics, or any text not specified above. NEVER show any text element twice.
-6. Match the EXACT proportions and spacing from the layout reference — text sizes, margins, element positions must be faithful to the original template.
-7. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
-8. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display on the image. NEVER render position percentages as visible text.
-9. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.`;
-    } else if (template && layout && !isTextOnly && templateAnalysis?.templateType === "comparison") {
-      // ── COMPARISON / VS template ──
+CRITICAL: Generate the image with ABSOLUTELY NO TEXT.
+No headlines, no prices, no CTA buttons, no discount labels, no words.
+Only the brand logo (as an image) may appear. Text will be added in post-production.`;
+    } else if (template && layout) {
+      // Template mode: simplified prompt, NO TEXT
       const competitors = brandAnalysis.competitorProducts?.length
         ? brandAnalysis.competitorProducts.slice(0, 2).join(" ou ")
-        : "le produit concurrent traditionnel";
+        : "generic inferior alternative";
 
-      const productCategory = product.description || product.name;
-
-      visualPrompt = `${aspectRatio} — Create a COMPARISON / VS advertising image for "${brandAnalysis.brandName}".
-
-SPLIT LAYOUT: ${layout.comparisonLayout || "left = bad alternative, right = good brand product"}
-
-BAD SIDE: Show a generic, unappealing version of the OLD/INFERIOR alternative in the SAME product category as "${product.name}" (${productCategory}).
-- CRITICAL: Do NOT copy the template's specific objects (if the template shows a crushed can, a bottle, etc. from another industry — IGNORE those). Instead show a relevant inferior product from "${product.name}"'s actual category.
-- Make it look dull, uncomfortable, outdated, or wasteful — visually unappealing.
-GOOD SIDE: Show EXACTLY 1 unit of "${product.name}" from the PRODUCT reference — clean, premium, desirable. FULLY VISIBLE.
-- Reproduce the product with PIXEL-PERFECT FIDELITY from the PRODUCT reference photo — same shape, same colors, same textures, same patterns, same proportions. The product must be INDISTINGUISHABLE from the reference.
-- ABSOLUTELY FORBIDDEN: Do NOT invent, create, or add ANY object that is NOT in the PRODUCT reference. No packaging, no bags, no wrappers, no hands holding the product, no hands holding fabric/cloth/material, no additional items whatsoever.
-- ABSOLUTELY FORBIDDEN: Do NOT add any person, hand, arm, or human body part on the GOOD side. The product stands alone — no one touches it, holds it, or interacts with it.
-- NEVER write text or percentages ON the product surface.
-
-LAYOUT:
-- Background: ${layout.backgroundStyle}
-- Typography: ${layout.typographyStyle}
-- Headline style: ${layout.headlineStyle}${layout.subheadlineStyle ? `\n- Subheadline style: ${layout.subheadlineStyle}` : ""}
-- Text color: ${layout.textColor}${layout.accentColor ? ` | Accent color: ${layout.accentColor}` : ""}
-- Brand name position: ${layout.brandLogoPosition}
-${layout.margins ? `- Margins: ${layout.margins}` : ""}
-
-TEXT ON IMAGE (in the brand's language — display ONLY this text):
-${imageText ? `"${imageText}"` : `"${brandAnalysis.brandName}"`}
-
-SCENE: ${sceneDescription}
-
-STRICT RULES:
-1. Clear visual comparison — two distinct sides.
-2. BAD side: Must show a product from the SAME CATEGORY as "${product.name}". NOT a random object from the template.
-3. GOOD side: EXACTLY 1 unit of "${product.name}" from PRODUCT reference. Never cropped. Show ONLY the product itself — NO hands, NO arms, NO person holding or touching it. NO invented objects. ONLY what is visible in the PRODUCT reference photo.
-4. ${logoInstruction}
-5. Brand colors: ${colors}.
-${showDiscount && !discountAlreadyInText ? `6. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "6. No extra discount text needed."}
-${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
-8. NEVER add labels or text ON the product.
-9. Display ONLY the text provided above. No extra text, no bullet points, no feature lists, no star ratings, no review counts, no statistics. NEVER show any text element twice.
-10. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
-11. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display. NEVER render position percentages as visible text.
-12. NEVER invent statistics, star ratings, review counts, or customer numbers.`;
-    } else if (template && layout && !isTextOnly) {
-      // ── Product template: layout reference image IS sent to Gemini for visual quality
-      //    Product photo + layout reference + detailed layout description ──
-
+      const isComparison = templateAnalysis?.templateType === "comparison";
       const noHuman = !templateAnalysis?.templateHasHumanModel;
-      const noProduct = !templateShowsProduct;
 
-      const productSection = noProduct
-        ? `This ad does NOT show a product photo — it uses only text, shapes, and graphics to advertise "${product.name}".
-- Do NOT add any product photo, packshot, or physical object.
-- Do NOT add any person, model, or human figure.`
-        : `PRODUCT: Look at the PRODUCT reference image. Reproduce this product with PIXEL-PERFECT FIDELITY — same shape, same colors, same textures, same patterns, same proportions. The product must be INDISTINGUISHABLE from the reference.
-- Display EXACTLY 1 unit of this product. NOT 2, NOT a stack, NOT multiple colors.
-- The product MUST be FULLY VISIBLE — never cropped or cut off.
-- Reproduce EXACT textures and details: if ribbed texture → show ribbed, if lace → show lace, if glossy → show glossy. NEVER substitute with a generic version.
-- NEVER create, invent, or add packaging (no box, bag, sachet, wrapper). Show the product as-is.
-- NEVER write text, discount percentages, prices, or ANY text ON the product surface. The product must remain clean.
-- NEVER show a person holding a miniature/card version of the product.
-${layout.productSizePercent ? `- Product size: ${layout.productSizePercent}` : ""}`;
+      let comparisonSection = "";
+      if (isComparison) {
+        comparisonSection = `
+COMPARISON LAYOUT: ${layout.comparisonLayout || "left = bad alternative, right = good product"}
+BAD SIDE: Generic, unappealing version of an inferior alternative in "${product.name}"'s category. Make it look dull/outdated.
+GOOD SIDE: "${product.name}" from PRODUCT reference — clean, premium, desirable. PIXEL-PERFECT reproduction.`;
+      }
 
-      visualPrompt = `${aspectRatio} — Create the SAME style of ad as the LAYOUT REFERENCE but for "${brandAnalysis.brandName}" selling "${product.name}".
+      let productSection = "";
+      if (isTextOnly) {
+        productSection = `This is a TEXT-ONLY layout — NO product photos, NO physical objects, NO people.
+Generate ONLY the background and decorative elements.
+Background: ${layout.backgroundStyle}
+Decorative elements: ${layout.decorativeElements || "same as layout reference, adapted to the brand"}`;
+      } else if (templateShowsProduct) {
+        productSection = `PRODUCT: Reproduce "${product.name}" from PRODUCT reference with PIXEL-PERFECT FIDELITY.
+- EXACTLY 1 unit, fully visible, never cropped.
+- NEVER add packaging, boxes, or wrappers.
+${noHuman ? "- Do NOT add any person, model, hand, or human figure." : ""}`;
+      }
 
-Copy the LAYOUT REFERENCE's style: same background, same colors, same positions, same typography style, same visual mood. Change only: the product (use PRODUCT reference), the text, the brand name. If there are decorative objects, adapt them to fit "${product.name}" while keeping the same arrangement/style.
+      visualPrompt = `${aspectRatio} — Create an advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
 
+Copy the LAYOUT REFERENCE's visual style:
+- Same background colors/gradients
+- Same composition and spacing
+- Same mood and lighting
+- Same decorative elements (adapted to fit "${product.name}")
+${comparisonSection}
 ${productSection}
 
-LAYOUT (match the LAYOUT REFERENCE):
-- Background: ${layout.backgroundStyle}
-- Decorative elements: Same arrangement as LAYOUT REFERENCE, adapted to fit "${product.name}".
-- Text placement: ${layout.textPosition}
-${layout.textAreaPercent ? `- Text area: ${layout.textAreaPercent}` : ""}
-${!noProduct ? `- Product area: ${layout.productPosition}` : ""}
-${layout.margins ? `- Margins: ${layout.margins}` : ""}
-- CTA: ${layout.ctaStyle} at ${layout.ctaPosition}
-- Brand name position: ${layout.brandLogoPosition}
-
-TYPOGRAPHY (match this style precisely):
-- Headline: ${layout.headlineStyle}${layout.subheadlineStyle ? `\n- Subheadline: ${layout.subheadlineStyle}` : ""}
-- Primary text color: ${layout.textColor}${layout.accentColor ? `\n- Accent/highlight color: ${layout.accentColor}` : ""}
-- General style: ${layout.typographyStyle}
-
-TEXT ON IMAGE (in the brand's language — display ONLY this text, nothing more):
-${imageText ? `"${imageText}"` : `"${brandAnalysis.brandName}"`}
+${logoInstruction}
 
 SCENE: ${sceneDescription}
 
-STRICT RULES:
-${!noProduct ? `1. Show EXACTLY 1 unit of "${product.name}" from the PRODUCT reference. ONE. Not two, not multiple colors.` : `1. NO product photo, NO packshot, NO physical object on this image.`}
-2. ${logoInstruction}
-3. Brand colors: ${colors}.
-4. The ONLY brand name is "${brandAnalysis.brandName}".
-${showDiscount && !discountAlreadyInText ? `5. DISCOUNT: Show "${discountStr}" prominently. Write it exactly as shown — no extra dashes. Show it ONLY ONCE.` : "5. No extra discount text needed — it's already in the text above (or there is none)."}
-${showPrices ? `6. ${priceInfo}` : "6. NO PRICES on this image. Do NOT show any price, € symbol, or monetary amount anywhere."}
-7. Display ONLY the text provided above. Do NOT add extra text, bullet points, feature lists, star ratings, review counts, statistics, product descriptions, or any text not specified above. NEVER show any text element twice.
-8. If the text above includes annotations with arrows/lines, each annotation MUST point to the correct part of the product.
-${!noProduct ? "9. Photorealistic product, professional lighting, high-end advertising quality." : "9. Professional, high-end advertising quality."}
-10. Match the template's proportions EXACTLY — text size ratios, spacing, element positions must be faithful to the described layout.
-${noHuman ? "11. Do NOT add any person, model, hand, or human figure. The template has NO people — keep it that way." : ""}
-12. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
-13. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display on the image. NEVER render position percentages as visible text.
-14. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.
-15. The ONLY product shown is "${product.name}". Decorative objects must be coherent with "${product.name}" — adapt them from the LAYOUT REFERENCE style but do NOT add random unrelated objects.`.trim();
-    } else if (isTextOnly) {
-      // Fallback text-only (no template ref)
-      const textContent = imageText
-        ? `The main headline text on the image MUST be: "${imageText}". Spell the brand name "${brandAnalysis.brandName}" EXACTLY like this.`
-        : `Create compelling text in the brand's language for "${brandAnalysis.brandName}" using their key selling points.`;
-
-      visualPrompt = `${aspectRatio} bold graphic advertising design for "${brandAnalysis.brandName}".
-
-Scene: ${sceneDescription}
-
-This is a TEXT-FOCUSED graphic ad — NO product photography, NO physical objects.
-
-RULES:
-- This is a TYPOGRAPHIC / GRAPHIC design. Use bold typography, colors, shapes, patterns, gradients as the main visual.
-- ${textContent}
-- Colors: ${colors}. The design must feel premium and on-brand.
-- Text must be large, readable, and the hero of the image.
-- NO product photos, NO physical objects, NO people. Only typography and graphic elements.
-- Professional graphic design quality, clean layout.`;
+CRITICAL: Generate the image with ABSOLUTELY NO TEXT.
+No headlines, no prices, no CTA buttons, no discount labels, no words at all.
+Only the brand logo (as an image element) may appear.
+Text will be added separately in post-production.`;
     } else {
-      // Fallback product ad (no template ref)
-      const textInstruction = imageText
-        ? `Include this text prominently on the image in a bold, stylish font: "${imageText}". The brand name "${brandAnalysis.brandName}" must be spelled EXACTLY like this if it appears.`
-        : `Do NOT include any text, words, letters, logos, or numbers in the image.`;
-
-      visualPrompt = `${aspectRatio} professional advertising photo for "${brandAnalysis.brandName}".
+      // Fallback: no template
+      visualPrompt = `${aspectRatio} — Professional advertising photo for "${brandAnalysis.brandName}" selling "${product.name}".
 
 Scene: ${sceneDescription}
 
-RULES:
-- The ONLY product allowed in this image is "${product.name}" from the PRODUCT reference. No other brand's products.
-- Keep the product IDENTICAL to the PRODUCT reference — same shape, colors, packaging. Do NOT redesign it.
-- The product must be FULLY VISIBLE and well-positioned — NEVER cropped, cut off, or bleeding past image edges. Leave clear margins.
-- NEVER add labels, stickers, tags, text, or ANY overlay directly ON the product — show it exactly as-is.
-- Colors: ${colors}. Photorealistic, professional camera, high-end lighting.
-${textInstruction}`;
-    }
-
-    // ── Reference ad mode: override prompt to copy the reference layout ──
-    if (isReference) {
-      visualPrompt = `${aspectRatio} — Create a professional advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
-
-Look at the REFERENCE AD image and reproduce the EXACT same visual layout, composition, color scheme, typography style, and element positions — but replace ALL text, branding, and products with "${brandAnalysis.brandName}" content.
-
-${productImageBase64 ? `Show the product from the PRODUCT reference — same shape, colors, appearance.` : ""}
-Brand colors: ${colors}.
+${productImageBase64 ? `Show ONLY "${product.name}" from the PRODUCT reference. Keep it IDENTICAL — same shape, colors, packaging. Fully visible, never cropped.` : ""}
 ${logoInstruction}
 
-STRICT RULES:
-1. Copy the reference ad's LAYOUT and VISUAL STYLE precisely.
-2. Replace ALL text with content about "${product.name}" by "${brandAnalysis.brandName}" in the brand's language.
-3. Replace ALL logos and brand elements with "${brandAnalysis.brandName}".
-4. Do NOT copy any text from the reference — only copy the visual structure.
-5. NEVER invent statistics, star ratings, or customer numbers.
-6. Professional advertising quality.
-${customPrompt ? `\nADDITIONAL INSTRUCTIONS: ${customPrompt}` : ""}`;
+CRITICAL: Generate the image with ABSOLUTELY NO TEXT.
+No headlines, no prices, no CTA buttons, no words.
+Only the brand logo may appear. Text will be added separately.`;
     }
 
-    // ── Modification mode: tweak the previous ad ──
-    if (isModification) {
-      visualPrompt = `${aspectRatio} — Modify the PREVIOUS AD image according to these instructions:
-
-MODIFICATION REQUESTED: "${modificationPrompt}"
-
-Keep everything else from the previous ad IDENTICAL — same layout, same product, same colors, same text positioning. Only apply the specific modification requested above.
-
-Brand: "${brandAnalysis.brandName}"
-Product: "${product.name}"
-${logoInstruction}
-
-STRICT RULES:
-1. Start from the PREVIOUS AD and make ONLY the requested modification.
-2. Keep ALL other elements unchanged.
-3. Professional advertising quality.`;
-    }
-
-    // ── PARALLEL: Image + copy at the same time (saves 2-5s) ──
+    // ── PARALLEL: Image + copy at the same time ──
     console.log(`[generate-ad] Calling Gemini (${referenceImages.length} refs) + Claude copy in PARALLEL...`);
 
     const copyAngle = customPrompt
       ? `Adapte le texte à cette direction créative : ${customPrompt}`
-      : imageText
-        ? `Le texte "${imageText}" est déjà sur l'image. Complète avec un body text et CTA cohérents qui renforcent ce message.`
+      : overlayText
+        ? `Le headline "${overlayText.headline}" est sur l'image. Complète avec un body text et CTA cohérents.`
         : "Mets en avant le bénéfice le plus fort du produit avec les vrais arguments de la marque.";
 
     const [visualResult, copyRaw] = await Promise.all([
@@ -604,6 +320,47 @@ STRICT RULES:
     }
     console.log("[generate-ad] Gemini image + Claude copy done");
 
+    // ── Composite text overlay (Satori + Sharp) ──
+    let finalImage = { imageBase64: visualResult.imageBase64, mimeType: visualResult.mimeType };
+
+    // Only apply overlay if we have overlay text AND this is NOT a modification (which keeps existing text)
+    if (overlayText && !isModification) {
+      try {
+        const overlayConfig: OverlayConfig = {
+          headline: overlayText.headline,
+          ctaText: overlayText.ctaText,
+          discountBadge: templateHasPriceArea && discountStr ? discountStr : undefined,
+          originalPrice: templateHasPriceArea && origPrice ? origPrice : undefined,
+          salePrice: templateHasPriceArea && salePrice ? salePrice : undefined,
+          price: templateHasPriceArea && !origPrice && !salePrice && product.price ? product.price : undefined,
+        };
+
+        const overlayStyle: OverlayStyle = {
+          templateType: templateAnalysis?.templateType || "product-showcase",
+          textPosition: layout?.textPosition || "bottom",
+          ctaPosition: layout?.ctaPosition || "bottom-center",
+          textColor: layout?.textColor || "#FFFFFF",
+          accentColor: layout?.accentColor,
+          brandPrimaryColor: brandAnalysis.colors?.[0] || "#6B46C1",
+          dimensions: format === "square"
+            ? { width: 1024, height: 1024 }
+            : { width: 768, height: 1365 },
+        };
+
+        console.log("[generate-ad] Compositing text overlay...", { overlayConfig, templateType: overlayStyle.templateType });
+        finalImage = await compositeTextOverlay(
+          visualResult.imageBase64,
+          visualResult.mimeType,
+          overlayConfig,
+          overlayStyle,
+        );
+        console.log("[generate-ad] Text overlay composited successfully");
+      } catch (err) {
+        console.error("[generate-ad] Text overlay failed, returning raw Gemini image:", err);
+        // Fallback: return the raw Gemini image without overlay
+      }
+    }
+
     // Parse copy
     let copy;
     try {
@@ -614,7 +371,7 @@ STRICT RULES:
         ? JSON.parse(jsonMatch[0])
         : {
             headline: brandAnalysis.brandName,
-            bodyText: product.description.slice(0, 60),
+            bodyText: product.description?.slice(0, 60) || "",
             callToAction: "Découvrir",
           };
     }
@@ -622,8 +379,8 @@ STRICT RULES:
     return NextResponse.json({
       id: `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       format,
-      imageBase64: visualResult.imageBase64,
-      mimeType: visualResult.mimeType,
+      imageBase64: finalImage.imageBase64,
+      mimeType: finalImage.mimeType,
       headline: copy.headline,
       bodyText: copy.bodyText,
       callToAction: copy.callToAction,
@@ -634,7 +391,8 @@ STRICT RULES:
       // Debug info for prompt inspection
       _debug: {
         geminiPrompt: visualPrompt,
-        imageText,
+        imageText: null,
+        overlayText,
         sceneDescription,
         templateType: templateAnalysis?.templateType || null,
         referenceImageLabels: referenceImages.map((r) => r.label.slice(0, 100)),

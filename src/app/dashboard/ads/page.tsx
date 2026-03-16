@@ -399,9 +399,19 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
               </pre>
             </div>
 
+            {ad._debug.overlayText && (
+              <div>
+                <span className="text-gray-400 font-medium">Overlay text:</span>
+                <p className="text-gray-300 mt-1 bg-gray-800 rounded-lg p-3">
+                  Headline: {ad._debug.overlayText.headline}<br/>
+                  CTA: {ad._debug.overlayText.ctaText}
+                </p>
+              </div>
+            )}
+
             {ad._debug.imageText && (
               <div>
-                <span className="text-gray-400 font-medium">Image text:</span>
+                <span className="text-gray-400 font-medium">Image text (legacy):</span>
                 <p className="text-gray-300 mt-1 bg-gray-800 rounded-lg p-3">{ad._debug.imageText}</p>
               </div>
             )}

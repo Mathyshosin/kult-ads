@@ -98,7 +98,8 @@ function buildBrandContext(ctx: BrandContext): string {
 // ── Template analysis result (detailed layout info for Gemini) ──
 export interface TemplateAnalysis {
   scene: string;
-  imageText: string | null;
+  imageText: string | null;       // DEPRECATED — kept for backward compat
+  overlayText: { headline: string; ctaText: string } | null;
   isTextOnly: boolean;
   templateType: "product-showcase" | "comparison" | "text-only" | "lifestyle";
   templateHasPrices: boolean;
@@ -452,6 +453,7 @@ JSON ONLY (no markdown):
   const parseResult = (parsed: Record<string, unknown>): TemplateAnalysis => ({
     scene: (parsed.scene as string) || "Product displayed elegantly on a clean surface with professional lighting.",
     imageText: (parsed.imageText as string) || null,
+    overlayText: null,
     isTextOnly: parsed.isTextOnly === true,
     templateType: (parsed.templateType as TemplateAnalysis["templateType"]) || (parsed.isTextOnly ? "text-only" : "product-showcase"),
     templateHasPrices: parsed.templateHasPrices === true,
@@ -469,10 +471,10 @@ JSON ONLY (no markdown):
       try {
         return parseResult(JSON.parse(jsonMatch[0]));
       } catch {
-        return { scene: raw, imageText: null, isTextOnly: false, templateType: "product-showcase", templateHasPrices: false, templateTextCount: 3, templateHasHumanModel: false, templateHasProductPhoto: true, layout: defaultLayout };
+        return { scene: raw, imageText: null, overlayText: null, isTextOnly: false, templateType: "product-showcase", templateHasPrices: false, templateTextCount: 3, templateHasHumanModel: false, templateHasProductPhoto: true, layout: defaultLayout };
       }
     }
-    return { scene: raw, imageText: null, isTextOnly: false, templateType: "product-showcase", templateHasPrices: false, templateTextCount: 3, templateHasHumanModel: false, templateHasProductPhoto: true, layout: defaultLayout };
+    return { scene: raw, imageText: null, overlayText: null, isTextOnly: false, templateType: "product-showcase", templateHasPrices: false, templateTextCount: 3, templateHasHumanModel: false, templateHasProductPhoto: true, layout: defaultLayout };
   }
 }
 
@@ -495,58 +497,35 @@ async function describeTemplateSceneWithMetadata(
     messages: [
       {
         role: "user",
-        content: `You are an elite creative director. Create ad text for "${brandContext.brandName}" selling "${brandContext.productName}".
-You work from METADATA ONLY — you do NOT see the template and have ZERO knowledge of its content.
+        content: `You are an elite creative director. Create a short headline and CTA for "${brandContext.brandName}" selling "${brandContext.productName}".
+You work from METADATA ONLY — you do NOT see the template.
 
 TARGET BRAND:
 ${context}
 
-TEMPLATE STRUCTURE (metadata only — you cannot see the template):
-- Template type: ${meta.templateType}
-- Text elements: ${meta.textElements.join(", ")} (${meta.templateTextCount} total)
-- Has prices: ${meta.templateHasPrices}
-- Has human model: ${meta.templateHasHumanModel}
-- Has product photo: ${meta.templateHasProductPhoto}
+TEMPLATE: ${meta.templateType} layout.
+${meta.templateType === "comparison" ? `COMPARISON: BAD SIDE = generic inferior alternative in "${brandContext.productName}"'s category. GOOD SIDE = "${brandContext.productName}".` : ""}
 
-YOUR TASK: Create ad text and scene description for "${brandContext.brandName}" selling "${brandContext.productName}".
-ALL text must be 100% about "${brandContext.productName}" — ZERO words copied from the template.
+YOUR TASK — TWO things only:
+1. headline: 2-4 punchy words about "${brandContext.productName}". In the brand's language. Pick the ONE strongest benefit.
+2. ctaText: 1-3 word CTA (e.g. "Découvrir", "J'en profite", "Shop Now").
 
-IRON RULES:
-1. You MUST produce EXACTLY ${meta.templateTextCount} text elements matching: ${meta.textElements.join(", ")}. Not one more, not one less.
-2. EVERY text element must be about "${brandContext.productName}" by "${brandContext.brandName}" — using the brand's REAL selling points.
-3. ${meta.templateHasPrices ? "Template has prices — use real prices if available." : "Template has NO prices — ZERO prices in imageText."}
-4. NEVER add bullet points, feature lists, star ratings, review counts, or statistics. Keep it clean.
-5. NEVER add body text / descriptions unless the template has them.
-6. ALL text MUST be written in the SAME LANGUAGE as the brand's website/content.
-7. NEVER invent numbers, percentages, ratings, or customer counts. Only use REAL data from the brand info.
-8. NEVER invent a statistic like "X utilisatrices", "X clients satisfaits", "X% de satisfaction", "certifié X". If you don't have a REAL number from the brand data, DO NOT write any number.
+RULES:
+- NEVER invent statistics, numbers, or customer counts.
+- NEVER reference the template's content. Write ONLY about "${brandContext.productName}".
+- Use the brand's language.
 
-TEXT BREVITY — THE #1 RULE:
-- Think Instagram ad. The viewer has 2 seconds. LESS IS ALWAYS MORE.
-- Headlines: MAX 4 words. Subheadlines: MAX 5 words.
-- TOTAL text on the entire ad: MAX 15 words (count every word).
-- NEVER write feature lists, ingredient lists, or multiple benefits. Pick ONE single benefit — the strongest.
-- Each text element = short, punchy, impactful. No sentences, no paragraphs.
-- Use ONLY simple, common words. Complex vocabulary renders poorly.
+SCENE DESCRIPTION (for the image generator):
+Describe briefly (2-3 sentences) what CHANGES from the template:
+- The product becomes "${brandContext.productName}"
+- Decorative objects adapted to the brand's universe
+- Keep the same visual mood
+${meta.templateType === "comparison" ? `BAD SIDE: generic inferior alternative. GOOD SIDE: "${brandContext.productName}" from the product reference.` : ""}
 
-DISCOUNT/OFFER RULES:
-${brandContext.offerTitle ? `- The ONLY offer is: "${brandContext.offerTitle}". Use this EXACT offer name. NEVER invent a different offer (no "BLACK FRIDAY", no "SOLDES", no "PROMO" unless that's the actual offer name). If the template shows a big percentage, write ONLY the number+% (e.g. "-60%").` : "- There is NO current offer. NEVER invent an offer name (no \"BLACK FRIDAY\", no \"SOLDES\", no \"PROMO\"). Replace any discount area with the brand's strongest selling point in 2-4 words."}
-- NEVER use "---" or multiple dashes before a number. Write exactly "-60%" not "---60%".
-
-PRICE RULES:
-${meta.templateHasPrices ? (brandContext.productOriginalPrice && brandContext.productSalePrice ? `Use real prices: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}` : brandContext.productPrice ? `Use real price: ${brandContext.productPrice}` : "No prices available → do NOT show any price.") : "ZERO prices. No exceptions."}
-
-SCENE DESCRIPTION:
-Describe the ad layout briefly (2-3 sentences). The image generator sees the template directly, so focus on what CHANGES:
-- The product becomes "${brandContext.productName}" (describe how it should be displayed)
-- If the template has decorative objects around the product, describe what they should become to fit "${brandContext.productName}" (same arrangement, but objects adapted to the brand's universe)
-- Keep the same visual mood/energy as the template
-${meta.templateType === "comparison" ? `This is a COMPARISON layout. BAD SIDE: generic inferior alternative in "${brandContext.productName}"'s category. GOOD SIDE: "${brandContext.productName}".` : ""}
-
-JSON ONLY — no other text:
+JSON ONLY:
 {
-  "scene": "SHORT English description — what to change from the template for ${brandContext.productName}",
-  "imageText": "Text in the brand's language. Use \\n for line breaks. EXACTLY ${meta.templateTextCount} elements: ${meta.textElements.join(", ")}. 100% about ${brandContext.productName}."
+  "scene": "SHORT English description of what changes from the template",
+  "overlayText": { "headline": "2-4 words in brand language", "ctaText": "1-3 words" }
 }`,
       },
     ],
@@ -559,9 +538,14 @@ JSON ONLY — no other text:
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
 
+    const overlayText = parsed.overlayText
+      ? { headline: String(parsed.overlayText.headline || ""), ctaText: String(parsed.overlayText.ctaText || "Découvrir") }
+      : null;
+
     return {
       scene: (parsed.scene as string) || "Product displayed elegantly on a clean surface.",
-      imageText: (parsed.imageText as string) || null,
+      imageText: null,
+      overlayText,
       isTextOnly: meta.isTextOnly,
       templateType: meta.templateType,
       templateHasPrices: meta.templateHasPrices,
@@ -575,6 +559,7 @@ JSON ONLY — no other text:
     return {
       scene: raw || "Product on clean surface with professional lighting.",
       imageText: null,
+      overlayText: null,
       isTextOnly: meta.isTextOnly,
       templateType: meta.templateType,
       templateHasPrices: meta.templateHasPrices,
