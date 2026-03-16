@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { generateAdCopy, describeTemplateScene } from "@/lib/claude";
-import type { TemplateAnalysis } from "@/lib/claude";
+import { generateAdCopy } from "@/lib/claude";
+import type { TemplateAnalysisData } from "@/lib/template-store";
 import { generateImage } from "@/lib/gemini";
 import { getRandomTemplateWithImage, getTemplateByIdWithImage } from "@/lib/template-store";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
@@ -87,11 +87,10 @@ export async function POST(request: Request) {
     // Template tracking now handled via Supabase (generated_ads.template_id)
     // No need for in-memory tracking — getRandomTemplateWithImage queries recent ads
 
-    // ── Build scene description ──
+    // ── Build scene description using precomputed metadata (no Haiku call) ──
     let sceneDescription: string;
     let isTextOnly = false;
-    let templateAnalysis: TemplateAnalysis | null = null;
-    let overlayText: { headline: string; ctaText: string } | null = null;
+    let metadata: TemplateAnalysisData | null = null;
 
     if (customPrompt) {
       sceneDescription = customPrompt;
@@ -110,21 +109,14 @@ export async function POST(request: Request) {
         console.log(`[generate-ad] Using cached metadata from Supabase for ${template.id}`);
       }
 
-      templateAnalysis = await describeTemplateScene(
-        template.imageBase64,
-        template.mimeType,
-        brandContext,
-        precomputedAnalysis,
-      );
-      sceneDescription = templateAnalysis.scene;
-      isTextOnly = templateAnalysis.isTextOnly;
-      overlayText = templateAnalysis.overlayText || null;
+      // Use precomputed metadata directly — no Haiku call
+      metadata = precomputedAnalysis;
+      isTextOnly = metadata.isTextOnly;
+      sceneDescription = `Background: ${metadata.layout.backgroundStyle}. Typography: ${metadata.layout.typographyStyle}.`;
 
-      console.log("[generate-ad] Scene:", sceneDescription);
-      console.log("[generate-ad] Overlay text:", JSON.stringify(overlayText));
-      console.log("[generate-ad] Decorative action:", templateAnalysis.decorativeAction);
-      console.log("[generate-ad] Text-only template:", isTextOnly);
-      console.log("[generate-ad] Template type:", templateAnalysis.templateType);
+      console.log("[generate-ad] Template type:", metadata.templateType);
+      console.log("[generate-ad] Text-only:", isTextOnly);
+      console.log("[generate-ad] Layout:", JSON.stringify(metadata.layout));
     } else {
       sceneDescription = "Product displayed on a clean minimal surface with soft professional studio lighting.";
     }
@@ -137,7 +129,7 @@ export async function POST(request: Request) {
     }> = [];
 
     // ── Reference images — order: product, logo, template (Gemini sees images before prompt text) ──
-    const templateShowsProduct = templateAnalysis?.templateHasProductPhoto !== false;
+    const templateShowsProduct = metadata?.templateHasProductPhoto !== false;
     if (productImageBase64 && !isTextOnly && templateShowsProduct) {
       referenceImages.push({
         base64: productImageBase64,
@@ -181,11 +173,18 @@ export async function POST(request: Request) {
 
     // ── Build Gemini prompt (narrative style per Google's best practices) ──
     let visualPrompt: string;
-    const layout = templateAnalysis?.layout;
+    const layout = metadata?.layout;
 
     const logoSentence = brandLogoBase64
       ? `Place the exact logo from the logo reference for "${brandAnalysis.brandName}" without any modification.`
       : `Write "${brandAnalysis.brandName}" in clean, modern typography as the brand name.`;
+
+    // Build a short headline instruction from brand context for Gemini to render
+    const headlineHint = brandContext.offerTitle
+      ? brandContext.offerTitle
+      : brandContext.uniqueSellingPoints?.[0]
+        ? brandContext.uniqueSellingPoints[0]
+        : product.name;
 
     if (isModification) {
       visualPrompt = `Modify the previous ad image by applying this change: "${modificationPrompt}". Keep everything else identical. The brand is "${brandAnalysis.brandName}" and the product is "${product.name}". ${logoSentence}`;
@@ -194,8 +193,8 @@ export async function POST(request: Request) {
       visualPrompt = `Create a professional Instagram advertising image for "${brandAnalysis.brandName}" selling "${product.name}". Reproduce the reference ad's exact visual layout, composition, and style. ${productImageBase64 ? `Feature the product from the product photo reference.` : ""} ${logoSentence} Adapt all text and branding for "${brandAnalysis.brandName}" with a short, punchy headline about "${product.name}". The result should look polished, modern, and Instagram-ready.`;
 
     } else if (template && layout) {
-      const isComparison = templateAnalysis?.templateType === "comparison";
-      const noHuman = !templateAnalysis?.templateHasHumanModel;
+      const isComparison = metadata?.templateType === "comparison";
+      const noHuman = !metadata?.templateHasHumanModel;
 
       // Build the narrative prompt as descriptive paragraphs
       let productNarrative: string;
@@ -212,10 +211,11 @@ export async function POST(request: Request) {
         comparisonNarrative = ` Use a ${layout.comparisonLayout || "left vs right split"} comparison layout. On the bad side, show a generic, unappealing version of an inferior alternative in "${product.name}"'s product category — make it look dull and outdated. On the good side, show "${product.name}" from the product photo reference, looking clean, premium, and desirable.`;
       }
 
-      // Text instructions as natural language
+      // Text instructions — Gemini generates headline from brand context
       let textNarrative: string;
-      if (overlayText) {
-        textNarrative = `Write the headline "${overlayText.headline}" in ${layout.headlineStyle || "bold, prominent typography"} positioned at ${layout.textPosition || "the center of the image"}. Add a call-to-action button saying "${overlayText.ctaText}" styled as ${layout.ctaStyle || "a clean button"} at ${layout.ctaPosition || "the bottom"}. ${logoSentence}${brandContext.productPrice && templateAnalysis?.templateHasPrices ? ` Include the price "${brandContext.productPrice}".` : ""} Do not add any extra text, slogans, descriptions, or statistics beyond what is specified here. Use ${layout.typographyStyle || "clean sans-serif"} typography with ${layout.textColor || "white"} as the primary text color${layout.accentColor ? ` and ${layout.accentColor} as the accent color` : ""}.`;
+      const hasTextElements = metadata && metadata.textElements && metadata.textElements.length > 0;
+      if (hasTextElements) {
+        textNarrative = `Write a short, punchy headline about "${headlineHint}" in ${layout.headlineStyle || "bold, prominent typography"} positioned at ${layout.textPosition || "the center of the image"}. Add a call-to-action button saying "Découvrir" styled as ${layout.ctaStyle || "a clean button"} at ${layout.ctaPosition || "the bottom"}. ${logoSentence}${brandContext.productPrice && metadata?.templateHasPrices ? ` Include the price "${brandContext.productPrice}".` : ""}${brandContext.productOriginalPrice && brandContext.productSalePrice && metadata?.templateHasPrices ? ` Show the original price "${brandContext.productOriginalPrice}" crossed out and the sale price "${brandContext.productSalePrice}" highlighted.` : ""} Do not add any extra text, slogans, descriptions, or statistics beyond what is specified here. Use ${layout.typographyStyle || "clean sans-serif"} typography with ${layout.textColor || "white"} as the primary text color${layout.accentColor ? ` and ${layout.accentColor} as the accent color` : ""}.`;
       } else {
         textNarrative = `${logoSentence} Keep the text minimal — just the brand name.`;
       }
@@ -232,9 +232,7 @@ export async function POST(request: Request) {
 
     const copyAngle = customPrompt
       ? `Adapte le texte à cette direction créative : ${customPrompt}`
-      : overlayText
-        ? `Le headline "${overlayText.headline}" est sur l'image. Complète avec un body text et CTA cohérents.`
-        : "Mets en avant le bénéfice le plus fort du produit avec les vrais arguments de la marque.";
+      : "Mets en avant le bénéfice le plus fort du produit avec les vrais arguments de la marque.";
 
     const [visualResult, copyRaw] = await Promise.all([
       generateImage(visualPrompt, aspectRatio, referenceImages),
@@ -283,10 +281,8 @@ export async function POST(request: Request) {
       // Debug info for prompt inspection
       _debug: {
         geminiPrompt: visualPrompt,
-        imageText: null,
-        overlayText,
         sceneDescription,
-        templateType: templateAnalysis?.templateType || null,
+        templateType: metadata?.templateType || null,
         referenceImageLabels: referenceImages.map((r) => r.label.slice(0, 100)),
       },
     });
