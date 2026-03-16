@@ -21,7 +21,7 @@ export default function SignupPage() {
     setLoading(true);
     const result = await signup(name, email, password);
     if (result.success) {
-      router.push("/dashboard/analyze");
+      router.push("/dashboard");
     } else {
       setError(result.error || "Erreur lors de la création du compte.");
       setLoading(false);
