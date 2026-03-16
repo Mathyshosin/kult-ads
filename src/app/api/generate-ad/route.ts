@@ -6,9 +6,6 @@ import { getRandomTemplateWithImage, getTemplateByIdWithImage } from "@/lib/temp
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 import { getTemplateAnalysisFromDb, saveTemplateAnalysisToDb } from "@/lib/supabase/template-analysis";
 import { analyzeTemplateMetadata } from "@/lib/claude";
-// Text overlay imports kept for potential future use
-// import { compositeTextOverlay } from "@/lib/text-overlay";
-// import type { OverlayConfig, OverlayStyle } from "@/lib/text-overlay";
 
 // Allow up to 120s for Claude + Gemini + Satori chain
 export const maxDuration = 120;
