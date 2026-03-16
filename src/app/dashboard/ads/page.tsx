@@ -17,6 +17,9 @@ import {
   Type,
   Smartphone,
   LayoutGrid,
+  Bug,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { toPng } from "html-to-image";
 
@@ -195,6 +198,7 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
   const [styleIndex, setStyleIndex] = useState(0);
   const [showTextOverlay, setShowTextOverlay] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
 
   const style = AD_STYLES[styleIndex];
 
@@ -341,6 +345,19 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
               S{styleIndex + 1}
             </span>
           </button>
+          {ad._debug && (
+            <button
+              onClick={() => setShowDebug(!showDebug)}
+              className={`p-2.5 rounded-xl border text-xs transition-all ${
+                showDebug
+                  ? "bg-amber-500 border-amber-500 text-white"
+                  : "border-border/60 bg-white text-muted hover:text-foreground"
+              }`}
+              title="Voir le prompt"
+            >
+              <Bug className="w-3.5 h-3.5" />
+            </button>
+          )}
           <button
             onClick={() => { onDelete(ad.id); onClose(); }}
             className="p-2.5 rounded-xl border border-red-200 bg-white text-red-400 hover:bg-red-50 transition-all"
@@ -349,6 +366,73 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
+
+        {/* Debug panel */}
+        {showDebug && ad._debug && (
+          <div className="mt-3 bg-gray-900 text-gray-100 rounded-xl p-4 text-xs space-y-3 max-h-[50vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h4 className="font-bold text-amber-400 text-sm">Debug — Prompt Gemini</h4>
+              <button onClick={() => setShowDebug(false)} className="text-gray-500 hover:text-gray-300">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {ad._debug.templateType && (
+              <div>
+                <span className="text-gray-400 font-medium">Template type:</span>
+                <span className="ml-2 text-emerald-400">{ad._debug.templateType}</span>
+              </div>
+            )}
+
+            <div>
+              <button
+                onClick={() => {
+                  const el = document.getElementById("debug-scene");
+                  if (el) el.classList.toggle("hidden");
+                }}
+                className="flex items-center gap-1 text-gray-400 font-medium hover:text-gray-200 mb-1"
+              >
+                Scene Description <ChevronDown className="w-3 h-3" />
+              </button>
+              <pre id="debug-scene" className="whitespace-pre-wrap text-gray-300 bg-gray-800 rounded-lg p-3 leading-relaxed hidden">
+                {ad._debug.sceneDescription}
+              </pre>
+            </div>
+
+            {ad._debug.imageText && (
+              <div>
+                <span className="text-gray-400 font-medium">Image text:</span>
+                <p className="text-gray-300 mt-1 bg-gray-800 rounded-lg p-3">{ad._debug.imageText}</p>
+              </div>
+            )}
+
+            <div>
+              <button
+                onClick={() => {
+                  const el = document.getElementById("debug-prompt");
+                  if (el) el.classList.toggle("hidden");
+                }}
+                className="flex items-center gap-1 text-gray-400 font-medium hover:text-gray-200 mb-1"
+              >
+                Prompt Gemini complet <ChevronDown className="w-3 h-3" />
+              </button>
+              <pre id="debug-prompt" className="whitespace-pre-wrap text-gray-300 bg-gray-800 rounded-lg p-3 leading-relaxed text-[11px] hidden">
+                {ad._debug.geminiPrompt}
+              </pre>
+            </div>
+
+            {ad._debug.referenceImageLabels.length > 0 && (
+              <div>
+                <span className="text-gray-400 font-medium">Reference images:</span>
+                <ul className="mt-1 space-y-1">
+                  {ad._debug.referenceImageLabels.map((label, i) => (
+                    <li key={i} className="text-gray-300 bg-gray-800 rounded-lg px-3 py-1.5">{label}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

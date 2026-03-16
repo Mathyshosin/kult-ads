@@ -631,6 +631,14 @@ STRICT RULES:
       offerId: offer?.id,
       templateId: actualTemplateId,
       timestamp: Date.now(),
+      // Debug info for prompt inspection
+      _debug: {
+        geminiPrompt: visualPrompt,
+        imageText,
+        sceneDescription,
+        templateType: templateAnalysis?.templateType || null,
+        referenceImageLabels: referenceImages.map((r) => r.label.slice(0, 100)),
+      },
     });
   } catch (error) {
     console.error("[generate-ad] ERROR:", error);

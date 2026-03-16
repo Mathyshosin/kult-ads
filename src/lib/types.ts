@@ -59,6 +59,13 @@ export interface GeneratedAd {
   timestamp: number;
   status?: "generating" | "completed" | "failed";
   error?: string;
+  _debug?: {
+    geminiPrompt: string;
+    imageText: string | null;
+    sceneDescription: string;
+    templateType: string | null;
+    referenceImageLabels: string[];
+  };
 }
 
 export interface AdTemplate {
