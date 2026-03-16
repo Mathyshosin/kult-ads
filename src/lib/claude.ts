@@ -89,8 +89,8 @@ function buildBrandContext(ctx: BrandContext): string {
     `Product: "${ctx.productName}" — ${ctx.productDescription}`,
     ctx.productFeatures?.length ? `Product features: ${ctx.productFeatures.join(", ")}` : null,
     ctx.offerTitle ? `Current offer: ${ctx.offerTitle}${ctx.offerDescription ? ` — ${ctx.offerDescription}` : ""}` : null,
-    ctx.productPrice ? `Real product price (number only, no label): ${ctx.productPrice}` : null,
-    ctx.productOriginalPrice && ctx.productSalePrice ? `Real prices (show as numbers only, NEVER write "Price:" or "Original-price:" labels): ${ctx.productOriginalPrice} → ${ctx.productSalePrice}` : null,
+    ctx.productPrice ? `Product price: ${ctx.productPrice}` : null,
+    ctx.productOriginalPrice && ctx.productSalePrice ? `Price: ${ctx.productOriginalPrice} → ${ctx.productSalePrice} (use these EXACT prices from the website, NEVER invent prices)` : null,
   ];
   return parts.filter(Boolean).join("\n");
 }
@@ -367,26 +367,17 @@ IRON RULES:
 7. Keep text SHORT — each element should be roughly the same length as the template's equivalent.
 8. EVERY text element must be about "${brandContext.productName}" by "${brandContext.brandName}". If the template headline says "WC Japonais" or "Shampoing Bio" — IGNORE it completely and write a headline about "${brandContext.productName}" instead.
 
-TEXT BREVITY — CRITICAL (THE #1 RULE):
-- The ad MUST be simple and easy to understand at a glance (under 2 seconds).
-- Headlines: MAX 5 words. Subheadlines: MAX 6 words. Body text: MAX 10 words.
-- TOTAL text on the entire ad: MAX 25 words. Count every single word.
-- NEVER write long lists of features, ingredients, or benefits. Pick 1 SINGLE benefit.
-- For comparison layouts: each side = 1 short title (2-3 words) ONLY. No supporting text underneath.
-- Think Instagram ad, not product page. LESS IS ALWAYS MORE.
-- NEVER invent statistics, customer counts, or percentages not in the brand data.
-
 DISCOUNT RULES:
 ${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If the template shows a big percentage, write ONLY the number+% (e.g. "-60%"). The offer name can appear as small text IF the template has small text, but the BIG visible number must be ONLY the percentage.` : "- No offer. Replace any discount area with the brand's strongest selling point in 2-4 words."}
 - NEVER use "---" or multiple dashes before a number. Write exactly "-60%" not "---60%".
 
 PRICE RULES — THIS IS CRITICAL:
-- NEVER include any price, monetary amount, € symbol, or number followed by € in imageText UNLESS the template VISUALLY shows a dedicated price area.
+- NEVER include any price, monetary amount, € symbol, "Price:", or number followed by € in imageText UNLESS the template VISUALLY shows a dedicated price area (e.g. "29,99€" or "Prix: XX€").
 - If templateHasPrices is false → ZERO prices in imageText. No exceptions.
 - Even if templateHasPrices is true, ONLY use real prices if available:
-${brandContext.productOriginalPrice && brandContext.productSalePrice ? `  Show "${brandContext.productOriginalPrice}" crossed out, then "${brandContext.productSalePrice}" highlighted. NUMBERS ONLY — no labels.` : brandContext.productPrice ? `  Show "${brandContext.productPrice}" as a number only — no label.` : "  No prices available → do NOT show any price. Replace that space with a short benefit or leave empty."}
-- NEVER invent prices. NEVER write made-up numbers with €.
-- CRITICAL: NEVER write labels like "Price:", "Prix:", "Original-price:", "sale-price:" before a price. Just the number + € symbol, nothing else.
+${brandContext.productOriginalPrice && brandContext.productSalePrice ? `  Real prices: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}` : brandContext.productPrice ? `  Real price: ${brandContext.productPrice}` : "  No prices available → do NOT show any price. Replace that space with a short benefit or leave empty."}
+- NEVER invent prices. NEVER write "Price: XX" or "XX€" with made-up numbers.
+- The word "Price" or "Prix" should NEVER appear in imageText unless real prices exist AND templateHasPrices is true.
 
 BRAND & PRODUCT:
 - Brand name EXACTLY: "${brandContext.brandName}"
@@ -494,18 +485,24 @@ async function describeTemplateSceneWithMetadata(
 ): Promise<TemplateAnalysis> {
   const context = buildBrandContext(brandContext);
 
-  // NOTE: We intentionally do NOT send the template image to Haiku.
-  // The pre-computed metadata contains ALL needed layout info.
-  // Sending the image causes Haiku to copy template text/concepts despite instructions.
-  // No image = no contamination source = clean adapted text every time.
-
   const message = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 1000,
     messages: [
       {
         role: "user",
-        content: `You are an elite creative director. Your job: create ad text for a brand based on a template's STRUCTURE (described below as metadata). You do NOT see the template — only its structural analysis.
+        content: [
+          {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: templateMimeType as "image/png" | "image/jpeg" | "image/webp" | "image/gif",
+              data: templateBase64,
+            },
+          },
+          {
+            type: "text",
+            text: `You are an elite creative director. Your job: adapt an ad template's TEXT for a different brand. The template's visual structure has already been analyzed — you only need to create the adapted text and scene description.
 
 TARGET BRAND:
 ${context}
@@ -517,9 +514,16 @@ PRE-ANALYZED TEMPLATE METADATA (these are FACTS — do NOT override them):
 - Has human model: ${meta.templateHasHumanModel}
 - Has product photo: ${meta.templateHasProductPhoto}
 
-YOUR TASK: Create ad text and scene description for "${brandContext.brandName}" selling "${brandContext.productName}".
-You are working from METADATA ONLY — you have no knowledge of the original template's content.
-ALL text must be 100% original content about "${brandContext.productName}" by "${brandContext.brandName}".
+YOUR TASK: Create ONLY the adapted text and scene description for "${brandContext.brandName}".
+
+⚠️ ABSOLUTE RULE — READ THIS FIRST ⚠️
+The template is from a COMPLETELY DIFFERENT brand selling a COMPLETELY DIFFERENT product.
+You must IGNORE the template's MESSAGE, CONCEPT, and TOPIC entirely.
+- If the template talks about NFC, QR codes, reviews, tapping phones → IGNORE ALL OF THAT
+- If the template talks about cooking, fitness, skincare → IGNORE ALL OF THAT
+- The ONLY thing you copy from the template is its VISUAL STRUCTURE (how many text elements, their sizes, their positions)
+- ALL text content must be 100% about "${brandContext.productName}" by "${brandContext.brandName}"
+- NEVER copy, reuse, adapt, or translate ANY concept from the template's text
 
 IRON RULES:
 1. You MUST produce EXACTLY ${meta.templateTextCount} text elements matching: ${meta.textElements.join(", ")}. Not one more.
@@ -530,25 +534,13 @@ IRON RULES:
 6. NEVER add body text / descriptions unless the template has them.
 7. ALL text MUST be written in the SAME LANGUAGE as the brand's website/content. Match the brand's communication language exactly.
 8. NEVER invent numbers, percentages, ratings, or customer counts. Only use REAL data from the brand info provided.
-9. NEVER invent a statistic like "X utilisatrices", "X clients satisfaits", "X% de satisfaction". If you don't have a REAL number from the brand data, DO NOT write any number.
-10. Use ONLY simple, common words. Avoid complex/rare vocabulary. The text will be rendered by an AI image generator — simple words render better.
-
-TEXT BREVITY — CRITICAL (THE #1 RULE):
-- The ad MUST be simple and easy to understand at a glance (under 2 seconds).
-- Headlines: MAX 5 words. Subheadlines: MAX 6 words. Body text: MAX 10 words.
-- TOTAL text on the entire ad: MAX 25 words. Count every single word.
-- NEVER write long lists of features or benefits. Pick 1 SINGLE benefit — the most impactful one.
-- For comparison layouts: each side = 1 short title (2-3 words) ONLY. No supporting text underneath.
-- Think Instagram ad, not product page. LESS IS ALWAYS MORE.
-- If in doubt between a short version and a long version, ALWAYS pick the shorter one.
 
 DISCOUNT RULES:
 ${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If the template shows a big percentage, write ONLY the number+% (e.g. "-60%"). The offer name can appear as small text IF the template has small text, but the BIG visible number must be ONLY the percentage.` : "- No offer. Replace any discount area with the brand's strongest selling point in 2-4 words."}
 - NEVER use "---" or multiple dashes before a number. Write exactly "-60%" not "---60%".
 
 PRICE RULES:
-${meta.templateHasPrices ? (brandContext.productOriginalPrice && brandContext.productSalePrice ? `Show prices as NUMBERS ONLY: "${brandContext.productOriginalPrice}" crossed out, then "${brandContext.productSalePrice}" highlighted. NEVER write labels like "Original-price:", "sale-price:", "Price:", or "Prix:" — just the number with € symbol.` : brandContext.productPrice ? `Show the price as a NUMBER ONLY: "${brandContext.productPrice}". NEVER write "Price:" or "Prix:" labels.` : "No prices available → do NOT show any price.") : "ZERO prices. No exceptions."}
-- CRITICAL: NEVER write "Original-price:", "sale-price:", "Price:", "Prix:" or any label before a price. Just the number + € symbol.
+${meta.templateHasPrices ? (brandContext.productOriginalPrice && brandContext.productSalePrice ? `Use real prices: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}` : brandContext.productPrice ? `Use real price: ${brandContext.productPrice}` : "No prices available → do NOT show any price.") : "ZERO prices. No exceptions."}
 
 SCENE DESCRIPTION — CRITICAL:
 Describe the visual layout for image generation. You MUST describe a scene that makes sense for "${brandContext.productName}".
@@ -560,8 +552,10 @@ ${meta.templateType === "product-showcase" || meta.templateType === "lifestyle" 
 JSON ONLY:
 {
   "scene": "ENGLISH description of layout for image generation — must be about ${brandContext.productName}, NO template-specific objects",
-  "imageText": "Text adapted for the brand in the brand's language, matching template structure exactly. Use \\n for line breaks. MUST have exactly ${meta.templateTextCount} elements matching: ${meta.textElements.join(", ")}. MUST be 100% about ${brandContext.productName} — zero words from any other brand."
+  "imageText": "Text adapted for the brand in the brand's language, matching template structure exactly. Use \\n for line breaks. MUST have exactly ${meta.templateTextCount} elements matching: ${meta.textElements.join(", ")}. MUST be 100% about ${brandContext.productName} — zero words from the template's original message."
 }`,
+          },
+        ],
       },
     ],
   });

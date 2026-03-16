@@ -14,95 +14,6 @@ function cleanDiscount(raw: string): string {
     .replace(/%%+/g, "%");  // "-60%%" → "-60%"
 }
 
-/**
- * Post-process imageText from Claude to prevent common Gemini rendering issues:
- * - Strip invented statistics (e.g. "300 000 utilisatrices")
- * - Strip bullet points and long feature lists
- * - Enforce word count limits per line
- * - Remove gibberish patterns
- * - Remove any remaining template concepts
- */
-function sanitizeImageText(text: string, templateTextCount: number): string {
-  let lines = text.split("\n");
-
-  lines = lines.map((line) => {
-    // Strip technical price labels that Claude sometimes includes verbatim
-    // e.g. "Original-price: 39€", "sale-price: 32€", "Price: 29,99€"
-    line = line.replace(/\b(original[- ]?price|sale[- ]?price|price|prix)\s*[:：]\s*/gi, "");
-
-    // Strip invented statistics: large numbers + people/user words
-    // e.g. "300 000 UTILISATRICES", "1 MILLION DE CLIENTS", "+50 000 avis"
-    line = line.replace(
-      /\+?\d[\d\s.,]*\d*\s*(utilisat(eur|rice)s?|clients?|femmes|hommes|personnes|avis|étoiles|stars?|reviews?|customers?|users?|satisfied|satisfait(e)?s?)/gi,
-      ""
-    ).trim();
-
-    // Strip star ratings: "★★★★★", "⭐⭐⭐⭐", "4.8/5", "4,8★"
-    line = line.replace(/[★⭐]{2,}/g, "");
-    line = line.replace(/\d[.,]\d\s*\/\s*5/g, "");
-    line = line.replace(/\d[.,]\d\s*[★⭐]/g, "");
-
-    // Strip bullet point markers
-    line = line.replace(/^[\s]*[•●◆▸▹→➤✓✔☑︎☑️-]\s*/g, "");
-
-    // Strip lines that are just a number (leftover from stat removal)
-    if (/^\s*\+?\d[\d\s.,]*\s*$/.test(line)) return "";
-
-    return line.trim();
-  });
-
-  // Remove empty lines from cleaning
-  lines = lines.filter((line) => line.length > 0);
-
-  // Enforce max words per line (headline ~6, other lines ~8)
-  lines = lines.map((line, i) => {
-    const words = line.split(/\s+/);
-    const maxWords = i === 0 ? 6 : 8;
-    if (words.length > maxWords) {
-      return words.slice(0, maxWords).join(" ");
-    }
-    return line;
-  });
-
-  // Enforce max number of lines to match template (strict)
-  const maxLines = Math.min(templateTextCount, 5);
-  if (lines.length > maxLines) {
-    lines = lines.slice(0, maxLines);
-  }
-
-  // Enforce total word count (max 20 words across entire imageText)
-  let totalWords = 0;
-  lines = lines.filter((line) => {
-    const wordCount = line.split(/\s+/).length;
-    if (totalWords + wordCount > 20) {
-      // Try to truncate this line to fit
-      const remaining = 20 - totalWords;
-      if (remaining > 0) {
-        totalWords += remaining;
-        return true; // will be truncated below
-      }
-      return false;
-    }
-    totalWords += wordCount;
-    return true;
-  });
-
-  // Actually truncate last line if it pushed over 20 words
-  totalWords = 0;
-  lines = lines.map((line) => {
-    const words = line.split(/\s+/);
-    const remaining = 20 - totalWords;
-    if (words.length > remaining && remaining > 0) {
-      totalWords += remaining;
-      return words.slice(0, remaining).join(" ");
-    }
-    totalWords += words.length;
-    return line;
-  });
-
-  return lines.join("\n");
-}
-
 // Allow up to 120s for Claude + Gemini chain
 export const maxDuration = 120;
 
@@ -236,15 +147,6 @@ export async function POST(request: Request) {
           .replace(/(\d)%%/g, "$1%");    // "60%%" → "60%"
       }
 
-      // ── Safety filter: sanitize imageText to remove invented stats, gibberish, enforce brevity ──
-      if (imageText) {
-        const before = imageText;
-        imageText = sanitizeImageText(imageText, templateAnalysis.templateTextCount);
-        if (before !== imageText) {
-          console.log("[generate-ad] imageText sanitized:", { before, after: imageText });
-        }
-      }
-
       console.log("[generate-ad] Scene:", sceneDescription);
       console.log("[generate-ad] Image text:", imageText);
       console.log("[generate-ad] Text-only template:", isTextOnly);
@@ -277,11 +179,10 @@ CRITICAL FIDELITY RULES — THE PRODUCT MUST BE AN EXACT COPY:
 - If the product is black, it stays black. If it has a pattern, reproduce that EXACT pattern. If it has a specific texture (ribbed, lace, matte, glossy), reproduce it faithfully.
 - Do NOT generalize or simplify the product. A "culotte côtelée" (ribbed) must show visible ribbed texture. A "culotte en dentelle" (lace) must show actual lace patterns.
 - NEVER substitute with a generic version — the viewer must recognize THIS SPECIFIC product.
-- ABSOLUTELY FORBIDDEN: NEVER place ANY element ON TOP of the product — no text, no percentages, no prices, no labels, no badges, no stickers, no overlays, no graphic elements. The product surface must be 100% clean and untouched.
-- NEVER create, invent, or add ANY physical object that is not in this reference photo. No box, bag, wrapper, jar, pot, tube, container, bottle, sachet, or ANY other object. The ONLY physical object allowed is the product visible in this photo.
+- NEVER write text, percentages, prices, or ANY overlay ON the product surface.
+- NEVER create, invent, or add packaging (no box, bag, wrapper). Show the product as-is.
 - NEVER show a person holding a miniature version or a card with the product.
-- The product should be displayed as a standalone item — floating or on a simple surface.
-- For the brand name/logo: use TEXT ONLY (clean typography) or the LOGO reference image if provided. NEVER create a physical object (jar, container, badge, emblem) to display the brand name.
+- The product should be displayed as a standalone item.
 Any product visible in the layout reference below is from a DIFFERENT brand and must NOT appear.`,
       });
     }
@@ -398,8 +299,7 @@ ${showDiscount && !discountAlreadyInText ? `4. DISCOUNT: Show "${discountStr}" p
 6. Match the EXACT proportions and spacing from the layout reference — text sizes, margins, element positions must be faithful to the original template.
 7. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
 8. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display on the image. NEVER render position percentages as visible text.
-9. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.
-10. TEXT RENDERING QUALITY: Every word on the image MUST be perfectly spelled and readable. If you cannot render a word clearly, OMIT it rather than rendering gibberish. NO random characters, NO garbled text, NO misspelled words. Each text element must be a real word in the brand's language.`;
+9. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.`;
     } else if (template && layout && !isTextOnly && templateAnalysis?.templateType === "comparison") {
       // ── COMPARISON / VS template ──
       const competitors = brandAnalysis.competitorProducts?.length
@@ -417,10 +317,9 @@ BAD SIDE: Show a generic, unappealing version of the OLD/INFERIOR alternative in
 - Make it look dull, uncomfortable, outdated, or wasteful — visually unappealing.
 GOOD SIDE: Show EXACTLY 1 unit of "${product.name}" from the PRODUCT reference — clean, premium, desirable. FULLY VISIBLE.
 - Reproduce the product with PIXEL-PERFECT FIDELITY from the PRODUCT reference photo — same shape, same colors, same textures, same patterns, same proportions. The product must be INDISTINGUISHABLE from the reference.
-- ABSOLUTELY FORBIDDEN: Do NOT invent, create, or add ANY object that is NOT in the PRODUCT reference. No packaging, no bags, no wrappers, no jars, no pots, no tubes, no containers, no hands holding the product, no additional items whatsoever. The ONLY physical object on the GOOD side is the product from the reference.
+- ABSOLUTELY FORBIDDEN: Do NOT invent, create, or add ANY object that is NOT in the PRODUCT reference. No packaging, no bags, no wrappers, no hands holding the product, no hands holding fabric/cloth/material, no additional items whatsoever.
 - ABSOLUTELY FORBIDDEN: Do NOT add any person, hand, arm, or human body part on the GOOD side. The product stands alone — no one touches it, holds it, or interacts with it.
 - NEVER write text or percentages ON the product surface.
-- For the brand name: use TEXT ONLY (typography) or the LOGO reference. NEVER create a physical object (jar, badge, container) to display the brand name.
 
 LAYOUT:
 - Background: ${layout.backgroundStyle}
@@ -443,13 +342,11 @@ STRICT RULES:
 5. Brand colors: ${colors}.
 ${showDiscount && !discountAlreadyInText ? `6. DISCOUNT: Show "${discountStr}" prominently. No extra dashes. Show it ONLY ONCE.` : "6. No extra discount text needed."}
 ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
-8. NEVER place ANY text, label, overlay, badge, sticker, or graphic element ON TOP of the product. The product surface must remain completely clean and untouched.
+8. NEVER add labels or text ON the product.
 9. Display ONLY the text provided above. No extra text, no bullet points, no feature lists, no star ratings, no review counts, no statistics. NEVER show any text element twice.
-10. SIMPLICITY: The ad must be instantly understandable in under 2 seconds. Keep text minimal — short headlines, no paragraphs. Think Instagram ad, not product page.
-11. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
-12. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display. NEVER render position percentages as visible text.
-13. NEVER invent statistics, star ratings, review counts, or customer numbers.
-14. TEXT RENDERING QUALITY: Every word on the image MUST be perfectly spelled and readable. If you cannot render a word clearly, OMIT it rather than rendering gibberish. NO random characters, NO garbled text, NO misspelled words. Each text element must be a real word in the brand's language.`;
+10. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
+11. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display. NEVER render position percentages as visible text.
+12. NEVER invent statistics, star ratings, review counts, or customer numbers.`;
     } else if (template && layout && !isTextOnly) {
       // ── Product template: NO layout reference image sent (Gemini copies products visually)
       //    Instead, use Claude's detailed layout description + product photo only ──
@@ -465,10 +362,9 @@ ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
 - Display EXACTLY 1 unit of this product. NOT 2, NOT a stack, NOT multiple colors.
 - The product MUST be FULLY VISIBLE — never cropped or cut off.
 - Reproduce EXACT textures and details: if ribbed texture → show ribbed, if lace → show lace, if glossy → show glossy. NEVER substitute with a generic version.
-- NEVER create, invent, or add ANY physical object not in the reference (no box, bag, jar, pot, tube, container, sachet, wrapper). The ONLY object is the product from the reference.
+- NEVER create, invent, or add packaging (no box, bag, sachet, wrapper). Show the product as-is.
 - NEVER write text, discount percentages, prices, or ANY text ON the product surface. The product must remain clean.
 - NEVER show a person holding a miniature/card version of the product.
-- For the brand name: use TEXT ONLY (typography) or the LOGO reference. NEVER invent a physical object (jar, badge, container) to show the brand name.
 ${layout.productSizePercent ? `- Product size: ${layout.productSizePercent}` : ""}`;
 
       visualPrompt = `${aspectRatio} — Create a professional advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
@@ -509,10 +405,7 @@ ${!noProduct ? "9. Photorealistic product, professional lighting, high-end adver
 ${noHuman ? "11. Do NOT add any person, model, hand, or human figure. The template has NO people — keep it that way." : ""}
 12. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
 13. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display on the image. NEVER render position percentages as visible text.
-14. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.
-15. NEVER place ANY text, label, overlay, badge, sticker, or graphic element ON TOP of the product. The product surface must remain completely clean and untouched.
-16. SIMPLICITY: The ad must be instantly understandable in under 2 seconds. Keep text minimal — short headlines, no paragraphs. Think Instagram ad, not product page.
-17. TEXT RENDERING QUALITY: Every word on the image MUST be perfectly spelled and readable. If you cannot render a word clearly, OMIT it rather than rendering gibberish. NO random characters, NO garbled text, NO misspelled words. Each text element must be a real word in the brand's language.`.trim();
+14. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.`.trim();
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
@@ -546,9 +439,8 @@ RULES:
 - The ONLY product allowed in this image is "${product.name}" from the PRODUCT reference. No other brand's products.
 - Keep the product IDENTICAL to the PRODUCT reference — same shape, colors, packaging. Do NOT redesign it.
 - The product must be FULLY VISIBLE and well-positioned — NEVER cropped, cut off, or bleeding past image edges. Leave clear margins.
-- NEVER place ANY text, label, overlay, badge, sticker, or graphic element ON TOP of the product. The product surface must remain completely clean and untouched.
+- NEVER add labels, stickers, tags, text, or ANY overlay directly ON the product — show it exactly as-is.
 - Colors: ${colors}. Photorealistic, professional camera, high-end lighting.
-- SIMPLICITY: The ad must be instantly understandable in under 2 seconds. Minimal text, no paragraphs.
 ${textInstruction}`;
     }
 
