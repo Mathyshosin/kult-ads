@@ -268,12 +268,26 @@ Any product visible in the layout reference below is from a DIFFERENT brand and 
       });
     }
 
-    // Layout reference — ONLY for text-only templates (no products to confuse Gemini)
-    if (template && isTextOnly) {
+    // Layout reference template — sent for ALL template types so Gemini has a visual reference
+    if (template) {
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: `LAYOUT REFERENCE (from a DIFFERENT brand — NOT "${brandAnalysis.brandName}"). Copy ONLY the visual structure: background, element positions, text arrangement, decorative shapes. IGNORE all text, brand names, and logos in this image.`,
+        label: `LAYOUT REFERENCE — THIS IS FROM A DIFFERENT BRAND (NOT "${brandAnalysis.brandName}").
+Your job: create the SAME style of ad but for "${brandAnalysis.brandName}" selling "${product.name}".
+
+COPY from this reference:
+- The overall layout structure (where text goes, where product goes, spacing, proportions)
+- The background style (colors, gradients, patterns)
+- The typography style (font weight, size ratios, text arrangement)
+- The visual mood and energy (minimal, bold, fun, elegant)
+- The decorative element STYLE (but replace specific objects with ones relevant to "${product.name}")
+
+DO NOT COPY from this reference:
+- Any text/words (replace ALL text with "${brandAnalysis.brandName}" content)
+- Any products/objects (replace with "${product.name}" from the PRODUCT reference)
+- Any brand names/logos (use "${brandAnalysis.brandName}" instead)
+- Any specific offers, prices, or promotions (use only the real offer data provided in the prompt)`,
       });
     }
 
@@ -420,8 +434,8 @@ ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
 11. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display. NEVER render position percentages as visible text.
 12. NEVER invent statistics, star ratings, review counts, or customer numbers.`;
     } else if (template && layout && !isTextOnly) {
-      // ── Product template: NO layout reference image sent (Gemini copies products visually)
-      //    Instead, use Claude's detailed layout description + product photo only ──
+      // ── Product template: layout reference image IS sent to Gemini for visual quality
+      //    Product photo + layout reference + detailed layout description ──
 
       const noHuman = !templateAnalysis?.templateHasHumanModel;
       const noProduct = !templateShowsProduct;
@@ -441,11 +455,17 @@ ${layout.productSizePercent ? `- Product size: ${layout.productSizePercent}` : "
 
       visualPrompt = `${aspectRatio} — Create a professional advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
 
+Look at the LAYOUT REFERENCE image — reproduce the SAME visual style and layout but adapted for "${brandAnalysis.brandName}":
+- Same background style, same text positioning, same overall composition
+- Replace the template's product with "${product.name}" from the PRODUCT reference
+- Replace ALL text with "${brandAnalysis.brandName}" content (provided below)
+- Replace any decorative objects with elements relevant to "${product.name}"
+
 ${productSection}
 
-LAYOUT (match these proportions precisely):
+LAYOUT (from the reference — match these proportions):
 - Background: ${layout.backgroundStyle}
-- Decorative elements: Use simple, abstract decorative elements (soft shapes, leaves, petals, dots, gradients) that are RELEVANT to "${product.name}" and "${brandAnalysis.brandName}". NEVER copy decorative objects from another brand's template (no perfume bottles, no unrelated products, no industry-specific props). The decorative style should match: ${layout.decorativeElements} — but replace ANY specific objects with brand-relevant alternatives.
+- Decorative elements: Match the STYLE of decorative elements from the LAYOUT REFERENCE but use objects relevant to "${product.name}" (e.g. cotton flowers, leaves, fabric textures). NEVER keep objects from the template's original brand.
 - Text placement: ${layout.textPosition}
 ${layout.textAreaPercent ? `- Text area: ${layout.textAreaPercent}` : ""}
 ${!noProduct ? `- Product area: ${layout.productPosition}` : ""}

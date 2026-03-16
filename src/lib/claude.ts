@@ -485,33 +485,43 @@ async function describeTemplateSceneWithMetadata(
 ): Promise<TemplateAnalysis> {
   const context = buildBrandContext(brandContext);
 
-  // NOTE: We intentionally do NOT send the template image to Haiku.
-  // The pre-computed metadata contains ALL needed layout info (from Sonnet analysis).
-  // Sending the image causes Haiku to copy template-specific elements (shopping baskets,
-  // perfume bottles, "BLACK FRIDAY" text, etc.) despite explicit instructions not to.
-  // No image = no contamination source = clean adapted text every time.
-
   const message = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 1000,
     messages: [
       {
         role: "user",
-        content: `You are an elite creative director. Your job: create ad text for a brand based on a template's STRUCTURE (described below as metadata). You do NOT see the template — you work only from its structural analysis.
+        content: [
+          {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: templateMimeType as "image/png" | "image/jpeg" | "image/webp" | "image/gif",
+              data: templateBase64,
+            },
+          },
+          {
+            type: "text",
+            text: `You are an elite creative director. This template image is your VISUAL REFERENCE for layout and style ONLY. You must create a NEW ad for a COMPLETELY DIFFERENT brand.
+
+⚠️ CRITICAL — READ FIRST ⚠️
+This template is from ANOTHER brand. You must:
+- COPY: the visual LAYOUT (positions, proportions, spacing, colors, typography style)
+- IGNORE COMPLETELY: all TEXT content, all OBJECTS/PRODUCTS, all OFFERS/PROMOTIONS visible on the template
+- The template's text, products, offers, and decorative objects are IRRELEVANT — they belong to another brand
 
 TARGET BRAND:
 ${context}
 
-PRE-ANALYZED TEMPLATE METADATA (these are FACTS — do NOT override them):
+PRE-ANALYZED TEMPLATE METADATA:
 - Template type: ${meta.templateType}
-- Text elements on template: ${meta.textElements.join(", ")} (${meta.templateTextCount} total)
+- Text elements: ${meta.textElements.join(", ")} (${meta.templateTextCount} total)
 - Has prices: ${meta.templateHasPrices}
 - Has human model: ${meta.templateHasHumanModel}
 - Has product photo: ${meta.templateHasProductPhoto}
 
 YOUR TASK: Create ad text and scene description for "${brandContext.brandName}" selling "${brandContext.productName}".
-You are working from METADATA ONLY — you have no knowledge of the original template's content or visuals.
-ALL text must be 100% original content about "${brandContext.productName}" by "${brandContext.brandName}".
+ALL text must be 100% about "${brandContext.productName}" — ZERO words copied from the template.
 
 IRON RULES:
 1. You MUST produce EXACTLY ${meta.templateTextCount} text elements matching: ${meta.textElements.join(", ")}. Not one more, not one less.
@@ -538,20 +548,22 @@ ${brandContext.offerTitle ? `- The ONLY offer is: "${brandContext.offerTitle}". 
 PRICE RULES:
 ${meta.templateHasPrices ? (brandContext.productOriginalPrice && brandContext.productSalePrice ? `Use real prices: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}` : brandContext.productPrice ? `Use real price: ${brandContext.productPrice}` : "No prices available → do NOT show any price.") : "ZERO prices. No exceptions."}
 
-SCENE DESCRIPTION — CRITICAL:
-Describe the visual layout for image generation. You MUST describe a scene that makes sense for "${brandContext.productName}".
-- ABSOLUTELY NEVER include ANY object from the template image in your scene description. The template may show perfume bottles, jars, cosmetics, food, electronics, or other products — IGNORE ALL OF THEM. They belong to a DIFFERENT brand.
-- Replace ALL template-specific decorative objects with simple, abstract elements relevant to "${brandContext.productName}" (e.g. soft fabric textures, cotton flowers, leaves, minimal shapes — whatever fits the product category).
-- The ONLY physical product in the scene is "${brandContext.productName}" itself.
-- Describe a clean, professional layout that showcases "${brandContext.productName}".
-${meta.templateType === "comparison" ? `COMPARISON: Describe split layout. BAD SIDE: Show a generic inferior product from the SAME CATEGORY as "${brandContext.productName}" — NOT the template's product. GOOD SIDE: Show "${brandContext.productName}".` : ""}
-${meta.templateType === "product-showcase" || meta.templateType === "lifestyle" ? `Describe ONLY 1 unit of "${brandContext.productName}" displayed simply and cleanly. NEVER describe multiple units.` : ""}
+SCENE DESCRIPTION:
+Describe the visual layout for image generation. The scene must make sense for "${brandContext.productName}".
+- Copy the template's LAYOUT STYLE (background type, element positioning, overall vibe)
+- Replace ALL products/objects from the template with "${brandContext.productName}" — the ONLY product shown
+- Replace decorative objects (if any) with elements relevant to "${brandContext.productName}" (e.g. cotton flowers for textiles, leaves for organic products, abstract shapes for tech)
+- Keep the same visual ENERGY as the template (minimal, bold, elegant, fun — match the mood)
+${meta.templateType === "comparison" ? `COMPARISON: Describe split layout. BAD SIDE: generic inferior alternative in "${brandContext.productName}"'s category. GOOD SIDE: "${brandContext.productName}".` : ""}
+${meta.templateType === "product-showcase" || meta.templateType === "lifestyle" ? `Show ONLY 1 unit of "${brandContext.productName}" displayed cleanly.` : ""}
 
-JSON ONLY:
+JSON ONLY — no other text:
 {
-  "scene": "ENGLISH description of layout for image generation — must be about ${brandContext.productName}, NO template-specific objects",
-  "imageText": "Text adapted for the brand in the brand's language, matching template structure exactly. Use \\n for line breaks. MUST have exactly ${meta.templateTextCount} elements matching: ${meta.textElements.join(", ")}. MUST be 100% about ${brandContext.productName} — zero words from any other brand."
+  "scene": "ENGLISH description of the ad layout adapted for ${brandContext.productName}",
+  "imageText": "Text in the brand's language. Use \\n for line breaks. EXACTLY ${meta.templateTextCount} elements: ${meta.textElements.join(", ")}. 100% about ${brandContext.productName}."
 }`,
+          },
+        ],
       },
     ],
   });
