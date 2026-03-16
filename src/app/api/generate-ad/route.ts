@@ -14,6 +14,68 @@ function cleanDiscount(raw: string): string {
     .replace(/%%+/g, "%");  // "-60%%" → "-60%"
 }
 
+/**
+ * Light sanitizer for imageText — catches common Haiku mistakes:
+ * - Invented statistics ("300 000 utilisatrices", "4.8/5")
+ * - Feature lists with separators ("|")
+ * - Excessive word count
+ */
+function sanitizeImageText(text: string, maxLines: number): string {
+  let lines = text.split("\n");
+
+  lines = lines.map((line) => {
+    // Strip invented statistics: large numbers + people words
+    line = line.replace(
+      /\+?\d[\d\s.,]*\d*\s*(utilisat(eur|rice)s?|clients?|femmes|hommes|personnes|avis|étoiles|stars?|reviews?|customers?|users?|satisfait(e)?s?)/gi,
+      ""
+    ).trim();
+
+    // Strip star ratings
+    line = line.replace(/[★⭐]{2,}/g, "");
+    line = line.replace(/\d[.,]\d\s*\/\s*5/g, "");
+
+    // Strip pipe-separated feature lists → keep only first item
+    if (line.includes("|")) {
+      line = line.split("|")[0].trim();
+    }
+
+    // Strip bullet markers
+    line = line.replace(/^[\s]*[•●◆▸▹→➤✓✔-]\s*/g, "");
+
+    // Cap each line at 6 words
+    const words = line.split(/\s+/).filter(Boolean);
+    if (words.length > 6) {
+      line = words.slice(0, 6).join(" ");
+    }
+
+    return line.trim();
+  });
+
+  // Remove empty lines
+  lines = lines.filter((l) => l.length > 0);
+
+  // Cap total lines
+  if (lines.length > maxLines) {
+    lines = lines.slice(0, maxLines);
+  }
+
+  // Cap total words at 20
+  let totalWords = 0;
+  lines = lines.map((line) => {
+    const words = line.split(/\s+/);
+    const remaining = 20 - totalWords;
+    if (remaining <= 0) return "";
+    if (words.length > remaining) {
+      totalWords += remaining;
+      return words.slice(0, remaining).join(" ");
+    }
+    totalWords += words.length;
+    return line;
+  }).filter((l) => l.length > 0);
+
+  return lines.join("\n");
+}
+
 // Allow up to 120s for Claude + Gemini chain
 export const maxDuration = 120;
 
@@ -145,6 +207,16 @@ export async function POST(request: Request) {
           .replace(/--+(\d)/g, "-$1")   // "--60%" or "---60%" → "-60%"
           .replace(/%%+/g, "%")          // "-60%%" → "-60%"
           .replace(/(\d)%%/g, "$1%");    // "60%%" → "60%"
+      }
+
+      // ── Safety filter: sanitize imageText (strip invented stats, cap word count) ──
+      if (imageText) {
+        const maxLines = Math.min(templateAnalysis.templateTextCount, 5);
+        const before = imageText;
+        imageText = sanitizeImageText(imageText, maxLines);
+        if (before !== imageText) {
+          console.log("[generate-ad] imageText sanitized:", { before, after: imageText });
+        }
       }
 
       console.log("[generate-ad] Scene:", sceneDescription);

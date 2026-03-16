@@ -514,14 +514,22 @@ You are working from METADATA ONLY — you have no knowledge of the original tem
 ALL text must be 100% original content about "${brandContext.productName}" by "${brandContext.brandName}".
 
 IRON RULES:
-1. You MUST produce EXACTLY ${meta.templateTextCount} text elements matching: ${meta.textElements.join(", ")}. Not one more.
-2. EVERY text element must be about "${brandContext.productName}" by "${brandContext.brandName}" — using the brand's REAL selling points and features.
+1. You MUST produce EXACTLY ${meta.templateTextCount} text elements matching: ${meta.textElements.join(", ")}. Not one more, not one less.
+2. EVERY text element must be about "${brandContext.productName}" by "${brandContext.brandName}" — using the brand's REAL selling points.
 3. ${meta.templateHasPrices ? "Template has prices — use real prices if available." : "Template has NO prices — ZERO prices in imageText."}
 4. NEVER add bullet points, feature lists, star ratings, review counts, or statistics. Keep it clean.
-5. Keep text SHORT — match the template's text length roughly.
-6. NEVER add body text / descriptions unless the template has them.
-7. ALL text MUST be written in the SAME LANGUAGE as the brand's website/content. Match the brand's communication language exactly.
-8. NEVER invent numbers, percentages, ratings, or customer counts. Only use REAL data from the brand info provided.
+5. NEVER add body text / descriptions unless the template has them.
+6. ALL text MUST be written in the SAME LANGUAGE as the brand's website/content.
+7. NEVER invent numbers, percentages, ratings, or customer counts. Only use REAL data from the brand info.
+8. NEVER invent a statistic like "X utilisatrices", "X clients satisfaits", "X% de satisfaction", "certifié X". If you don't have a REAL number from the brand data, DO NOT write any number.
+
+TEXT BREVITY — THE #1 RULE:
+- Think Instagram ad. The viewer has 2 seconds. LESS IS ALWAYS MORE.
+- Headlines: MAX 4 words. Subheadlines: MAX 5 words.
+- TOTAL text on the entire ad: MAX 15 words (count every word).
+- NEVER write feature lists, ingredient lists, or multiple benefits. Pick ONE single benefit — the strongest.
+- Each text element = short, punchy, impactful. No sentences, no paragraphs.
+- Use ONLY simple, common words. Complex vocabulary renders poorly.
 
 DISCOUNT/OFFER RULES:
 ${brandContext.offerTitle ? `- The ONLY offer is: "${brandContext.offerTitle}". Use this EXACT offer name. NEVER invent a different offer (no "BLACK FRIDAY", no "SOLDES", no "PROMO" unless that's the actual offer name). If the template shows a big percentage, write ONLY the number+% (e.g. "-60%").` : "- There is NO current offer. NEVER invent an offer name (no \"BLACK FRIDAY\", no \"SOLDES\", no \"PROMO\"). Replace any discount area with the brand's strongest selling point in 2-4 words."}
