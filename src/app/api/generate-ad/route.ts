@@ -142,13 +142,16 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: productImageBase64,
         mimeType: productImageMimeType || "image/png",
-        label: `THIS IS THE ONLY PRODUCT for "${brandAnalysis.brandName}". Reproduce with PIXEL-PERFECT FIDELITY.
-- Exact shape, proportions, colors, textures, details. Must be INDISTINGUISHABLE from this reference.
-- NEVER substitute with a generic version.
+        label: `THIS IS THE EXACT PRODUCT for "${brandAnalysis.brandName}". COPY IT IDENTICALLY — DO NOT MODIFY IT IN ANY WAY.
+- SAME exact shape, proportions, colors, textures, fabric, stitching, every detail.
+- SAME exact color — if the product is BLACK, it must be BLACK. NEVER change the color.
+- Must be INDISTINGUISHABLE from this photo. Treat it as a sacred reference — zero creative liberty.
+- NEVER substitute with a generic version, a different model, or a different color variant.
 - NEVER add packaging, boxes, bags, or wrappers.
 - NEVER show a person holding or touching the product.
+- NEVER modify, enhance, simplify, or "improve" the product appearance.
 - Show the product as a standalone item.
-Any product in the layout reference is from a DIFFERENT brand and must NOT appear.`,
+Any product in the layout reference is from a DIFFERENT brand and must NOT appear — ONLY this product.`,
       });
     }
 
@@ -248,8 +251,10 @@ GOOD SIDE: "${product.name}" from PRODUCT reference — clean, premium, desirabl
 Background style: ${layout.backgroundStyle}
 Keep the background clean and elegant.`;
       } else if (templateShowsProduct) {
-        productSection = `PRODUCT: Reproduce "${product.name}" from PRODUCT reference with PIXEL-PERFECT FIDELITY.
+        productSection = `PRODUCT: Copy "${product.name}" IDENTICALLY from PRODUCT reference — ZERO modifications.
 - EXACTLY 1 unit, fully visible, never cropped.
+- EXACT same color, shape, texture, fabric — if the product is BLACK, it stays BLACK.
+- NEVER change the product's appearance, color, or style in any way.
 - NEVER add packaging, boxes, or wrappers.
 ${noHuman ? "- Do NOT add any person, model, hand, or human figure." : ""}`;
       }
