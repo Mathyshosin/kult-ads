@@ -155,21 +155,11 @@ export async function POST(request: Request) {
     }
 
     // Layout reference template
-    const decorativeAction = templateAnalysis?.decorativeAction || "remove";
     if (template) {
-      let decoContext: string;
-      if (decorativeAction === "keep") {
-        decoContext = "The decorative elements in this template are relevant to the brand, so keep them in the final ad.";
-      } else if (decorativeAction === "remove") {
-        decoContext = "The decorative elements in this template (leaves, flowers, objects, etc.) belong to a different brand and are not relevant. Remove them and use a clean background instead.";
-      } else {
-        decoContext = `The decorative elements in this template belong to a different brand. Replace them with: ${decorativeAction}.`;
-      }
-
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: `This is the layout template to reproduce. Create an ad that looks visually identical to this template in terms of background colors, gradients, composition, spacing, and overall mood. The product and all text in this template are from a completely different brand — replace the product with the product photo provided above, and replace all text with content about "${brandAnalysis.brandName}" selling "${product.name}". ${decoContext}`,
+        label: `This is the layout template to reproduce. Create an ad that looks visually identical to this template in terms of background colors, gradients, composition, spacing, and overall mood. The product and all text in this template are from a completely different brand — replace the product with the product photo provided above, and replace all text with content about "${brandAnalysis.brandName}" selling "${product.name}". IMPORTANT: Remove ALL decorative objects from this template (cotton flowers, leaves, branches, scattered items, etc.). Use a clean, uncluttered background instead. Only keep the background color/gradient and the overall layout structure.`,
       });
     }
 

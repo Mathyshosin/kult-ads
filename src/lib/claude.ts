@@ -492,10 +492,6 @@ async function describeTemplateSceneWithMetadata(
   // Haiku copies template words ("Gummies", "BLACK FRIDAY", etc.) despite instructions.
   // Haiku only needs the metadata. Gemini gets the template image separately for visual quality.
 
-  // Build decorative elements context for Haiku to decide
-  const decoElements = meta.layout.decorativeElements || "none";
-  const hasDecos = decoElements !== "none" && decoElements.trim().length > 0;
-
   const message = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 1000,
@@ -514,25 +510,19 @@ ${meta.templateType === "comparison" ? `COMPARISON: BAD SIDE = generic inferior 
 YOUR TASKS:
 1. headline: 2-5 punchy words about "${brandContext.productName}". In the brand's language. Pick the ONE strongest benefit.
 2. ctaText: 1-3 word CTA (e.g. "Découvrir", "J'en profite", "Shop Now").
-3. scene: Brief description of what the image should look like (2-3 sentences).
-${hasDecos ? `4. decorativeAction: The template has these decorative elements: "${decoElements}". Decide:
-   - Are they RELEVANT to "${brandContext.productName}" by "${brandContext.brandName}"? (e.g. cotton flowers ARE relevant for organic cotton underwear)
-   - If YES → "keep" (Gemini will keep them)
-   - If NO → suggest what to replace them with for this brand, or "remove" for a clean look
-   Output a short instruction for the image generator.` : ""}
+3. scene: Brief description of what the image should look like (2-3 sentences). The background must be clean and uncluttered — no scattered decorative objects (no flowers, leaves, cotton, branches). Just a simple, elegant background with the product.
 
 RULES:
 - NEVER invent statistics, numbers, or customer counts.
 - NEVER reference the template's content. Write ONLY about "${brandContext.productName}".
 - Use the brand's language for headline and CTA.
-- Scene must be in English, modern, minimalist, premium aesthetic.
+- Scene must be in English, modern, minimalist, premium aesthetic with CLEAN background.
 ${meta.templateType === "comparison" ? `- BAD SIDE: generic inferior alternative. GOOD SIDE: "${brandContext.productName}" from the product reference.` : ""}
 
 JSON ONLY:
 {
-  "scene": "SHORT English description",
-  "overlayText": { "headline": "2-5 words in brand language", "ctaText": "1-3 words" }${hasDecos ? `,
-  "decorativeAction": "keep | remove | replace with [specific items relevant to the brand]"` : ""}
+  "scene": "SHORT English description with clean background",
+  "overlayText": { "headline": "2-5 words in brand language", "ctaText": "1-3 words" }
 }`,
       },
     ],
@@ -553,7 +543,7 @@ JSON ONLY:
       scene: (parsed.scene as string) || "Product displayed elegantly on a clean surface.",
       imageText: null,
       overlayText,
-      decorativeAction: parsed.decorativeAction ? String(parsed.decorativeAction) : undefined,
+      decorativeAction: undefined,
       isTextOnly: meta.isTextOnly,
       templateType: meta.templateType,
       templateHasPrices: meta.templateHasPrices,
