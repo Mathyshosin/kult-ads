@@ -13,6 +13,7 @@ import {
   uploadTemplateImage,
   getTemplateImageFromStorage,
 } from "@/lib/supabase/templates";
+import { getRecentTemplateIds } from "@/lib/supabase/sync";
 
 // Pre-computed template analysis (fixed fields that don't change per brand)
 export interface TemplateAnalysisData {
@@ -134,16 +135,6 @@ export async function getTemplateByIdWithImage(
   return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType };
 }
 
-// ── Recently used template tracking (avoid repeats) ──
-const recentlyUsedTemplates: Map<string, string[]> = new Map(); // userId → [templateId, ...]
-const MAX_RECENT = 5;
-
-export function trackUsedTemplate(userId: string, templateId: string) {
-  const recent = recentlyUsedTemplates.get(userId) || [];
-  recent.unshift(templateId);
-  recentlyUsedTemplates.set(userId, recent.slice(0, MAX_RECENT));
-}
-
 // ── Public: get random template with base64 image ──
 export async function getRandomTemplateWithImage(
   format: "square" | "story",
@@ -153,8 +144,8 @@ export async function getRandomTemplateWithImage(
   const matching = rows.filter((r) => r.format === format);
   if (matching.length === 0) return null;
 
-  // Exclude recently used templates for this user (if enough templates remain)
-  const recentIds = userId ? (recentlyUsedTemplates.get(userId) || []) : [];
+  // Exclude recently used templates from Supabase (persists across serverless invocations)
+  const recentIds = userId ? await getRecentTemplateIds(userId, 5) : [];
   let pool = matching.filter((r) => !recentIds.includes(r.id));
   // If all templates were recently used, fall back to full pool
   if (pool.length === 0) pool = matching;

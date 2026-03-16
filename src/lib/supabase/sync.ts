@@ -499,3 +499,21 @@ export async function deleteAllGeneratedAds(
       .eq("brand_analysis_id", brandAnalysisId);
   }
 }
+
+// ── Get recently used template IDs for a user (for randomization) ──
+export async function getRecentTemplateIds(
+  userId: string,
+  limit: number = 5
+): Promise<string[]> {
+  const sb = supabase();
+  const { data } = await sb
+    .from("generated_ads")
+    .select("template_id")
+    .eq("user_id", userId)
+    .not("template_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (!data) return [];
+  return data.map((r) => r.template_id as string).filter(Boolean);
+}

@@ -100,6 +100,7 @@ export interface TemplateAnalysis {
   scene: string;
   imageText: string | null;       // DEPRECATED — kept for backward compat
   overlayText: { headline: string; ctaText: string } | null;
+  decorativeAction?: string;      // Haiku's decision: "keep" | "remove" | "replace with [X]"
   isTextOnly: boolean;
   templateType: "product-showcase" | "comparison" | "text-only" | "lifestyle";
   templateHasPrices: boolean;
@@ -491,13 +492,17 @@ async function describeTemplateSceneWithMetadata(
   // Haiku copies template words ("Gummies", "BLACK FRIDAY", etc.) despite instructions.
   // Haiku only needs the metadata. Gemini gets the template image separately for visual quality.
 
+  // Build decorative elements context for Haiku to decide
+  const decoElements = meta.layout.decorativeElements || "none";
+  const hasDecos = decoElements !== "none" && decoElements.trim().length > 0;
+
   const message = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 1000,
     messages: [
       {
         role: "user",
-        content: `You are an elite creative director. Create a short headline and CTA for "${brandContext.brandName}" selling "${brandContext.productName}".
+        content: `You are an elite creative director. Create ad text and scene direction for "${brandContext.brandName}" selling "${brandContext.productName}".
 You work from METADATA ONLY — you do NOT see the template.
 
 TARGET BRAND:
@@ -506,26 +511,28 @@ ${context}
 TEMPLATE: ${meta.templateType} layout.
 ${meta.templateType === "comparison" ? `COMPARISON: BAD SIDE = generic inferior alternative in "${brandContext.productName}"'s category. GOOD SIDE = "${brandContext.productName}".` : ""}
 
-YOUR TASK — TWO things only:
-1. headline: 2-4 punchy words about "${brandContext.productName}". In the brand's language. Pick the ONE strongest benefit.
+YOUR TASKS:
+1. headline: 2-5 punchy words about "${brandContext.productName}". In the brand's language. Pick the ONE strongest benefit.
 2. ctaText: 1-3 word CTA (e.g. "Découvrir", "J'en profite", "Shop Now").
+3. scene: Brief description of what the image should look like (2-3 sentences).
+${hasDecos ? `4. decorativeAction: The template has these decorative elements: "${decoElements}". Decide:
+   - Are they RELEVANT to "${brandContext.productName}" by "${brandContext.brandName}"? (e.g. cotton flowers ARE relevant for organic cotton underwear)
+   - If YES → "keep" (Gemini will keep them)
+   - If NO → suggest what to replace them with for this brand, or "remove" for a clean look
+   Output a short instruction for the image generator.` : ""}
 
 RULES:
 - NEVER invent statistics, numbers, or customer counts.
 - NEVER reference the template's content. Write ONLY about "${brandContext.productName}".
-- Use the brand's language.
-
-SCENE DESCRIPTION (for the image generator):
-Describe briefly (2-3 sentences) what the image should look like:
-- The product is "${brandContext.productName}" — describe how to display it (angle, lighting)
-- Modern, minimalist, premium aesthetic — clean background, no cluttered decorative objects
-- Do NOT mention any specific decorative items (no cotton, flowers, leaves, etc.)
-${meta.templateType === "comparison" ? `BAD SIDE: generic inferior alternative. GOOD SIDE: "${brandContext.productName}" from the product reference.` : ""}
+- Use the brand's language for headline and CTA.
+- Scene must be in English, modern, minimalist, premium aesthetic.
+${meta.templateType === "comparison" ? `- BAD SIDE: generic inferior alternative. GOOD SIDE: "${brandContext.productName}" from the product reference.` : ""}
 
 JSON ONLY:
 {
-  "scene": "SHORT English description of what changes from the template",
-  "overlayText": { "headline": "2-4 words in brand language", "ctaText": "1-3 words" }
+  "scene": "SHORT English description",
+  "overlayText": { "headline": "2-5 words in brand language", "ctaText": "1-3 words" }${hasDecos ? `,
+  "decorativeAction": "keep | remove | replace with [specific items relevant to the brand]"` : ""}
 }`,
       },
     ],
@@ -546,6 +553,7 @@ JSON ONLY:
       scene: (parsed.scene as string) || "Product displayed elegantly on a clean surface.",
       imageText: null,
       overlayText,
+      decorativeAction: parsed.decorativeAction ? String(parsed.decorativeAction) : undefined,
       isTextOnly: meta.isTextOnly,
       templateType: meta.templateType,
       templateHasPrices: meta.templateHasPrices,

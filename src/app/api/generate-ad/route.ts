@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { generateAdCopy, describeTemplateScene } from "@/lib/claude";
 import type { TemplateAnalysis } from "@/lib/claude";
 import { generateImage } from "@/lib/gemini";
-import { getRandomTemplateWithImage, getTemplateByIdWithImage, trackUsedTemplate } from "@/lib/template-store";
+import { getRandomTemplateWithImage, getTemplateByIdWithImage } from "@/lib/template-store";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 import { getTemplateAnalysisFromDb, saveTemplateAnalysisToDb } from "@/lib/supabase/template-analysis";
 import { analyzeTemplateMetadata } from "@/lib/claude";
-import { compositeTextOverlay } from "@/lib/text-overlay";
-import type { OverlayConfig, OverlayStyle } from "@/lib/text-overlay";
+// Text overlay imports kept for potential future use
+// import { compositeTextOverlay } from "@/lib/text-overlay";
+// import type { OverlayConfig, OverlayStyle } from "@/lib/text-overlay";
 
 // Allow up to 120s for Claude + Gemini + Satori chain
 export const maxDuration = 120;
@@ -83,10 +84,8 @@ export async function POST(request: Request) {
     // Track the actual template ID used (important for random templates)
     const actualTemplateId = template?.id || templateId || null;
 
-    // Track this template as recently used (for randomness)
-    if (actualTemplateId) {
-      trackUsedTemplate(user.id, actualTemplateId);
-    }
+    // Template tracking now handled via Supabase (generated_ads.template_id)
+    // No need for in-memory tracking — getRandomTemplateWithImage queries recent ads
 
     // ── Build scene description ──
     let sceneDescription: string;
@@ -123,6 +122,7 @@ export async function POST(request: Request) {
 
       console.log("[generate-ad] Scene:", sceneDescription);
       console.log("[generate-ad] Overlay text:", JSON.stringify(overlayText));
+      console.log("[generate-ad] Decorative action:", templateAnalysis.decorativeAction);
       console.log("[generate-ad] Text-only template:", isTextOnly);
       console.log("[generate-ad] Template type:", templateAnalysis.templateType);
     } else {
@@ -165,15 +165,26 @@ Any product in the layout reference is from a DIFFERENT brand and must NOT appea
     }
 
     // Layout reference template
+    const decorativeAction = templateAnalysis?.decorativeAction || "remove";
     if (template) {
+      let decoInstruction: string;
+      if (decorativeAction === "keep") {
+        decoInstruction = "Keep the same decorative elements visible in this template.";
+      } else if (decorativeAction === "remove") {
+        decoInstruction = "REMOVE all decorative objects from this template. Use a CLEAN background instead.";
+      } else {
+        // "replace with [X]"
+        decoInstruction = `REPLACE the template's decorative objects with: ${decorativeAction}.`;
+      }
+
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: `LAYOUT REFERENCE — use as STYLE inspiration for "${brandAnalysis.brandName}".
-Reproduce: background colors/gradients, composition, spacing, mood.
-Replace: product (use PRODUCT reference), brand logo.
-DO NOT copy decorative objects from this template (no cotton, no flowers, no leaves unless relevant to the brand).
-DO NOT include ANY text, headlines, prices, CTA buttons, or words. Text is added in post-production.`,
+        label: `LAYOUT REFERENCE — reproduce this template's EXACT style for "${brandAnalysis.brandName}".
+Copy EXACTLY: background colors/gradients, composition, spacing, mood, overall aesthetic.
+Replace: product (use PRODUCT reference instead), brand name/logo (use "${brandAnalysis.brandName}").
+${decoInstruction}
+The text on this template is from a DIFFERENT brand — adapt ALL text for "${brandAnalysis.brandName}" and "${product.name}".`,
       });
     }
 
@@ -195,22 +206,6 @@ DO NOT include ANY text, headlines, prices, CTA buttons, or words. Text is added
       });
     }
 
-    // ── Discount / price data for overlay ──
-    const discountStr = offer
-      ? (() => {
-          if (offer.discountValue && offer.discountType === "percentage") {
-            return `-${String(offer.discountValue).replace(/%+$/, "")}%`;
-          } else if (offer.discountValue) {
-            return `-${String(offer.discountValue).replace(/€+$/, "")}€`;
-          }
-          return offer.title || null;
-        })()
-      : null;
-
-    const origPrice = offer?.originalPrice || product.originalPrice;
-    const salePrice = offer?.salePrice || product.salePrice;
-    const templateHasPriceArea = templateAnalysis?.templateHasPrices ?? false;
-
     // ── Logo instruction (for Gemini prompt) ──
     const logoInstruction = brandLogoBase64
       ? `Use the EXACT logo from the LOGO reference for "${brandAnalysis.brandName}". ZERO modifications.`
@@ -227,21 +222,15 @@ MODIFICATION: "${modificationPrompt}"
 Keep everything else IDENTICAL. Brand: "${brandAnalysis.brandName}", Product: "${product.name}".
 ${logoInstruction}`;
     } else if (isReference) {
-      // Reference mode: copy the reference layout, no text
-      visualPrompt = `${aspectRatio} — Create an advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
+      // Reference mode: copy the reference layout
+      visualPrompt = `${aspectRatio} — Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}".
 Copy the REFERENCE AD's exact visual layout, composition, and style.
 ${productImageBase64 ? `Show the product from PRODUCT reference.` : ""}
 ${logoInstruction}
-
-CRITICAL: Generate the image with ABSOLUTELY NO TEXT.
-No headlines, no prices, no CTA buttons, no discount labels, no words.
-Only the brand logo (as an image) may appear. Text will be added in post-production.`;
+Adapt ALL text and branding for "${brandAnalysis.brandName}" — write the brand name and a short headline about "${product.name}".
+The result must look polished, modern, and Instagram-ready.`;
     } else if (template && layout) {
-      // Template mode: simplified prompt, NO TEXT
-      const competitors = brandAnalysis.competitorProducts?.length
-        ? brandAnalysis.competitorProducts.slice(0, 2).join(" ou ")
-        : "generic inferior alternative";
-
+      // Template mode: Gemini reproduces template style with brand content
       const isComparison = templateAnalysis?.templateType === "comparison";
       const noHuman = !templateAnalysis?.templateHasHumanModel;
 
@@ -255,10 +244,9 @@ GOOD SIDE: "${product.name}" from PRODUCT reference — clean, premium, desirabl
 
       let productSection = "";
       if (isTextOnly) {
-        productSection = `This is a BACKGROUND-ONLY layout — NO product photos, NO physical objects, NO people.
-Generate ONLY a clean, modern background.
+        productSection = `This is a TEXT-FOCUSED layout — NO product photos, NO physical objects, NO people.
 Background style: ${layout.backgroundStyle}
-Keep it minimal and elegant — no cluttered decorative objects.`;
+Keep the background clean and elegant.`;
       } else if (templateShowsProduct) {
         productSection = `PRODUCT: Reproduce "${product.name}" from PRODUCT reference with PIXEL-PERFECT FIDELITY.
 - EXACTLY 1 unit, fully visible, never cropped.
@@ -266,37 +254,47 @@ Keep it minimal and elegant — no cluttered decorative objects.`;
 ${noHuman ? "- Do NOT add any person, model, hand, or human figure." : ""}`;
       }
 
-      visualPrompt = `${aspectRatio} — Create a modern, minimalist, premium advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
+      // Build text instructions for Gemini
+      const imageTextContent = overlayText
+        ? `TEXT TO WRITE ON THE IMAGE:
+- Headline: "${overlayText.headline}" — ${layout.headlineStyle || "bold, large, prominent"}
+- CTA button: "${overlayText.ctaText}" — ${layout.ctaStyle || "clean button style"}
+- Brand name: "${brandAnalysis.brandName}" — at ${layout.brandLogoPosition || "top or bottom"}
+${brandContext.productPrice ? `- Price: "${brandContext.productPrice}" (ONLY if the template shows prices)` : ""}
+Write text EXACTLY as specified above. Do NOT add extra text, slogans, or descriptions.
+Text placement: headline at ${layout.textPosition || "center"}, CTA at ${layout.ctaPosition || "bottom"}.
+Typography: ${layout.typographyStyle || "clean sans-serif"}. Text color: ${layout.textColor || "white"}.`
+        : `TEXT: Write "${brandAnalysis.brandName}" as brand name. Keep text minimal.`;
 
-Use the LAYOUT REFERENCE as STYLE inspiration:
-- Same background colors/gradients
-- Same composition and spacing
-- Same mood and lighting
-- Clean, modern aesthetic — do NOT add random decorative objects (no cotton flowers, no leaves, no scattered items unless they are essential to "${product.name}")
+      visualPrompt = `${aspectRatio} — Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}".
+
+STYLE: Reproduce the LAYOUT REFERENCE template EXACTLY — same background, same composition, same spacing, same visual mood.
+The result must look like a polished, high-end Instagram ad. Modern, clean, premium.
 ${comparisonSection}
 ${productSection}
 
 ${logoInstruction}
 
+${imageTextContent}
+
 SCENE: ${sceneDescription}
 
-ABSOLUTE RULE — ZERO TEXT IN THE IMAGE:
-The image must contain ZERO text characters. No headlines, no prices, no CTA buttons, no discount labels, no words, no letters, no numbers.
-The ONLY exception is the brand logo if provided as an image reference.
-Any text will be composited in post-production — the image must be completely text-free.
-This is a hard technical requirement — if the image contains ANY text it will be rejected.`;
+CRITICAL RULES:
+- The template is from a DIFFERENT brand. ALL content must be adapted for "${brandAnalysis.brandName}".
+- Product, brand name, text = 100% "${brandAnalysis.brandName}". ZERO elements from the template's original brand.
+- Text must be sharp, readable, and well-positioned. No overlapping, no cut-off text.
+- Final result must be Instagram-ready: polished, professional, visually striking.`;
     } else {
       // Fallback: no template
-      visualPrompt = `${aspectRatio} — Modern, minimalist, premium advertising photo for "${brandAnalysis.brandName}" selling "${product.name}".
+      visualPrompt = `${aspectRatio} — Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}".
 
 Scene: ${sceneDescription}
 
 ${productImageBase64 ? `Show ONLY "${product.name}" from the PRODUCT reference. Keep it IDENTICAL — same shape, colors, packaging. Fully visible, never cropped.` : ""}
 ${logoInstruction}
 
-ABSOLUTE RULE — ZERO TEXT IN THE IMAGE:
-No headlines, no prices, no CTA buttons, no words, no letters, no numbers.
-Only the brand logo may appear. Text will be composited in post-production.`;
+Write "${brandAnalysis.brandName}" as brand name and a short headline about "${product.name}".
+Modern, clean, premium aesthetic. Instagram-ready.`;
     }
 
     // ── PARALLEL: Image + copy at the same time ──
@@ -322,46 +320,8 @@ Only the brand logo may appear. Text will be composited in post-production.`;
     }
     console.log("[generate-ad] Gemini image + Claude copy done");
 
-    // ── Composite text overlay (Satori + Sharp) ──
-    let finalImage = { imageBase64: visualResult.imageBase64, mimeType: visualResult.mimeType };
-
-    // Only apply overlay if we have overlay text AND this is NOT a modification (which keeps existing text)
-    if (overlayText && !isModification) {
-      try {
-        const overlayConfig: OverlayConfig = {
-          headline: overlayText.headline,
-          ctaText: overlayText.ctaText,
-          discountBadge: templateHasPriceArea && discountStr ? discountStr : undefined,
-          originalPrice: templateHasPriceArea && origPrice ? origPrice : undefined,
-          salePrice: templateHasPriceArea && salePrice ? salePrice : undefined,
-          price: templateHasPriceArea && !origPrice && !salePrice && product.price ? product.price : undefined,
-        };
-
-        const overlayStyle: OverlayStyle = {
-          templateType: templateAnalysis?.templateType || "product-showcase",
-          textPosition: layout?.textPosition || "bottom",
-          ctaPosition: layout?.ctaPosition || "bottom-center",
-          textColor: layout?.textColor || "#FFFFFF",
-          accentColor: layout?.accentColor,
-          brandPrimaryColor: brandAnalysis.colors?.[0] || "#6B46C1",
-          dimensions: format === "square"
-            ? { width: 1024, height: 1024 }
-            : { width: 768, height: 1365 },
-        };
-
-        console.log("[generate-ad] Compositing text overlay...", { overlayConfig, templateType: overlayStyle.templateType });
-        finalImage = await compositeTextOverlay(
-          visualResult.imageBase64,
-          visualResult.mimeType,
-          overlayConfig,
-          overlayStyle,
-        );
-        console.log("[generate-ad] Text overlay composited successfully");
-      } catch (err) {
-        console.error("[generate-ad] Text overlay failed, returning raw Gemini image:", err);
-        // Fallback: return the raw Gemini image without overlay
-      }
-    }
+    // Gemini now handles all text directly — no Satori overlay needed
+    const finalImage = { imageBase64: visualResult.imageBase64, mimeType: visualResult.mimeType };
 
     // Parse copy
     let copy;
