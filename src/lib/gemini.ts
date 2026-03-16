@@ -16,18 +16,21 @@ export async function generateImage(
 ): Promise<{ imageBase64: string; mimeType: string } | null> {
   const contents: Array<
     { text: string } | { inlineData: { mimeType: string; data: string } }
-  > = [{ text: prompt }];
+  > = [];
 
-  // Add all reference images
+  // Reference images FIRST, then prompt text — Gemini processes images better when they come before the text instructions
   for (const img of referenceImages) {
-    contents.push({ text: `[${img.label}]` });
     contents.push({
       inlineData: {
         mimeType: img.mimeType,
         data: img.base64,
       },
     });
+    contents.push({ text: img.label });
   }
+
+  // Main prompt LAST
+  contents.push({ text: prompt });
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -38,6 +41,10 @@ export async function generateImage(
         contents,
         config: {
           responseModalities: ["IMAGE", "TEXT"],
+          // Aspect ratio in config for proper image dimensions
+          imageConfig: {
+            aspectRatio,
+          },
         },
       });
 
