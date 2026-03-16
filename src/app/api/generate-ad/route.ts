@@ -185,6 +185,16 @@ export async function POST(request: Request) {
         ? brandContext.uniqueSellingPoints[0]
         : product.name;
 
+    // Product/brand context so Gemini knows what it's advertising
+    const productContext = [
+      `Brand: "${brandAnalysis.brandName}"`,
+      `Product: "${product.name}"`,
+      brandContext.productDescription ? `Description: ${brandContext.productDescription}` : null,
+      brandContext.productFeatures?.length ? `Key features: ${brandContext.productFeatures.join(", ")}` : null,
+      brandContext.uniqueSellingPoints?.length ? `Selling points: ${brandContext.uniqueSellingPoints.join(", ")}` : null,
+      brandContext.targetAudience ? `Target audience: ${brandContext.targetAudience}` : null,
+    ].filter(Boolean).join(". ") + ".";
+
     if (isModification) {
       visualPrompt = `Modify the previous ad image by applying this change: "${modificationPrompt}". Keep everything else identical. The brand is "${brandAnalysis.brandName}" and the product is "${product.name}". ${logoSentence}`;
 
@@ -219,7 +229,7 @@ export async function POST(request: Request) {
         textNarrative = `${logoSentence} Keep the text minimal — just the brand name.`;
       }
 
-      visualPrompt = `Create a polished, high-end Instagram advertising image for "${brandAnalysis.brandName}" selling "${product.name}". Reproduce the layout template's exact visual style — same background colors and gradients, same composition and spacing, same overall mood and lighting. ${productNarrative}${comparisonNarrative} ${textNarrative} ${sceneDescription} CRITICAL: Remove every single decorative object from the template — no cotton flowers, no leaves, no branches, no petals, no scattered items, no props, no decorative accessories of any kind. The background must be completely clean: only keep the color/gradient. The ONLY objects allowed in the final image are the product and the logo. Nothing else. The template is from a completely different brand, so every element of the final ad — product, text, logo, branding — must be 100% about "${brandAnalysis.brandName}". Zero elements from the template's original brand should remain. All text must be sharp, readable, and properly positioned with no overlapping or cut-off characters. The final result should be a professional, visually striking ad ready to post on Instagram.`;
+      visualPrompt = `Create a polished, high-end Instagram advertising image. ${productContext} Reproduce the layout template's exact visual style — same background colors and gradients, same composition and spacing, same overall mood and lighting. ${productNarrative}${comparisonNarrative} ${textNarrative} ${sceneDescription} CRITICAL: Remove every single decorative object from the template — no cotton flowers, no leaves, no branches, no petals, no scattered items, no props, no decorative accessories of any kind. The background must be completely clean: only keep the color/gradient. The ONLY objects allowed in the final image are the product and the logo. Nothing else. The template is from a completely different brand, so every element of the final ad — product, text, logo, branding — must be 100% about "${brandAnalysis.brandName}". Zero elements from the template's original brand should remain. All text in the ad MUST be accurate and directly related to the product described above — do NOT invent features, categories, or claims that are not in the product description. All text must be sharp, readable, and properly positioned with no overlapping or cut-off characters. The final result should be a professional, visually striking ad ready to post on Instagram.`;
 
     } else {
       // Fallback: no template
