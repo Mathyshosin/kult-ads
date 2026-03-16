@@ -387,6 +387,7 @@ export async function saveGeneratedAd(
     product_local_id: ad.productId || null,
     offer_local_id: ad.offerId || null,
     template_id: ad.templateId || null,
+    debug_info: ad._debug ? JSON.stringify(ad._debug) : null,
   });
 
   if (error) console.error("Error saving ad:", error.message);
@@ -422,6 +423,16 @@ export async function loadGeneratedAds(
       new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
     );
 
+    // Parse debug info if available
+    let debugInfo: GeneratedAd["_debug"] | undefined;
+    if (row.debug_info) {
+      try {
+        debugInfo = typeof row.debug_info === "string"
+          ? JSON.parse(row.debug_info)
+          : row.debug_info;
+      } catch { /* ignore parse errors */ }
+    }
+
     ads.push({
       id: row.id,
       format: row.format,
@@ -434,6 +445,7 @@ export async function loadGeneratedAds(
       offerId: row.offer_local_id || undefined,
       templateId: row.template_id || undefined,
       timestamp: new Date(row.created_at).getTime(),
+      _debug: debugInfo,
     });
   }
 
