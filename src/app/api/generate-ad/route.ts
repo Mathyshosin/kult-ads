@@ -273,7 +273,7 @@ Any product visible in the layout reference below is from a DIFFERENT brand and 
 
 Reproduce the EXACT layout from the LAYOUT REFERENCE image:
 - Background: ${layout.backgroundStyle}
-- Decorative elements: ${layout.decorativeElements}
+- Decorative elements: Use decorative elements that match the STYLE of "${layout.decorativeElements}" but are RELEVANT to "${brandAnalysis.brandName}" and "${product.name}". Replace any brand-specific objects (products, bottles, props from another industry) with abstract or brand-relevant alternatives.
 - Text placement: ${layout.textPosition}
 - Typography: ${layout.typographyStyle}
 - Headline style: ${layout.headlineStyle}${layout.subheadlineStyle ? `\n- Subheadline style: ${layout.subheadlineStyle}` : ""}
@@ -373,7 +373,7 @@ ${productSection}
 
 LAYOUT (match these proportions precisely):
 - Background: ${layout.backgroundStyle}
-- Decorative elements: ${layout.decorativeElements}
+- Decorative elements: Use simple, abstract decorative elements (soft shapes, leaves, petals, dots, gradients) that are RELEVANT to "${product.name}" and "${brandAnalysis.brandName}". NEVER copy decorative objects from another brand's template (no perfume bottles, no unrelated products, no industry-specific props). The decorative style should match: ${layout.decorativeElements} — but replace ANY specific objects with brand-relevant alternatives.
 - Text placement: ${layout.textPosition}
 ${layout.textAreaPercent ? `- Text area: ${layout.textAreaPercent}` : ""}
 ${!noProduct ? `- Product area: ${layout.productPosition}` : ""}
@@ -405,7 +405,8 @@ ${!noProduct ? "9. Photorealistic product, professional lighting, high-end adver
 ${noHuman ? "11. Do NOT add any person, model, hand, or human figure. The template has NO people — keep it that way." : ""}
 12. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
 13. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display on the image. NEVER render position percentages as visible text.
-14. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.`.trim();
+14. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.
+15. COHERENCE: The ONLY physical product in this image is "${product.name}". ALL decorative elements must be relevant to this product and "${brandAnalysis.brandName}". NEVER include objects from another brand or industry (no perfume bottles, no food items, no electronics, no unrelated products). Use simple, relevant decorative elements instead.`.trim();
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText

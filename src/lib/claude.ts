@@ -341,7 +341,7 @@ Describe with EXTREME PRECISION using % of image dimensions:
 - textColor: Primary text color as hex (e.g. "#FFFFFF")
 - accentColor: Color used for highlights/discounts/CTA (e.g. "#FF5733")
 - brandLogoPosition: Where is the logo? Use % (e.g. "top-right, ~5% from top and right edges")
-- decorativeElements: Any shapes, patterns, gradients
+- decorativeElements: Describe the STYLE and ARRANGEMENT of decorative elements (e.g. "small objects arranged in a circle around the product", "scattered elements in corners", "gradient shapes"). Describe the LAYOUT PATTERN, NOT the specific objects — because the objects will be replaced for each brand. Never say "perfume bottles" or "food items" — say "small decorative objects arranged around center" instead.
 - textAreaPercent: What % of the image is dedicated to text vs product? (e.g. "text zone = top 35%")
 - margins: Approximate margins/padding (e.g. "~8% on all sides")
 
@@ -385,7 +385,7 @@ ${brandContext.uniqueSellingPoints?.length ? `- USPs (use only if template has s
 
 ━━━ STEP 5: SCENE DESCRIPTION ━━━
 Describe the visual layout for Gemini to reproduce.
-CRITICAL: The scene must make sense for "${brandContext.productName}". NEVER include template-specific objects (QR codes, NFC icons, phone icons, specific props from the template). Replace them with elements relevant to "${brandContext.productName}".
+CRITICAL: The scene must make sense for "${brandContext.productName}". ABSOLUTELY NEVER include ANY object from the template in your scene description — no perfume bottles, no jars, no cosmetics, no electronics, no food items, no industry-specific props. The template is from a COMPLETELY DIFFERENT brand. Replace ALL template objects with simple, abstract decorative elements relevant to "${brandContext.productName}". The ONLY physical product in the scene is "${brandContext.productName}" itself.
 
 IF COMPARISON: describe split layout adapted to "${brandContext.productName}"'s CATEGORY.
 - BAD SIDE: Show a generic product from the SAME CATEGORY as "${brandContext.productName}" — NOT the template's product. The template may show a drink can, a shampoo bottle, etc. — IGNORE those objects. Instead, show the typical inferior alternative in "${brandContext.productName}"'s actual product category.
@@ -544,7 +544,9 @@ ${meta.templateHasPrices ? (brandContext.productOriginalPrice && brandContext.pr
 
 SCENE DESCRIPTION — CRITICAL:
 Describe the visual layout for image generation. You MUST describe a scene that makes sense for "${brandContext.productName}".
-- NEVER include template-specific objects in the scene (QR codes, NFC icons, phone icons, specific props from the template). Replace them with elements relevant to "${brandContext.productName}".
+- ABSOLUTELY NEVER include ANY object from the template image in your scene description. The template may show perfume bottles, jars, cosmetics, food, electronics, or other products — IGNORE ALL OF THEM. They belong to a DIFFERENT brand.
+- Replace ALL template-specific decorative objects with simple, abstract elements relevant to "${brandContext.productName}" (e.g. soft fabric textures, cotton flowers, leaves, minimal shapes — whatever fits the product category).
+- The ONLY physical product in the scene is "${brandContext.productName}" itself.
 - Describe a clean, professional layout that showcases "${brandContext.productName}".
 ${meta.templateType === "comparison" ? `COMPARISON: Describe split layout. BAD SIDE: Show a generic inferior product from the SAME CATEGORY as "${brandContext.productName}" — NOT the template's product. GOOD SIDE: Show "${brandContext.productName}".` : ""}
 ${meta.templateType === "product-showcase" || meta.templateType === "lifestyle" ? `Describe ONLY 1 unit of "${brandContext.productName}" displayed simply and cleanly. NEVER describe multiple units.` : ""}
