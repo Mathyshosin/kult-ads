@@ -516,10 +516,10 @@ RULES:
 - Use the brand's language.
 
 SCENE DESCRIPTION (for the image generator):
-Describe briefly (2-3 sentences) what CHANGES from the template:
-- The product becomes "${brandContext.productName}"
-- Decorative objects adapted to the brand's universe
-- Keep the same visual mood
+Describe briefly (2-3 sentences) what the image should look like:
+- The product is "${brandContext.productName}" — describe how to display it (angle, lighting)
+- Modern, minimalist, premium aesthetic — clean background, no cluttered decorative objects
+- Do NOT mention any specific decorative items (no cotton, flowers, leaves, etc.)
 ${meta.templateType === "comparison" ? `BAD SIDE: generic inferior alternative. GOOD SIDE: "${brandContext.productName}" from the product reference.` : ""}
 
 JSON ONLY:

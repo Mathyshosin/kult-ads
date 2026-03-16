@@ -169,10 +169,11 @@ Any product in the layout reference is from a DIFFERENT brand and must NOT appea
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: `LAYOUT REFERENCE — create the SAME visual style for "${brandAnalysis.brandName}".
-Reproduce: background colors/gradients, composition, spacing, mood, decorative elements.
+        label: `LAYOUT REFERENCE — use as STYLE inspiration for "${brandAnalysis.brandName}".
+Reproduce: background colors/gradients, composition, spacing, mood.
 Replace: product (use PRODUCT reference), brand logo.
-DO NOT include ANY text, headlines, prices, CTA buttons, or words in the image. Text will be added separately.`,
+DO NOT copy decorative objects from this template (no cotton, no flowers, no leaves unless relevant to the brand).
+DO NOT include ANY text, headlines, prices, CTA buttons, or words. Text is added in post-production.`,
       });
     }
 
@@ -254,10 +255,10 @@ GOOD SIDE: "${product.name}" from PRODUCT reference — clean, premium, desirabl
 
       let productSection = "";
       if (isTextOnly) {
-        productSection = `This is a TEXT-ONLY layout — NO product photos, NO physical objects, NO people.
-Generate ONLY the background and decorative elements.
-Background: ${layout.backgroundStyle}
-Decorative elements: ${layout.decorativeElements || "same as layout reference, adapted to the brand"}`;
+        productSection = `This is a BACKGROUND-ONLY layout — NO product photos, NO physical objects, NO people.
+Generate ONLY a clean, modern background.
+Background style: ${layout.backgroundStyle}
+Keep it minimal and elegant — no cluttered decorative objects.`;
       } else if (templateShowsProduct) {
         productSection = `PRODUCT: Reproduce "${product.name}" from PRODUCT reference with PIXEL-PERFECT FIDELITY.
 - EXACTLY 1 unit, fully visible, never cropped.
@@ -265,13 +266,13 @@ Decorative elements: ${layout.decorativeElements || "same as layout reference, a
 ${noHuman ? "- Do NOT add any person, model, hand, or human figure." : ""}`;
       }
 
-      visualPrompt = `${aspectRatio} — Create an advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
+      visualPrompt = `${aspectRatio} — Create a modern, minimalist, premium advertising image for "${brandAnalysis.brandName}" selling "${product.name}".
 
-Copy the LAYOUT REFERENCE's visual style:
+Use the LAYOUT REFERENCE as STYLE inspiration:
 - Same background colors/gradients
 - Same composition and spacing
 - Same mood and lighting
-- Same decorative elements (adapted to fit "${product.name}")
+- Clean, modern aesthetic — do NOT add random decorative objects (no cotton flowers, no leaves, no scattered items unless they are essential to "${product.name}")
 ${comparisonSection}
 ${productSection}
 
@@ -279,22 +280,23 @@ ${logoInstruction}
 
 SCENE: ${sceneDescription}
 
-CRITICAL: Generate the image with ABSOLUTELY NO TEXT.
-No headlines, no prices, no CTA buttons, no discount labels, no words at all.
-Only the brand logo (as an image element) may appear.
-Text will be added separately in post-production.`;
+ABSOLUTE RULE — ZERO TEXT IN THE IMAGE:
+The image must contain ZERO text characters. No headlines, no prices, no CTA buttons, no discount labels, no words, no letters, no numbers.
+The ONLY exception is the brand logo if provided as an image reference.
+Any text will be composited in post-production — the image must be completely text-free.
+This is a hard technical requirement — if the image contains ANY text it will be rejected.`;
     } else {
       // Fallback: no template
-      visualPrompt = `${aspectRatio} — Professional advertising photo for "${brandAnalysis.brandName}" selling "${product.name}".
+      visualPrompt = `${aspectRatio} — Modern, minimalist, premium advertising photo for "${brandAnalysis.brandName}" selling "${product.name}".
 
 Scene: ${sceneDescription}
 
 ${productImageBase64 ? `Show ONLY "${product.name}" from the PRODUCT reference. Keep it IDENTICAL — same shape, colors, packaging. Fully visible, never cropped.` : ""}
 ${logoInstruction}
 
-CRITICAL: Generate the image with ABSOLUTELY NO TEXT.
-No headlines, no prices, no CTA buttons, no words.
-Only the brand logo may appear. Text will be added separately.`;
+ABSOLUTE RULE — ZERO TEXT IN THE IMAGE:
+No headlines, no prices, no CTA buttons, no words, no letters, no numbers.
+Only the brand logo may appear. Text will be composited in post-production.`;
     }
 
     // ── PARALLEL: Image + copy at the same time ──
