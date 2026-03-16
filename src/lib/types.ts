@@ -56,6 +56,7 @@ export interface GeneratedAd {
   offerId?: string;
   conversionAngle?: string;
   templateId?: string;          // Template used for this ad (library mode)
+  isFavorite?: boolean;          // User-marked favorite
   timestamp: number;
   status?: "generating" | "completed" | "failed";
   error?: string;

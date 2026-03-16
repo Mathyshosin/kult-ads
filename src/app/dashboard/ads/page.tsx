@@ -11,60 +11,13 @@ import {
   Loader2,
   AlertCircle,
   X,
-  Filter,
-  Pencil,
-  Check,
-  Type,
+  Heart,
   Smartphone,
   LayoutGrid,
   Bug,
   ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { toPng } from "html-to-image";
-
-const AD_STYLES = [
-  {
-    id: "gradient-bottom",
-    label: "Gradient bas",
-    overlay: "bg-gradient-to-t from-black/80 via-black/20 to-transparent",
-    textPosition: "justify-end",
-    headlineClass: "text-white font-black uppercase tracking-tight",
-    bodyClass: "text-white/85 font-medium",
-    ctaClass: "bg-white text-black font-bold",
-    hasBox: false,
-  },
-  {
-    id: "center-bold",
-    label: "Centre bold",
-    overlay: "bg-black/30",
-    textPosition: "justify-center items-center text-center",
-    headlineClass: "text-white font-black uppercase tracking-tight",
-    bodyClass: "text-white/90 font-medium",
-    ctaClass: "bg-white text-black font-bold",
-    hasBox: false,
-  },
-  {
-    id: "dark-box",
-    label: "Box sombre",
-    overlay: "",
-    textPosition: "justify-end",
-    headlineClass: "text-white font-black uppercase tracking-tight",
-    bodyClass: "text-white/90 font-medium",
-    ctaClass: "bg-white text-black font-bold",
-    hasBox: true,
-  },
-  {
-    id: "minimal",
-    label: "Minimal",
-    overlay: "",
-    textPosition: "justify-end",
-    headlineClass: "text-white font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]",
-    bodyClass: "text-white/90 font-medium drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]",
-    ctaClass: "bg-white/95 text-black font-bold backdrop-blur-sm shadow-lg",
-    hasBox: false,
-  },
-];
 
 // ── Skeleton card for generating ads ──
 function GeneratingCard({ ad }: { ad: GeneratedAd }) {
@@ -129,18 +82,10 @@ function FailedCard({ ad, onRetry, onDelete }: { ad: GeneratedAd; onRetry?: () =
 }
 
 // ── Completed card ──
-function CompletedCard({ ad, onClick, onDelete }: { ad: GeneratedAd; onClick: () => void; onDelete: () => void }) {
-  const handleDownload = (e: React.MouseEvent) => {
+function CompletedCard({ ad, onClick, onToggleFavorite }: { ad: GeneratedAd; onClick: () => void; onToggleFavorite: () => void }) {
+  const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const link = document.createElement("a");
-    link.href = `data:${ad.mimeType};base64,${ad.imageBase64}`;
-    link.download = `kult-ad-${ad.format}-${Date.now()}.png`;
-    link.click();
-  };
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onDelete();
+    onToggleFavorite();
   };
 
   return (
@@ -156,28 +101,23 @@ function CompletedCard({ ad, onClick, onDelete }: { ad: GeneratedAd; onClick: ()
         className="absolute inset-0 w-full h-full object-cover"
       />
       {/* Format badge */}
-      <div className="absolute top-2.5 right-2.5 z-10">
+      <div className="absolute top-2.5 left-2.5 z-10">
         <span className="bg-black/40 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
           {ad.format === "story" ? "Story" : "Carré"}
         </span>
       </div>
-      {/* Hover overlay */}
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 z-20">
-        <button
-          onClick={handleDownload}
-          className="p-2.5 rounded-xl bg-white/90 text-foreground hover:bg-white transition-colors shadow-lg"
-          title="Télécharger"
-        >
-          <Download className="w-4 h-4" />
-        </button>
-        <button
-          onClick={handleDelete}
-          className="p-2.5 rounded-xl bg-red-500/90 text-white hover:bg-red-500 transition-colors shadow-lg"
-          title="Supprimer"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-      </div>
+      {/* Favorite button — always visible */}
+      <button
+        onClick={handleFavorite}
+        className="absolute top-2.5 right-2.5 z-20 p-1.5 rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/50 transition-colors"
+        title={ad.isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+      >
+        <Heart
+          className={`w-4 h-4 transition-colors ${
+            ad.isFavorite ? "fill-red-500 text-red-500" : "text-white/70 hover:text-white"
+          }`}
+        />
+      </button>
     </div>
   );
 }
@@ -191,21 +131,8 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
 }) {
   const isStory = ad.format === "story";
   const cardRef = useRef<HTMLDivElement>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [headline, setHeadline] = useState(ad.headline);
-  const [bodyText, setBodyText] = useState(ad.bodyText);
-  const [callToAction, setCallToAction] = useState(ad.callToAction);
-  const [styleIndex, setStyleIndex] = useState(0);
-  const [showTextOverlay, setShowTextOverlay] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
-
-  const style = AD_STYLES[styleIndex];
-
-  const handleSave = useCallback(() => {
-    setIsEditing(false);
-    onUpdate(ad.id, { headline, bodyText, callToAction });
-  }, [ad.id, headline, bodyText, callToAction, onUpdate]);
 
   async function handleDownload() {
     if (!cardRef.current) return;
@@ -226,10 +153,9 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
     setIsExporting(false);
   }
 
-  const headlineSize = isStory ? "text-xl" : "text-lg";
-  const bodySize = isStory ? "text-sm" : "text-xs";
-  const ctaSize = isStory ? "text-sm" : "text-xs";
-  const padding = isStory ? "p-6" : "p-4";
+  const handleToggleFavorite = useCallback(() => {
+    onUpdate(ad.id, { isFavorite: !ad.isFavorite });
+  }, [ad.id, ad.isFavorite, onUpdate]);
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" onClick={onClose}>
@@ -255,46 +181,6 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
             alt="Ad"
             className="absolute inset-0 w-full h-full object-cover"
           />
-          {showTextOverlay && (
-            <>
-              {style.overlay && <div className={`absolute inset-0 ${style.overlay} z-10`} />}
-              <div className={`absolute inset-0 flex flex-col ${style.textPosition} ${padding} z-20`}>
-                {style.hasBox ? (
-                  <div className="bg-black/70 backdrop-blur-sm rounded-xl p-4 space-y-2">
-                    {isEditing ? (
-                      <>
-                        <input value={headline} onChange={(e) => setHeadline(e.target.value)} className={`${headlineSize} ${style.headlineClass} bg-transparent border-b border-white/30 w-full outline-none pb-1 leading-tight`} />
-                        <textarea value={bodyText} onChange={(e) => setBodyText(e.target.value)} rows={2} className={`${bodySize} ${style.bodyClass} bg-transparent border-b border-white/30 w-full outline-none resize-none pb-1 leading-snug`} />
-                        <input value={callToAction} onChange={(e) => setCallToAction(e.target.value)} className={`${ctaSize} ${style.ctaClass} px-5 py-2 rounded-full w-fit outline-none`} />
-                      </>
-                    ) : (
-                      <>
-                        <h3 className={`${headlineSize} ${style.headlineClass} leading-tight`}>{headline}</h3>
-                        <p className={`${bodySize} ${style.bodyClass} leading-snug`}>{bodyText}</p>
-                        <span className={`${ctaSize} ${style.ctaClass} px-5 py-2 rounded-full inline-block w-fit`}>{callToAction}</span>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-w-[90%]">
-                    {isEditing ? (
-                      <>
-                        <input value={headline} onChange={(e) => setHeadline(e.target.value)} className={`${headlineSize} ${style.headlineClass} bg-transparent border-b border-white/30 w-full outline-none pb-1 leading-tight`} />
-                        <textarea value={bodyText} onChange={(e) => setBodyText(e.target.value)} rows={2} className={`${bodySize} ${style.bodyClass} bg-transparent border-b border-white/30 w-full outline-none resize-none pb-1 leading-snug`} />
-                        <input value={callToAction} onChange={(e) => setCallToAction(e.target.value)} className={`${ctaSize} ${style.ctaClass} px-5 py-2 rounded-full w-fit outline-none`} />
-                      </>
-                    ) : (
-                      <>
-                        <h3 className={`${headlineSize} ${style.headlineClass} leading-tight`}>{headline}</h3>
-                        <p className={`${bodySize} ${style.bodyClass} leading-snug`}>{bodyText}</p>
-                        <span className={`${ctaSize} ${style.ctaClass} px-5 py-2 rounded-full inline-block w-fit`}>{callToAction}</span>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
           {!isExporting && (
             <div className="absolute top-3 right-3 z-30">
               <span className="bg-black/40 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
@@ -315,35 +201,15 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
             {isExporting ? "Export..." : "Télécharger"}
           </button>
           <button
-            onClick={isEditing ? handleSave : () => setIsEditing(true)}
+            onClick={handleToggleFavorite}
             className={`p-2.5 rounded-xl border text-xs transition-all ${
-              isEditing
-                ? "bg-emerald-500 border-emerald-500 text-white"
+              ad.isFavorite
+                ? "bg-red-50 border-red-200 text-red-500"
                 : "border-border/60 bg-white text-muted hover:text-foreground"
             }`}
-            title={isEditing ? "Sauvegarder" : "Modifier le texte"}
+            title={ad.isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
           >
-            {isEditing ? <Check className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
-          </button>
-          <button
-            onClick={() => setShowTextOverlay(!showTextOverlay)}
-            className={`p-2.5 rounded-xl border text-xs transition-all ${
-              !showTextOverlay
-                ? "bg-surface border-border text-foreground"
-                : "border-border/60 bg-white text-muted hover:text-foreground"
-            }`}
-            title={showTextOverlay ? "Masquer le texte" : "Afficher le texte"}
-          >
-            <Type className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => setStyleIndex((i) => (i + 1) % AD_STYLES.length)}
-            className="p-2.5 rounded-xl border border-border/60 bg-white text-muted hover:text-foreground transition-all"
-            title={`Style: ${style.label}`}
-          >
-            <span className="text-[10px] font-bold w-3.5 h-3.5 flex items-center justify-center">
-              S{styleIndex + 1}
-            </span>
+            <Heart className={`w-3.5 h-3.5 ${ad.isFavorite ? "fill-red-500" : ""}`} />
           </button>
           {ad._debug && (
             <button
@@ -399,23 +265,6 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
               </pre>
             </div>
 
-            {ad._debug.overlayText && (
-              <div>
-                <span className="text-gray-400 font-medium">Overlay text:</span>
-                <p className="text-gray-300 mt-1 bg-gray-800 rounded-lg p-3">
-                  Headline: {ad._debug.overlayText.headline}<br/>
-                  CTA: {ad._debug.overlayText.ctaText}
-                </p>
-              </div>
-            )}
-
-            {ad._debug.imageText && (
-              <div>
-                <span className="text-gray-400 font-medium">Image text (legacy):</span>
-                <p className="text-gray-300 mt-1 bg-gray-800 rounded-lg p-3">{ad._debug.imageText}</p>
-              </div>
-            )}
-
             <div>
               <button
                 onClick={() => {
@@ -441,6 +290,14 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
                 </ul>
               </div>
             )}
+
+            {/* Template reference thumbnail */}
+            {ad.templateId && ad._debug.templateType && (
+              <div>
+                <span className="text-gray-400 font-medium">Template ID:</span>
+                <span className="ml-2 text-blue-400 font-mono">{ad.templateId}</span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -456,7 +313,7 @@ export default function AdsGalleryPage() {
   const syncDeleteGeneratedAd = useWizardStore((s) => s.syncDeleteGeneratedAd);
   const currentUser = useAuthStore((s) => s.currentUser);
 
-  const [filter, setFilter] = useState<"all" | "square" | "story">("all");
+  const [filter, setFilter] = useState<"all" | "square" | "story" | "favorites">("all");
   const [selectedAd, setSelectedAd] = useState<GeneratedAd | null>(null);
 
   // Sort: generating first, then by timestamp desc
@@ -466,13 +323,24 @@ export default function AdsGalleryPage() {
     return b.timestamp - a.timestamp;
   });
 
-  const filtered = filter === "all" ? sorted : sorted.filter((ad) => ad.format === filter);
+  const filtered = (() => {
+    if (filter === "favorites") return sorted.filter((ad) => ad.isFavorite);
+    if (filter === "all") return sorted;
+    return sorted.filter((ad) => ad.format === filter);
+  })();
+
   const completedCount = generatedAds.filter((a) => a.status !== "generating" && a.status !== "failed").length;
   const generatingCount = generatedAds.filter((a) => a.status === "generating").length;
+  const favoritesCount = generatedAds.filter((a) => a.isFavorite).length;
 
   const handleDelete = (id: string) => {
     removeGeneratedAd(id);
     if (currentUser) syncDeleteGeneratedAd(currentUser.id, id);
+  };
+
+  const handleToggleFavorite = (id: string) => {
+    const ad = generatedAds.find((a) => a.id === id);
+    if (ad) updateGeneratedAd(id, { isFavorite: !ad.isFavorite });
   };
 
   return (
@@ -499,15 +367,19 @@ export default function AdsGalleryPage() {
 
         {/* Filter */}
         <div className="flex items-center gap-1 toggle-pill">
-          {(["all", "square", "story"] as const).map((f) => (
+          {(["all", "square", "story", "favorites"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1 ${
                 filter === f ? "toggle-pill-active" : "text-muted hover:text-foreground"
               }`}
             >
-              {f === "all" ? "Tous" : f === "square" ? "Carré" : "Story"}
+              {f === "favorites" && <Heart className={`w-3 h-3 ${filter === "favorites" ? "fill-current" : ""}`} />}
+              {f === "all" ? "Tous" : f === "square" ? "Carré" : f === "story" ? "Story" : "Favoris"}
+              {f === "favorites" && favoritesCount > 0 && (
+                <span className="text-[10px] bg-red-100 text-red-500 px-1.5 py-0.5 rounded-full font-semibold">{favoritesCount}</span>
+              )}
             </button>
           ))}
         </div>
@@ -517,12 +389,20 @@ export default function AdsGalleryPage() {
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4 animate-fade-in">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-            <Sparkles className="w-7 h-7 text-primary/40" />
+            {filter === "favorites" ? (
+              <Heart className="w-7 h-7 text-primary/40" />
+            ) : (
+              <Sparkles className="w-7 h-7 text-primary/40" />
+            )}
           </div>
           <div className="text-center">
-            <p className="text-lg font-semibold text-foreground">Aucune publicité</p>
+            <p className="text-lg font-semibold text-foreground">
+              {filter === "favorites" ? "Aucun favori" : "Aucune publicité"}
+            </p>
             <p className="text-sm text-muted mt-1">
-              Rendez-vous dans le Générateur pour créer votre première pub !
+              {filter === "favorites"
+                ? "Cliquez sur le coeur d'une publicité pour l'ajouter aux favoris"
+                : "Rendez-vous dans le Générateur pour créer votre première pub !"}
             </p>
           </div>
         </div>
@@ -547,7 +427,7 @@ export default function AdsGalleryPage() {
                 key={ad.id}
                 ad={ad}
                 onClick={() => setSelectedAd(ad)}
-                onDelete={() => handleDelete(ad.id)}
+                onToggleFavorite={() => handleToggleFavorite(ad.id)}
               />
             );
           })}
