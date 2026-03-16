@@ -89,8 +89,8 @@ function buildBrandContext(ctx: BrandContext): string {
     `Product: "${ctx.productName}" — ${ctx.productDescription}`,
     ctx.productFeatures?.length ? `Product features: ${ctx.productFeatures.join(", ")}` : null,
     ctx.offerTitle ? `Current offer: ${ctx.offerTitle}${ctx.offerDescription ? ` — ${ctx.offerDescription}` : ""}` : null,
-    ctx.productPrice ? `Product price: ${ctx.productPrice}` : null,
-    ctx.productOriginalPrice && ctx.productSalePrice ? `Price: ${ctx.productOriginalPrice} → ${ctx.productSalePrice} (use these EXACT prices from the website, NEVER invent prices)` : null,
+    ctx.productPrice ? `Real product price (number only, no label): ${ctx.productPrice}` : null,
+    ctx.productOriginalPrice && ctx.productSalePrice ? `Real prices (show as numbers only, NEVER write "Price:" or "Original-price:" labels): ${ctx.productOriginalPrice} → ${ctx.productSalePrice}` : null,
   ];
   return parts.filter(Boolean).join("\n");
 }
@@ -381,12 +381,12 @@ ${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If th
 - NEVER use "---" or multiple dashes before a number. Write exactly "-60%" not "---60%".
 
 PRICE RULES — THIS IS CRITICAL:
-- NEVER include any price, monetary amount, € symbol, "Price:", or number followed by € in imageText UNLESS the template VISUALLY shows a dedicated price area (e.g. "29,99€" or "Prix: XX€").
+- NEVER include any price, monetary amount, € symbol, or number followed by € in imageText UNLESS the template VISUALLY shows a dedicated price area.
 - If templateHasPrices is false → ZERO prices in imageText. No exceptions.
 - Even if templateHasPrices is true, ONLY use real prices if available:
-${brandContext.productOriginalPrice && brandContext.productSalePrice ? `  Real prices: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}` : brandContext.productPrice ? `  Real price: ${brandContext.productPrice}` : "  No prices available → do NOT show any price. Replace that space with a short benefit or leave empty."}
-- NEVER invent prices. NEVER write "Price: XX" or "XX€" with made-up numbers.
-- The word "Price" or "Prix" should NEVER appear in imageText unless real prices exist AND templateHasPrices is true.
+${brandContext.productOriginalPrice && brandContext.productSalePrice ? `  Show "${brandContext.productOriginalPrice}" crossed out, then "${brandContext.productSalePrice}" highlighted. NUMBERS ONLY — no labels.` : brandContext.productPrice ? `  Show "${brandContext.productPrice}" as a number only — no label.` : "  No prices available → do NOT show any price. Replace that space with a short benefit or leave empty."}
+- NEVER invent prices. NEVER write made-up numbers with €.
+- CRITICAL: NEVER write labels like "Price:", "Prix:", "Original-price:", "sale-price:" before a price. Just the number + € symbol, nothing else.
 
 BRAND & PRODUCT:
 - Brand name EXACTLY: "${brandContext.brandName}"
@@ -547,7 +547,8 @@ ${brandContext.offerTitle ? `- The offer is: "${brandContext.offerTitle}". If th
 - NEVER use "---" or multiple dashes before a number. Write exactly "-60%" not "---60%".
 
 PRICE RULES:
-${meta.templateHasPrices ? (brandContext.productOriginalPrice && brandContext.productSalePrice ? `Use real prices: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}` : brandContext.productPrice ? `Use real price: ${brandContext.productPrice}` : "No prices available → do NOT show any price.") : "ZERO prices. No exceptions."}
+${meta.templateHasPrices ? (brandContext.productOriginalPrice && brandContext.productSalePrice ? `Show prices as NUMBERS ONLY: "${brandContext.productOriginalPrice}" crossed out, then "${brandContext.productSalePrice}" highlighted. NEVER write labels like "Original-price:", "sale-price:", "Price:", or "Prix:" — just the number with € symbol.` : brandContext.productPrice ? `Show the price as a NUMBER ONLY: "${brandContext.productPrice}". NEVER write "Price:" or "Prix:" labels.` : "No prices available → do NOT show any price.") : "ZERO prices. No exceptions."}
+- CRITICAL: NEVER write "Original-price:", "sale-price:", "Price:", "Prix:" or any label before a price. Just the number + € symbol.
 
 SCENE DESCRIPTION — CRITICAL:
 Describe the visual layout for image generation. You MUST describe a scene that makes sense for "${brandContext.productName}".

@@ -26,6 +26,10 @@ function sanitizeImageText(text: string, templateTextCount: number): string {
   let lines = text.split("\n");
 
   lines = lines.map((line) => {
+    // Strip technical price labels that Claude sometimes includes verbatim
+    // e.g. "Original-price: 39€", "sale-price: 32€", "Price: 29,99€"
+    line = line.replace(/\b(original[- ]?price|sale[- ]?price|price|prix)\s*[:：]\s*/gi, "");
+
     // Strip invented statistics: large numbers + people/user words
     // e.g. "300 000 UTILISATRICES", "1 MILLION DE CLIENTS", "+50 000 avis"
     line = line.replace(
@@ -50,23 +54,51 @@ function sanitizeImageText(text: string, templateTextCount: number): string {
   // Remove empty lines from cleaning
   lines = lines.filter((line) => line.length > 0);
 
-  // Enforce max words per line (headline ~6 words, other lines ~10 words)
+  // Enforce max words per line (headline ~6, other lines ~8)
   lines = lines.map((line, i) => {
     const words = line.split(/\s+/);
-    // First line (headline): max 8 words
-    // Other lines: max 12 words
-    const maxWords = i === 0 ? 8 : 12;
+    const maxWords = i === 0 ? 6 : 8;
     if (words.length > maxWords) {
       return words.slice(0, maxWords).join(" ");
     }
     return line;
   });
 
-  // Enforce max number of lines to match template
-  const maxLines = Math.max(templateTextCount, 2);
-  if (lines.length > maxLines + 1) {
-    lines = lines.slice(0, maxLines + 1);
+  // Enforce max number of lines to match template (strict)
+  const maxLines = Math.min(templateTextCount, 5);
+  if (lines.length > maxLines) {
+    lines = lines.slice(0, maxLines);
   }
+
+  // Enforce total word count (max 20 words across entire imageText)
+  let totalWords = 0;
+  lines = lines.filter((line) => {
+    const wordCount = line.split(/\s+/).length;
+    if (totalWords + wordCount > 20) {
+      // Try to truncate this line to fit
+      const remaining = 20 - totalWords;
+      if (remaining > 0) {
+        totalWords += remaining;
+        return true; // will be truncated below
+      }
+      return false;
+    }
+    totalWords += wordCount;
+    return true;
+  });
+
+  // Actually truncate last line if it pushed over 20 words
+  totalWords = 0;
+  lines = lines.map((line) => {
+    const words = line.split(/\s+/);
+    const remaining = 20 - totalWords;
+    if (words.length > remaining && remaining > 0) {
+      totalWords += remaining;
+      return words.slice(0, remaining).join(" ");
+    }
+    totalWords += words.length;
+    return line;
+  });
 
   return lines.join("\n");
 }
