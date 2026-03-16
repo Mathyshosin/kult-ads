@@ -21,6 +21,7 @@ import {
   loadGeneratedAds,
   deleteGeneratedAd as syncDeleteGeneratedAd,
   deleteAllGeneratedAds as syncDeleteAllGeneratedAds,
+  updateGeneratedAdFavorite,
 } from "./supabase/sync";
 
 export interface BrandLogo {

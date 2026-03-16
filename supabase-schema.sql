@@ -64,6 +64,8 @@ CREATE TABLE generated_ads (
   product_local_id TEXT,
   offer_local_id TEXT,
   template_id TEXT,
+  is_favorite BOOLEAN DEFAULT false,
+  debug_info JSONB,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

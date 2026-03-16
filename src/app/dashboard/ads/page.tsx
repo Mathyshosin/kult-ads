@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useWizardStore } from "@/lib/store";
 import { useAuthStore } from "@/lib/auth-store";
+import { updateGeneratedAdFavorite } from "@/lib/supabase/sync";
 import type { GeneratedAd } from "@/lib/types";
 import {
   Download,
@@ -124,12 +125,12 @@ function CompletedCard({ ad, onClick, onToggleFavorite }: { ad: GeneratedAd; onC
 }
 
 // ── Ad detail modal ──
-function AdDetailModal({ ad, onClose, onUpdate, onDelete, onModify }: {
+function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
   ad: GeneratedAd;
   onClose: () => void;
-  onUpdate: (id: string, updates: Partial<GeneratedAd>) => void;
   onDelete: (id: string) => void;
   onModify: (ad: GeneratedAd, prompt: string) => void;
+  onToggleFavorite: (id: string) => void;
 }) {
   const isStory = ad.format === "story";
   const cardRef = useRef<HTMLDivElement>(null);
@@ -158,8 +159,8 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete, onModify }: {
   }
 
   const handleToggleFavorite = useCallback(() => {
-    onUpdate(ad.id, { isFavorite: !ad.isFavorite });
-  }, [ad.id, ad.isFavorite, onUpdate]);
+    onToggleFavorite(ad.id);
+  }, [ad.id, onToggleFavorite]);
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" onClick={onClose}>
@@ -401,7 +402,13 @@ export default function AdsGalleryPage() {
 
   const handleToggleFavorite = (id: string) => {
     const ad = generatedAds.find((a) => a.id === id);
-    if (ad) updateGeneratedAd(id, { isFavorite: !ad.isFavorite });
+    if (ad) {
+      const newFav = !ad.isFavorite;
+      updateGeneratedAd(id, { isFavorite: newFav });
+      if (currentUser) {
+        updateGeneratedAdFavorite(currentUser.id, id, newFav).catch(console.error);
+      }
+    }
   };
 
   const brandAnalysis = useWizardStore((s) => s.brandAnalysis);
@@ -558,9 +565,9 @@ export default function AdsGalleryPage() {
         <AdDetailModal
           ad={selectedAd}
           onClose={() => setSelectedAd(null)}
-          onUpdate={updateGeneratedAd}
           onDelete={handleDelete}
           onModify={handleModify}
+          onToggleFavorite={handleToggleFavorite}
         />
       )}
     </div>

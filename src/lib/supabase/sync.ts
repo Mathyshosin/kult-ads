@@ -260,21 +260,33 @@ export async function loadUploadedImages(
 
   if (!rows || rows.length === 0) return { images: [], logo: null };
 
+  // Download all images in parallel for speed
+  const results = await Promise.all(
+    rows.map(async (row) => {
+      try {
+        const { data: fileData } = await sb.storage
+          .from("user-images")
+          .download(row.storage_path);
+
+        if (!fileData) return null;
+
+        const buffer = await fileData.arrayBuffer();
+        const base64 = btoa(
+          new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+        );
+        return { row, base64 };
+      } catch {
+        return null;
+      }
+    })
+  );
+
   const images: UploadedImage[] = [];
   let logo: { base64: string; mimeType: string; previewUrl: string } | null = null;
 
-  for (const row of rows) {
-    // Download file to get base64 (needed for generation API)
-    const { data: fileData } = await sb.storage
-      .from("user-images")
-      .download(row.storage_path);
-
-    if (!fileData) continue;
-
-    const buffer = await fileData.arrayBuffer();
-    const base64 = btoa(
-      new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
-    );
+  for (const result of results) {
+    if (!result) continue;
+    const { row, base64 } = result;
     const previewUrl = `data:${row.mime_type};base64,${base64}`;
 
     if (row.is_logo) {
@@ -387,6 +399,7 @@ export async function saveGeneratedAd(
     product_local_id: ad.productId || null,
     offer_local_id: ad.offerId || null,
     template_id: ad.templateId || null,
+    is_favorite: ad.isFavorite || false,
     debug_info: ad._debug ? JSON.stringify(ad._debug) : null,
   });
 
@@ -409,47 +422,52 @@ export async function loadGeneratedAds(
 
   if (!rows || rows.length === 0) return [];
 
-  const ads: GeneratedAd[] = [];
-  for (const row of rows) {
-    // Download image
-    const { data: fileData } = await sb.storage
-      .from("generated-ads")
-      .download(row.image_path);
-
-    if (!fileData) continue;
-
-    const buffer = await fileData.arrayBuffer();
-    const base64 = btoa(
-      new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
-    );
-
-    // Parse debug info if available
-    let debugInfo: GeneratedAd["_debug"] | undefined;
-    if (row.debug_info) {
+  // Download all images in parallel for speed
+  const ads = await Promise.all(
+    rows.map(async (row): Promise<GeneratedAd | null> => {
       try {
-        debugInfo = typeof row.debug_info === "string"
-          ? JSON.parse(row.debug_info)
-          : row.debug_info;
-      } catch { /* ignore parse errors */ }
-    }
+        const { data: fileData } = await sb.storage
+          .from("generated-ads")
+          .download(row.image_path);
 
-    ads.push({
-      id: row.id,
-      format: row.format,
-      imageBase64: base64,
-      mimeType: row.image_path.endsWith(".png") ? "image/png" : "image/jpeg",
-      headline: row.headline || "",
-      bodyText: row.body_text || "",
-      callToAction: row.call_to_action || "",
-      productId: row.product_local_id || undefined,
-      offerId: row.offer_local_id || undefined,
-      templateId: row.template_id || undefined,
-      timestamp: new Date(row.created_at).getTime(),
-      _debug: debugInfo,
-    });
-  }
+        if (!fileData) return null;
 
-  return ads;
+        const buffer = await fileData.arrayBuffer();
+        const base64 = btoa(
+          new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+        );
+
+        let debugInfo: GeneratedAd["_debug"] | undefined;
+        if (row.debug_info) {
+          try {
+            debugInfo = typeof row.debug_info === "string"
+              ? JSON.parse(row.debug_info)
+              : row.debug_info;
+          } catch { /* ignore parse errors */ }
+        }
+
+        return {
+          id: row.id,
+          format: row.format,
+          imageBase64: base64,
+          mimeType: row.image_path.endsWith(".png") ? "image/png" : "image/jpeg",
+          headline: row.headline || "",
+          bodyText: row.body_text || "",
+          callToAction: row.call_to_action || "",
+          productId: row.product_local_id || undefined,
+          offerId: row.offer_local_id || undefined,
+          templateId: row.template_id || undefined,
+          isFavorite: row.is_favorite || false,
+          timestamp: new Date(row.created_at).getTime(),
+          _debug: debugInfo,
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return ads.filter((ad): ad is GeneratedAd => ad !== null);
 }
 
 export async function deleteGeneratedAd(
@@ -470,6 +488,20 @@ export async function deleteGeneratedAd(
     await sb.storage.from("generated-ads").remove([row.image_path]);
     await sb.from("generated_ads").delete().eq("id", adId);
   }
+}
+
+export async function updateGeneratedAdFavorite(
+  userId: string,
+  adId: string,
+  isFavorite: boolean
+): Promise<void> {
+  const sb = supabase();
+  const { error } = await sb
+    .from("generated_ads")
+    .update({ is_favorite: isFavorite })
+    .eq("id", adId)
+    .eq("user_id", userId);
+  if (error) console.error("Error updating favorite:", error.message);
 }
 
 export async function deleteAllGeneratedAds(
