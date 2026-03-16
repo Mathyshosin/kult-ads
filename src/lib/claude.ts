@@ -549,17 +549,15 @@ PRICE RULES:
 ${meta.templateHasPrices ? (brandContext.productOriginalPrice && brandContext.productSalePrice ? `Use real prices: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}` : brandContext.productPrice ? `Use real price: ${brandContext.productPrice}` : "No prices available → do NOT show any price.") : "ZERO prices. No exceptions."}
 
 SCENE DESCRIPTION:
-Describe the visual layout for image generation. The scene must make sense for "${brandContext.productName}".
-- Copy the template's LAYOUT STYLE (background type, element positioning, overall vibe)
-- Replace ALL products/objects from the template with "${brandContext.productName}" — the ONLY product shown
-- Replace decorative objects (if any) with elements relevant to "${brandContext.productName}" (e.g. cotton flowers for textiles, leaves for organic products, abstract shapes for tech)
-- Keep the same visual ENERGY as the template (minimal, bold, elegant, fun — match the mood)
-${meta.templateType === "comparison" ? `COMPARISON: Describe split layout. BAD SIDE: generic inferior alternative in "${brandContext.productName}"'s category. GOOD SIDE: "${brandContext.productName}".` : ""}
-${meta.templateType === "product-showcase" || meta.templateType === "lifestyle" ? `Show ONLY 1 unit of "${brandContext.productName}" displayed cleanly.` : ""}
+Describe the ad layout. Keep it SHORT (1-2 sentences). The image generator will see the template image directly, so you just need to say what changes.
+- Say: "Same layout as template but with [product name] as the product and [brand name] branding"
+- Mention the product positioning briefly
+- Do NOT describe decorative elements — they stay the same as the template
+${meta.templateType === "comparison" ? `This is a COMPARISON layout. BAD SIDE: generic inferior alternative in "${brandContext.productName}"'s category. GOOD SIDE: "${brandContext.productName}".` : ""}
 
 JSON ONLY — no other text:
 {
-  "scene": "ENGLISH description of the ad layout adapted for ${brandContext.productName}",
+  "scene": "SHORT English description — what to change from the template for ${brandContext.productName}",
   "imageText": "Text in the brand's language. Use \\n for line breaks. EXACTLY ${meta.templateTextCount} elements: ${meta.textElements.join(", ")}. 100% about ${brandContext.productName}."
 }`,
           },
