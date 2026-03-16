@@ -62,11 +62,11 @@ export interface GeneratedAd {
   error?: string;
   _debug?: {
     geminiPrompt: string;
-    imageText: string | null;
-    overlayText: { headline: string; ctaText: string } | null;
     sceneDescription: string;
     templateType: string | null;
     referenceImageLabels: string[];
+    templateImageBase64?: string | null;
+    templateMimeType?: string | null;
   };
 }
 

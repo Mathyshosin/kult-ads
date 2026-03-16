@@ -297,6 +297,8 @@ export async function POST(request: Request) {
         sceneDescription,
         templateType: metadata?.templateType || null,
         referenceImageLabels: referenceImages.map((r) => r.label.slice(0, 100)),
+        templateImageBase64: template?.imageBase64 || null,
+        templateMimeType: template?.mimeType || null,
       },
     });
   } catch (error) {

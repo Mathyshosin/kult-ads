@@ -161,15 +161,16 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative max-w-md w-full max-h-[90vh] overflow-y-auto animate-scale-in"
+        className="relative max-w-md w-full animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute -top-2 -right-2 z-50 p-2 rounded-full bg-white shadow-lg text-muted hover:text-foreground transition-colors"
+          className="absolute -top-3 -right-3 z-50 p-2 rounded-full bg-white shadow-lg text-muted hover:text-foreground transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
+        <div className="max-h-[90vh] overflow-y-auto rounded-2xl">
 
         {/* Ad image */}
         <div
@@ -291,15 +292,20 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
               </div>
             )}
 
-            {/* Template reference thumbnail */}
-            {ad.templateId && ad._debug.templateType && (
+            {/* Template reference image */}
+            {ad._debug.templateImageBase64 && (
               <div>
-                <span className="text-gray-400 font-medium">Template ID:</span>
-                <span className="ml-2 text-blue-400 font-mono">{ad.templateId}</span>
+                <span className="text-gray-400 font-medium">Template utilisé :</span>
+                <img
+                  src={`data:${ad._debug.templateMimeType || "image/png"};base64,${ad._debug.templateImageBase64}`}
+                  alt="Template"
+                  className="mt-2 rounded-lg w-32 h-auto border border-gray-700"
+                />
               </div>
             )}
           </div>
         )}
+        </div>
       </div>
     </div>
   );
