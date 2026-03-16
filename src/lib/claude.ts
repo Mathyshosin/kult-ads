@@ -485,35 +485,23 @@ async function describeTemplateSceneWithMetadata(
 ): Promise<TemplateAnalysis> {
   const context = buildBrandContext(brandContext);
 
+  // DO NOT send template image to Haiku — it causes text contamination.
+  // Haiku copies template words ("Gummies", "BLACK FRIDAY", etc.) despite instructions.
+  // Haiku only needs the metadata. Gemini gets the template image separately for visual quality.
+
   const message = await anthropic.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 1000,
     messages: [
       {
         role: "user",
-        content: [
-          {
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: templateMimeType as "image/png" | "image/jpeg" | "image/webp" | "image/gif",
-              data: templateBase64,
-            },
-          },
-          {
-            type: "text",
-            text: `You are an elite creative director. This template image is your VISUAL REFERENCE for layout and style ONLY. You must create a NEW ad for a COMPLETELY DIFFERENT brand.
-
-⚠️ CRITICAL — READ FIRST ⚠️
-This template is from ANOTHER brand. You must:
-- COPY: the visual LAYOUT (positions, proportions, spacing, colors, typography style)
-- IGNORE COMPLETELY: all TEXT content, all OBJECTS/PRODUCTS, all OFFERS/PROMOTIONS visible on the template
-- The template's text, products, offers, and decorative objects are IRRELEVANT — they belong to another brand
+        content: `You are an elite creative director. Create ad text for "${brandContext.brandName}" selling "${brandContext.productName}".
+You work from METADATA ONLY — you do NOT see the template and have ZERO knowledge of its content.
 
 TARGET BRAND:
 ${context}
 
-PRE-ANALYZED TEMPLATE METADATA:
+TEMPLATE STRUCTURE (metadata only — you cannot see the template):
 - Template type: ${meta.templateType}
 - Text elements: ${meta.textElements.join(", ")} (${meta.templateTextCount} total)
 - Has prices: ${meta.templateHasPrices}
@@ -560,8 +548,6 @@ JSON ONLY — no other text:
   "scene": "SHORT English description — what to change from the template for ${brandContext.productName}",
   "imageText": "Text in the brand's language. Use \\n for line breaks. EXACTLY ${meta.templateTextCount} elements: ${meta.textElements.join(", ")}. 100% about ${brandContext.productName}."
 }`,
-          },
-        ],
       },
     ],
   });

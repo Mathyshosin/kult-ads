@@ -264,7 +264,14 @@ Any product visible in the layout reference below is from a DIFFERENT brand and 
       referenceImages.push({
         base64: brandLogoBase64,
         mimeType: brandLogoMimeType || "image/png",
-        label: `THIS IS THE OFFICIAL LOGO for "${brandAnalysis.brandName}". Use this EXACT logo when showing the brand name/logo on the ad. Do NOT create, invent, or generate a different logo — use ONLY this one, reproduced faithfully. CRITICAL LOGO RULES: Do NOT modify the logo in ANY way — no font change, no color change, no outline, no shadow, no badge, no background shape, no resize distortion. Place it EXACTLY as uploaded with ZERO modifications. If it's hard to see against the background, place it on a contrasting area of the background instead of changing the logo itself.`,
+        label: `OFFICIAL LOGO for "${brandAnalysis.brandName}". Reproduce this logo with ZERO modifications.
+ABSOLUTE RULES — NEVER VIOLATE:
+- NEVER add a background shape behind the logo (no banner, no rectangle, no circle, no badge)
+- NEVER change the logo's colors, font, or style
+- NEVER add outlines, shadows, or effects to the logo
+- NEVER resize or distort the logo
+- Place the logo EXACTLY as-is on the ad background — if it's hard to see, move it to a contrasting area instead of modifying it
+- The logo must look IDENTICAL to this reference image with ZERO additions`,
       });
     }
 
