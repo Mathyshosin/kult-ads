@@ -319,12 +319,15 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
         set({
           brandAnalysis: result.analysis,
           brandAnalysisId: result.id,
+          isHydrated: true,
         });
 
-        const { images, logo } = await loadUploadedImages(userId, result.id);
+        // Load images and ads in parallel — don't block rendering
+        const [{ images, logo }, ads] = await Promise.all([
+          loadUploadedImages(userId, result.id),
+          loadGeneratedAds(userId, result.id),
+        ]);
         set({ uploadedImages: images, brandLogo: logo });
-
-        const ads = await loadGeneratedAds(userId, result.id);
         if (ads.length > 0) {
           set({ generatedAds: ads });
         }

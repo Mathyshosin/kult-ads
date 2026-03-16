@@ -12,7 +12,8 @@ import {
   AlertCircle,
   X,
   Heart,
-  Smartphone,
+  Pencil,
+  Send,
   LayoutGrid,
   Bug,
   ChevronDown,
@@ -123,16 +124,19 @@ function CompletedCard({ ad, onClick, onToggleFavorite }: { ad: GeneratedAd; onC
 }
 
 // ── Ad detail modal ──
-function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
+function AdDetailModal({ ad, onClose, onUpdate, onDelete, onModify }: {
   ad: GeneratedAd;
   onClose: () => void;
   onUpdate: (id: string, updates: Partial<GeneratedAd>) => void;
   onDelete: (id: string) => void;
+  onModify: (ad: GeneratedAd, prompt: string) => void;
 }) {
   const isStory = ad.format === "story";
   const cardRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
+  const [showModify, setShowModify] = useState(false);
+  const [modifyPrompt, setModifyPrompt] = useState("");
 
   async function handleDownload() {
     if (!cardRef.current) return;
@@ -226,6 +230,17 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
             </button>
           )}
           <button
+            onClick={() => setShowModify(!showModify)}
+            className={`p-2.5 rounded-xl border text-xs transition-all ${
+              showModify
+                ? "bg-primary border-primary text-white"
+                : "border-border/60 bg-white text-muted hover:text-foreground"
+            }`}
+            title="Modifier cette ad"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button
             onClick={() => { onDelete(ad.id); onClose(); }}
             className="p-2.5 rounded-xl border border-red-200 bg-white text-red-400 hover:bg-red-50 transition-all"
             title="Supprimer"
@@ -233,6 +248,46 @@ function AdDetailModal({ ad, onClose, onUpdate, onDelete }: {
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
+
+        {/* Modify input */}
+        {showModify && (
+          <div className="mt-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={modifyPrompt}
+                onChange={(e) => setModifyPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && modifyPrompt.trim()) {
+                    onModify(ad, modifyPrompt.trim());
+                    setModifyPrompt("");
+                    setShowModify(false);
+                    onClose();
+                  }
+                }}
+                placeholder="Ex: change le fond en bleu, agrandis le logo..."
+                className="flex-1 px-4 py-2.5 rounded-xl border border-border/60 bg-white text-sm text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
+                autoFocus
+              />
+              <button
+                onClick={() => {
+                  if (modifyPrompt.trim()) {
+                    onModify(ad, modifyPrompt.trim());
+                    setModifyPrompt("");
+                    setShowModify(false);
+                    onClose();
+                  }
+                }}
+                disabled={!modifyPrompt.trim()}
+                className="p-2.5 rounded-xl btn-gradient text-white disabled:opacity-40 transition-all"
+                title="Envoyer la modification"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <p className="text-[11px] text-muted mt-1.5 px-1">Appuyez sur Entrée pour envoyer. Une nouvelle ad modifiée sera générée.</p>
+          </div>
+        )}
 
         {/* Debug panel */}
         {showDebug && ad._debug && (
@@ -349,6 +404,64 @@ export default function AdsGalleryPage() {
     if (ad) updateGeneratedAd(id, { isFavorite: !ad.isFavorite });
   };
 
+  const brandAnalysis = useWizardStore((s) => s.brandAnalysis);
+  const uploadedImages = useWizardStore((s) => s.uploadedImages);
+  const brandLogo = useWizardStore((s) => s.brandLogo);
+  const addGeneratedAd = useWizardStore((s) => s.addGeneratedAd);
+  const startGeneration = useWizardStore((s) => s.startGeneration);
+  const completeGeneration = useWizardStore((s) => s.completeGeneration);
+  const failGeneration = useWizardStore((s) => s.failGeneration);
+  const syncGeneratedAd = useWizardStore((s) => s.syncGeneratedAd);
+
+  const handleModify = async (ad: GeneratedAd, prompt: string) => {
+    if (!brandAnalysis) return;
+
+    // Find the product used in this ad
+    const product = brandAnalysis.products.find((p) => p.id === ad.productId) || brandAnalysis.products[0];
+    if (!product) return;
+
+    // Find product image
+    const productImage = uploadedImages.find((img) => img.productId === product.id);
+
+    // Start a generating placeholder
+    const tempId = startGeneration({ format: ad.format, productId: product.id });
+
+    try {
+      const res = await fetch("/api/generate-ad", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brandAnalysis,
+          product,
+          format: ad.format,
+          modificationPrompt: prompt,
+          previousAdBase64: ad.imageBase64,
+          previousAdMimeType: ad.mimeType,
+          productImageBase64: productImage?.base64,
+          productImageMimeType: productImage?.mimeType,
+          brandLogoBase64: brandLogo?.base64,
+          brandLogoMimeType: brandLogo?.mimeType,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Erreur de modification");
+      }
+
+      const data = await res.json();
+      completeGeneration(tempId, data);
+
+      // Sync to Supabase
+      const newAd = useWizardStore.getState().generatedAds.find((a) => a.id === tempId);
+      if (newAd && currentUser) {
+        syncGeneratedAd(currentUser.id, newAd);
+      }
+    } catch (err) {
+      failGeneration(tempId, err instanceof Error ? err.message : "Erreur");
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-6">
       {/* Header */}
@@ -447,6 +560,7 @@ export default function AdsGalleryPage() {
           onClose={() => setSelectedAd(null)}
           onUpdate={updateGeneratedAd}
           onDelete={handleDelete}
+          onModify={handleModify}
         />
       )}
     </div>
