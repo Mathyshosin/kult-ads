@@ -549,10 +549,10 @@ PRICE RULES:
 ${meta.templateHasPrices ? (brandContext.productOriginalPrice && brandContext.productSalePrice ? `Use real prices: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}` : brandContext.productPrice ? `Use real price: ${brandContext.productPrice}` : "No prices available → do NOT show any price.") : "ZERO prices. No exceptions."}
 
 SCENE DESCRIPTION:
-Describe the ad layout. Keep it SHORT (1-2 sentences). The image generator will see the template image directly, so you just need to say what changes.
-- Say: "Same layout as template but with [product name] as the product and [brand name] branding"
-- Mention the product positioning briefly
-- Do NOT describe decorative elements — they stay the same as the template
+Describe the ad layout briefly (2-3 sentences). The image generator sees the template directly, so focus on what CHANGES:
+- The product becomes "${brandContext.productName}" (describe how it should be displayed)
+- If the template has decorative objects around the product, describe what they should become to fit "${brandContext.productName}" (same arrangement, but objects adapted to the brand's universe)
+- Keep the same visual mood/energy as the template
 ${meta.templateType === "comparison" ? `This is a COMPARISON layout. BAD SIDE: generic inferior alternative in "${brandContext.productName}"'s category. GOOD SIDE: "${brandContext.productName}".` : ""}
 
 JSON ONLY — no other text:

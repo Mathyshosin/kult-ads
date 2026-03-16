@@ -273,16 +273,22 @@ Any product visible in the layout reference below is from a DIFFERENT brand and 
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: `LAYOUT REFERENCE — reproduce this ad EXACTLY but for "${brandAnalysis.brandName}" selling "${product.name}".
+        label: `LAYOUT REFERENCE — create the SAME ad but for "${brandAnalysis.brandName}" selling "${product.name}".
 
-Make an AD THAT LOOKS IDENTICAL to this reference. Same background, same colors, same layout, same typography, same decorative elements, same spacing, same proportions, same visual style — EVERYTHING the same.
+Reproduce this ad's STYLE: same background colors/gradients, same layout positions, same typography style, same spacing, same visual mood.
 
-The ONLY things you change:
-1. Replace the product with "${product.name}" (from PRODUCT reference image)
-2. Replace all text with the text provided in the prompt (about "${brandAnalysis.brandName}")
-3. Replace the brand name/logo with "${brandAnalysis.brandName}"
+What you CHANGE (adapt for the brand):
+1. The product → replace with "${product.name}" (from PRODUCT reference)
+2. All text → replace with the text provided in the prompt
+3. The brand name/logo → "${brandAnalysis.brandName}"
+4. Decorative objects (if any) → replace with objects that make sense for "${product.name}" while keeping the same arrangement/style
 
-Keep EVERYTHING ELSE exactly as-is from this reference: background, decorative shapes, color palette, typography style, element positions, visual mood.`,
+What you KEEP exactly:
+- Background colors and gradients
+- Element positions and proportions
+- Typography style (font weight, size, case)
+- Overall visual mood and energy
+- Number and arrangement of decorative elements (but adapt WHAT they are to fit "${product.name}")`,
       });
     }
 
@@ -352,11 +358,11 @@ Keep EVERYTHING ELSE exactly as-is from this reference: background, decorative s
       // ── Text-only template: layout reference image IS sent to Gemini ──
       visualPrompt = `${aspectRatio} — Create a text-only advertising image for "${brandAnalysis.brandName}".
 
-Reproduce the LAYOUT REFERENCE image EXACTLY — same background, same decorative elements, same positions, same visual style. The ONLY change is the text and brand name.
+Reproduce this ad's STYLE: same background, same positions, same visual mood. Change only the text and brand name. If there are decorative objects, adapt them to fit "${product.name}" while keeping the same arrangement.
 
 Layout details:
 - Background: ${layout.backgroundStyle}
-- Decorative elements: Keep the same decorative style as the LAYOUT REFERENCE.
+- Decorative elements: Same arrangement as LAYOUT REFERENCE, adapted to fit "${product.name}".
 - Text placement: ${layout.textPosition}
 - Typography: ${layout.typographyStyle}
 - Headline style: ${layout.headlineStyle}${layout.subheadlineStyle ? `\n- Subheadline style: ${layout.subheadlineStyle}` : ""}
@@ -450,15 +456,15 @@ ${showPrices ? `7. ${priceInfo}` : "7. NO PRICES anywhere on the image."}
 - NEVER show a person holding a miniature/card version of the product.
 ${layout.productSizePercent ? `- Product size: ${layout.productSizePercent}` : ""}`;
 
-      visualPrompt = `${aspectRatio} — Reproduce the LAYOUT REFERENCE image EXACTLY but for "${brandAnalysis.brandName}" selling "${product.name}".
+      visualPrompt = `${aspectRatio} — Create the SAME style of ad as the LAYOUT REFERENCE but for "${brandAnalysis.brandName}" selling "${product.name}".
 
-The ad must look IDENTICAL to the LAYOUT REFERENCE — same background, same colors, same decorative elements, same positions, same typography style. The ONLY changes are: the product, the text, and the brand name.
+Copy the LAYOUT REFERENCE's style: same background, same colors, same positions, same typography style, same visual mood. Change only: the product (use PRODUCT reference), the text, the brand name. If there are decorative objects, adapt them to fit "${product.name}" while keeping the same arrangement/style.
 
 ${productSection}
 
-LAYOUT (copy from LAYOUT REFERENCE):
+LAYOUT (match the LAYOUT REFERENCE):
 - Background: ${layout.backgroundStyle}
-- Decorative elements: Keep the same style as the LAYOUT REFERENCE.
+- Decorative elements: Same arrangement as LAYOUT REFERENCE, adapted to fit "${product.name}".
 - Text placement: ${layout.textPosition}
 ${layout.textAreaPercent ? `- Text area: ${layout.textAreaPercent}` : ""}
 ${!noProduct ? `- Product area: ${layout.productPosition}` : ""}
@@ -491,7 +497,7 @@ ${noHuman ? "11. Do NOT add any person, model, hand, or human figure. The templa
 12. ALL text MUST match the brand's language. If the brand communicates in French, write in French. If in English, write in English.
 13. CRITICAL: Layout position values (like "8-20%", "25%", "45-55%") are INSTRUCTIONS for placement — they are NOT text to display on the image. NEVER render position percentages as visible text.
 14. NEVER invent statistics, star ratings, review counts, or customer numbers. Show ONLY the text provided above.
-15. The ONLY product shown is "${product.name}" from the PRODUCT reference. Keep all decorative/background elements from the LAYOUT REFERENCE as-is.`.trim();
+15. The ONLY product shown is "${product.name}". Decorative objects must be coherent with "${product.name}" — adapt them from the LAYOUT REFERENCE style but do NOT add random unrelated objects.`.trim();
     } else if (isTextOnly) {
       // Fallback text-only (no template ref)
       const textContent = imageText
