@@ -112,7 +112,9 @@ export async function POST(request: Request) {
       // Use precomputed metadata directly — no Haiku call
       metadata = precomputedAnalysis;
       isTextOnly = metadata.isTextOnly;
-      sceneDescription = `Background: ${metadata.layout.backgroundStyle}. Typography: ${metadata.layout.typographyStyle}.`;
+      // Only include background color/gradient — strip any mention of decorative elements
+      const bgStyle = metadata.layout.backgroundStyle || "clean minimal background";
+      sceneDescription = `Background: ${bgStyle}. Typography: ${metadata.layout.typographyStyle}. Clean background with no decorative objects.`;
 
       console.log("[generate-ad] Template type:", metadata.templateType);
       console.log("[generate-ad] Text-only:", isTextOnly);
@@ -220,7 +222,7 @@ export async function POST(request: Request) {
         textNarrative = `${logoSentence} Keep the text minimal — just the brand name.`;
       }
 
-      visualPrompt = `Create a polished, high-end Instagram advertising image for "${brandAnalysis.brandName}" selling "${product.name}". Reproduce the layout template's exact visual style — same background colors and gradients, same composition and spacing, same overall mood and lighting. ${productNarrative}${comparisonNarrative} ${textNarrative} ${sceneDescription} The template is from a completely different brand, so every element of the final ad — product, text, logo, branding — must be 100% about "${brandAnalysis.brandName}". Zero elements from the template's original brand should remain. All text must be sharp, readable, and properly positioned with no overlapping or cut-off characters. The final result should be a professional, visually striking ad ready to post on Instagram.`;
+      visualPrompt = `Create a polished, high-end Instagram advertising image for "${brandAnalysis.brandName}" selling "${product.name}". Reproduce the layout template's exact visual style — same background colors and gradients, same composition and spacing, same overall mood and lighting. ${productNarrative}${comparisonNarrative} ${textNarrative} ${sceneDescription} CRITICAL: Remove every single decorative object from the template — no cotton flowers, no leaves, no branches, no petals, no scattered items, no props, no decorative accessories of any kind. The background must be completely clean: only keep the color/gradient. The ONLY objects allowed in the final image are the product and the logo. Nothing else. The template is from a completely different brand, so every element of the final ad — product, text, logo, branding — must be 100% about "${brandAnalysis.brandName}". Zero elements from the template's original brand should remain. All text must be sharp, readable, and properly positioned with no overlapping or cut-off characters. The final result should be a professional, visually striking ad ready to post on Instagram.`;
 
     } else {
       // Fallback: no template
