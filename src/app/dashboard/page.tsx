@@ -11,7 +11,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (isHydrated) {
-      router.replace(brandAnalysis ? "/dashboard/generate" : "/dashboard/brand");
+      router.replace(brandAnalysis ? "/dashboard/ads" : "/dashboard/brand");
     }
   }, [router, brandAnalysis, isHydrated]);
 
