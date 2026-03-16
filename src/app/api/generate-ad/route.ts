@@ -120,45 +120,65 @@ export async function POST(request: Request) {
       sceneDescription = "Product displayed on a clean minimal surface with soft professional studio lighting.";
     }
 
-    // ── Reference images (ORDER MATTERS: product first, then layout) ──
+    // ── Reference images ──
+    // For template mode: template FIRST (it's the base to edit), then product/logo as swap references
+    // For other modes: product first, then other refs
     const referenceImages: Array<{
       base64: string;
       mimeType: string;
       label: string;
     }> = [];
 
-    // ── Reference images — order: product, logo, template (Gemini sees images before prompt text) ──
     const templateShowsProduct = metadata?.templateHasProductPhoto !== false;
-    if (productImageBase64 && !isTextOnly && templateShowsProduct) {
-      referenceImages.push({
-        base64: productImageBase64,
-        mimeType: productImageMimeType || "image/png",
-        label: `This is the exact product photo for "${brandAnalysis.brandName}" — "${product.name}". This product must appear in the final ad exactly as shown here: same colors, same shape, same textures, same proportions. Do not change anything about this product. If the product is black, it stays black. If it has lace trim, it keeps lace trim. Copy it with photographic fidelity as if you were placing this exact photo into the ad. Any product visible in the layout template below is from a different brand and must not appear in the final image.`,
-      });
-    }
 
-    if (brandLogoBase64) {
-      referenceImages.push({
-        base64: brandLogoBase64,
-        mimeType: brandLogoMimeType || "image/png",
-        label: `This is the official logo for "${brandAnalysis.brandName}". Place it in the ad exactly as-is, without any modification. Do not add any background shape, banner, circle, or badge behind it. Do not change its colors, font, or proportions. Simply place it on the ad background.`,
-      });
-    }
-
-    // Layout reference template
     if (template) {
+      // TEMPLATE MODE: template as creative direction reference
+      // Template first so Gemini sees the style before anything else
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: template.mimeType,
-        label: `This is the layout template to reproduce. Create an ad that looks visually identical to this template in terms of background colors, gradients, composition, spacing, and overall mood. The product and all text in this template are from a completely different brand — replace the product with the product photo provided above, and replace all text with content about "${brandAnalysis.brandName}" selling "${product.name}". IMPORTANT: Remove ALL decorative objects from this template (cotton flowers, leaves, branches, scattered items, etc.). Use a clean, uncluttered background instead. Only keep the background color/gradient and the overall layout structure.`,
+        label: `Creative direction reference — use this ad's style, color palette, mood, and marketing approach as inspiration. Do NOT copy its products, logo, text, or decorative elements. Only draw inspiration from its overall visual direction.`,
       });
+
+      if (productImageBase64 && !isTextOnly && templateShowsProduct) {
+        referenceImages.push({
+          base64: productImageBase64,
+          mimeType: productImageMimeType || "image/png",
+          label: `Product photo for "${product.name}" — feature this exact product in the ad. Copy it identically: same colors, shape, textures, proportions. Do not modify the product.`,
+        });
+      }
+
+      if (brandLogoBase64) {
+        referenceImages.push({
+          base64: brandLogoBase64,
+          mimeType: brandLogoMimeType || "image/png",
+          label: `Logo for "${brandAnalysis.brandName}" — place this exact logo in the ad as-is, no modification, no background shape added.`,
+        });
+      }
+    } else {
+      // NON-TEMPLATE MODES: product first, then logo, then refs
+      if (productImageBase64) {
+        referenceImages.push({
+          base64: productImageBase64,
+          mimeType: productImageMimeType || "image/png",
+          label: `Product photo for "${product.name}". Feature this product exactly as shown — same colors, shape, textures.`,
+        });
+      }
+
+      if (brandLogoBase64) {
+        referenceImages.push({
+          base64: brandLogoBase64,
+          mimeType: brandLogoMimeType || "image/png",
+          label: `Official logo for "${brandAnalysis.brandName}". Place as-is without modification.`,
+        });
+      }
     }
 
     if (isReference && referenceAdBase64) {
       referenceImages.push({
         base64: referenceAdBase64,
         mimeType: referenceAdMimeType || "image/png",
-        label: `This is a reference ad to reproduce. Copy its exact visual layout, composition, colors, and style, but replace all products with the product photo above and all branding with "${brandAnalysis.brandName}".`,
+        label: `Reference ad to reproduce. Copy its exact layout, composition, and colors, but swap products and branding for "${brandAnalysis.brandName}".`,
       });
     }
 
@@ -166,74 +186,58 @@ export async function POST(request: Request) {
       referenceImages.push({
         base64: previousAdBase64,
         mimeType: previousAdMimeType || "image/png",
-        label: `This is the previous version of the ad. Apply this modification: "${modificationPrompt}". Keep everything else identical.`,
+        label: `Previous ad version. Apply this change: "${modificationPrompt}". Keep everything else identical.`,
       });
     }
 
-    // ── Build Gemini prompt (narrative style per Google's best practices) ──
+    // ── Build Gemini prompt ──
     let visualPrompt: string;
     const layout = metadata?.layout;
 
-    const logoSentence = brandLogoBase64
-      ? `Place the exact logo from the logo reference for "${brandAnalysis.brandName}" without any modification.`
-      : `Write "${brandAnalysis.brandName}" in clean, modern typography as the brand name.`;
-
-    // Build a short headline instruction from brand context for Gemini to render
+    // Headline: use offer title, first USP, or product name
     const headlineHint = brandContext.offerTitle
-      ? brandContext.offerTitle
-      : brandContext.uniqueSellingPoints?.[0]
-        ? brandContext.uniqueSellingPoints[0]
-        : product.name;
+      || brandContext.uniqueSellingPoints?.[0]
+      || product.name;
 
-    // Product/brand context so Gemini knows what it's advertising
-    const productContext = [
-      `Brand: "${brandAnalysis.brandName}"`,
-      `Product: "${product.name}"`,
-      brandContext.productDescription ? `Description: ${brandContext.productDescription}` : null,
-      brandContext.productFeatures?.length ? `Key features: ${brandContext.productFeatures.join(", ")}` : null,
-      brandContext.uniqueSellingPoints?.length ? `Selling points: ${brandContext.uniqueSellingPoints.join(", ")}` : null,
-      brandContext.targetAudience ? `Target audience: ${brandContext.targetAudience}` : null,
-    ].filter(Boolean).join(". ") + ".";
+    // Price text for templates that show prices
+    let priceText = "";
+    if (brandContext.productOriginalPrice && brandContext.productSalePrice) {
+      priceText = ` Replace any price with: original price "${brandContext.productOriginalPrice}" crossed out, sale price "${brandContext.productSalePrice}" highlighted.`;
+    } else if (brandContext.productPrice) {
+      priceText = ` Replace any price with "${brandContext.productPrice}".`;
+    }
 
     if (isModification) {
-      visualPrompt = `Modify the previous ad image by applying this change: "${modificationPrompt}". Keep everything else identical. The brand is "${brandAnalysis.brandName}" and the product is "${product.name}". ${logoSentence}`;
+      visualPrompt = `Edit the previous ad image. Apply this change: "${modificationPrompt}". Keep everything else identical. Brand: "${brandAnalysis.brandName}", product: "${product.name}".`;
 
     } else if (isReference) {
-      visualPrompt = `Create a professional Instagram advertising image for "${brandAnalysis.brandName}" selling "${product.name}". Reproduce the reference ad's exact visual layout, composition, and style. ${productImageBase64 ? `Feature the product from the product photo reference.` : ""} ${logoSentence} Adapt all text and branding for "${brandAnalysis.brandName}" with a short, punchy headline about "${product.name}". The result should look polished, modern, and Instagram-ready.`;
+      visualPrompt = `Edit the reference ad image. Keep the exact same layout, background, colors, and composition. Make these swaps: ${productImageBase64 ? "Replace the product with the product photo provided." : ""} ${brandLogoBase64 ? `Replace the logo with the logo provided for "${brandAnalysis.brandName}".` : `Write "${brandAnalysis.brandName}" as the brand name.`} Replace all text with content about "${brandAnalysis.brandName}" selling "${product.name}" — write a short punchy headline. The result must look like the same ad but for a different brand.`;
 
     } else if (template && layout) {
-      const isComparison = metadata?.templateType === "comparison";
-      const noHuman = !metadata?.templateHasHumanModel;
+      // TEMPLATE INSPIRATION MODE — use template as creative direction reference
+      const productInstruction = templateShowsProduct && productImageBase64 && !isTextOnly
+        ? `Feature the product from the product photo — copy it exactly as-is (same colors, shape, texture), fully visible, never cropped.${!metadata?.templateHasHumanModel ? " Do not add any person or human figure." : ""}`
+        : isTextOnly
+          ? "This is a text-focused ad style — no product photo needed."
+          : "";
 
-      // Build the narrative prompt as descriptive paragraphs
-      let productNarrative: string;
-      if (isTextOnly) {
-        productNarrative = `This is a text-focused layout with no product photos. Create a clean, elegant background in the style of: ${layout.backgroundStyle}. No physical objects or people should appear.`;
-      } else if (templateShowsProduct) {
-        productNarrative = `Feature exactly one unit of "${product.name}" copied identically from the product photo reference — same exact color, shape, texture, and every detail. The product must be fully visible, never cropped, and shown as a standalone item without any packaging, boxes, or wrappers.${noHuman ? " Do not include any person, model, hand, or human figure in the image." : ""}`;
-      } else {
-        productNarrative = "";
-      }
+      const logoInstruction = brandLogoBase64
+        ? `Use the provided logo for "${brandAnalysis.brandName}" exactly as-is, no modification.`
+        : `Write "${brandAnalysis.brandName}" in clean, modern typography.`;
 
-      let comparisonNarrative = "";
-      if (isComparison) {
-        comparisonNarrative = ` Use a ${layout.comparisonLayout || "left vs right split"} comparison layout. On the bad side, show a generic, unappealing version of an inferior alternative in "${product.name}"'s product category — make it look dull and outdated. On the good side, show "${product.name}" from the product photo reference, looking clean, premium, and desirable.`;
-      }
+      const textInstruction = metadata?.textElements && metadata.textElements.length > 0
+        ? `Write a short, punchy headline about "${headlineHint}" (2-5 words max). Add a CTA button saying "Découvrir".${priceText} Use ${layout.typographyStyle || "clean sans-serif"} typography with ${layout.textColor || "white"} text${layout.accentColor ? ` and ${layout.accentColor} accents` : ""}.`
+        : `${logoInstruction}`;
 
-      // Text instructions — Gemini generates headline from brand context
-      let textNarrative: string;
-      const hasTextElements = metadata && metadata.textElements && metadata.textElements.length > 0;
-      if (hasTextElements) {
-        textNarrative = `Write a short, punchy headline about "${headlineHint}" in ${layout.headlineStyle || "bold, prominent typography"} positioned at ${layout.textPosition || "the center of the image"}. Add a call-to-action button saying "Découvrir" styled as ${layout.ctaStyle || "a clean button"} at ${layout.ctaPosition || "the bottom"}. ${logoSentence}${brandContext.productPrice && metadata?.templateHasPrices ? ` Include the price "${brandContext.productPrice}".` : ""}${brandContext.productOriginalPrice && brandContext.productSalePrice && metadata?.templateHasPrices ? ` Show the original price "${brandContext.productOriginalPrice}" crossed out and the sale price "${brandContext.productSalePrice}" highlighted.` : ""} Do not add any extra text, slogans, descriptions, or statistics beyond what is specified here. Use ${layout.typographyStyle || "clean sans-serif"} typography with ${layout.textColor || "white"} as the primary text color${layout.accentColor ? ` and ${layout.accentColor} as the accent color` : ""}.`;
-      } else {
-        textNarrative = `${logoSentence} Keep the text minimal — just the brand name.`;
-      }
+      const comparisonNote = metadata?.templateType === "comparison"
+        ? ` Use a comparison layout: one side shows a generic inferior alternative, the other side shows "${product.name}" looking premium and desirable.`
+        : "";
 
-      visualPrompt = `Create a polished, high-end Instagram advertising image. ${productContext} Reproduce the layout template's exact visual style — same background colors and gradients, same composition and spacing, same overall mood and lighting. ${productNarrative}${comparisonNarrative} ${textNarrative} ${sceneDescription} CRITICAL: Remove every single decorative object from the template — no cotton flowers, no leaves, no branches, no petals, no scattered items, no props, no decorative accessories of any kind. The background must be completely clean: only keep the color/gradient. The ONLY objects allowed in the final image are the product and the logo. Nothing else. The template is from a completely different brand, so every element of the final ad — product, text, logo, branding — must be 100% about "${brandAnalysis.brandName}". Zero elements from the template's original brand should remain. All text in the ad MUST be accurate and directly related to the product described above — do NOT invent features, categories, or claims that are not in the product description. All text must be sharp, readable, and properly positioned with no overlapping or cut-off characters. The final result should be a professional, visually striking ad ready to post on Instagram.`;
+      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). Use the template image as creative direction — match its overall style, color palette (${layout.backgroundStyle || "clean background"}), mood, and marketing approach (${metadata?.templateType || "product-showcase"}). ${productInstruction} ${logoInstruction} ${textInstruction}${comparisonNote} Do NOT copy decorative elements from the template (flowers, leaves, cotton, props) — keep the background clean. Do NOT invent product features or claims. Only use real information about "${product.name}". All text must be sharp and readable. The result should be a polished, modern ad inspired by the template's style.`;
 
     } else {
-      // Fallback: no template
-      visualPrompt = `Create a professional Instagram advertising image for "${brandAnalysis.brandName}" selling "${product.name}". ${sceneDescription} ${productImageBase64 ? `Feature the product exactly as shown in the product photo reference — same shape, colors, and details, fully visible and never cropped.` : ""} ${logoSentence} Write a short, punchy headline about "${product.name}" in modern, clean typography. The overall aesthetic should be premium, minimalist, and Instagram-ready.`;
+      // Fallback: no template — create from scratch
+      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). ${productImageBase64 ? "Feature the product exactly as shown in the product photo — same shape, colors, details, fully visible." : ""} ${brandLogoBase64 ? `Place the logo provided for "${brandAnalysis.brandName}" as-is.` : `Write "${brandAnalysis.brandName}" in clean typography.`} Write a short headline about "${headlineHint}". Premium, minimalist, Instagram-ready.`;
     }
 
     // ── PARALLEL: Image + copy at the same time ──
