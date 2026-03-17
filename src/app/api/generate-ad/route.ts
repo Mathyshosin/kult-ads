@@ -10,6 +10,16 @@ import { analyzeTemplateMetadata } from "@/lib/claude";
 // Allow up to 120s for Claude + Gemini + Satori chain
 export const maxDuration = 120;
 
+/** Detect actual MIME type from base64 magic bytes */
+function detectMimeType(base64: string, fallback: string = "image/png"): string {
+  const header = base64.slice(0, 20);
+  if (header.startsWith("/9j/") || header.startsWith("/9j+")) return "image/jpeg";
+  if (header.startsWith("iVBOR")) return "image/png";
+  if (header.startsWith("R0lGOD")) return "image/gif";
+  if (header.startsWith("UklGR")) return "image/webp";
+  return fallback;
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseClient();
@@ -158,22 +168,21 @@ export async function POST(request: Request) {
     if (isModification && previousAdBase64) {
       referenceImages.push({
         base64: previousAdBase64,
-        mimeType: previousAdMimeType || "image/png",
+        mimeType: detectMimeType(previousAdBase64, previousAdMimeType || "image/jpeg"),
         label: `This is the existing ad to edit. Apply ONLY this modification: "${modificationPrompt}". Keep absolutely everything else identical — same layout, colors, text placement, images, composition. The output must be visually identical except for the requested change.`,
       });
     } else if (template) {
       // TEMPLATE MODE: template as creative direction reference
-      // Template first so Gemini sees the style before anything else
       referenceImages.push({
         base64: template.imageBase64,
-        mimeType: template.mimeType,
+        mimeType: detectMimeType(template.imageBase64, template.mimeType),
         label: `Creative direction reference — use this ad's style, color palette, mood, and marketing approach as inspiration. Do NOT copy its products, logo, text, or decorative elements. Only draw inspiration from its overall visual direction.`,
       });
 
       if (productImageBase64 && !isTextOnly && templateShowsProduct) {
         referenceImages.push({
           base64: productImageBase64,
-          mimeType: productImageMimeType || "image/png",
+          mimeType: detectMimeType(productImageBase64, productImageMimeType || "image/jpeg"),
           label: `Product photo for "${product.name}" — feature this exact product in the ad. Copy it identically: same colors, shape, textures, proportions. Do not modify the product.`,
         });
       }
@@ -181,7 +190,7 @@ export async function POST(request: Request) {
       if (brandLogoBase64) {
         referenceImages.push({
           base64: brandLogoBase64,
-          mimeType: brandLogoMimeType || "image/png",
+          mimeType: detectMimeType(brandLogoBase64, brandLogoMimeType || "image/png"),
           label: `Logo for "${brandAnalysis.brandName}" — place this exact logo in the ad as-is, no modification, no background shape added.`,
         });
       }
@@ -190,7 +199,7 @@ export async function POST(request: Request) {
       if (productImageBase64) {
         referenceImages.push({
           base64: productImageBase64,
-          mimeType: productImageMimeType || "image/png",
+          mimeType: detectMimeType(productImageBase64, productImageMimeType || "image/jpeg"),
           label: `Product photo for "${product.name}". Feature this product exactly as shown — same colors, shape, textures.`,
         });
       }
@@ -198,7 +207,7 @@ export async function POST(request: Request) {
       if (brandLogoBase64) {
         referenceImages.push({
           base64: brandLogoBase64,
-          mimeType: brandLogoMimeType || "image/png",
+          mimeType: detectMimeType(brandLogoBase64, brandLogoMimeType || "image/png"),
           label: `Official logo for "${brandAnalysis.brandName}". Place as-is without modification.`,
         });
       }
@@ -207,7 +216,7 @@ export async function POST(request: Request) {
     if (isReference && referenceAdBase64) {
       referenceImages.push({
         base64: referenceAdBase64,
-        mimeType: referenceAdMimeType || "image/png",
+        mimeType: detectMimeType(referenceAdBase64, referenceAdMimeType || "image/jpeg"),
         label: `Reference ad to reproduce. Copy its exact layout, composition, and colors, but swap products and branding for "${brandAnalysis.brandName}".`,
       });
     }
