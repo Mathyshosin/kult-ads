@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuthStore } from "@/lib/auth-store";
 import {
   ChevronDown,
@@ -439,7 +439,17 @@ function PromptsTab() {
 export default function AdminPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const isLoading = useAuthStore((s) => s.isLoading);
+  const initialize = useAuthStore((s) => s.initialize);
   const [activeTab, setActiveTab] = useState<"moderation" | "prompts">("moderation");
+  const initRef = useRef(false);
+
+  useEffect(() => {
+    if (!initRef.current) {
+      initRef.current = true;
+      const unsub = initialize();
+      return unsub;
+    }
+  }, [initialize]);
 
   const isAdmin = currentUser?.email === ADMIN_EMAIL;
 
