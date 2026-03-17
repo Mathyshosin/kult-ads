@@ -404,13 +404,7 @@ export async function saveGeneratedAd(
   });
 
   if (error) console.error("Error saving ad:", error.message);
-
-  // Return public URL for immediate display
-  const { data: urlData } = sb.storage
-    .from("generated-ads")
-    .getPublicUrl(storagePath);
-
-  return urlData.publicUrl;
+  return storagePath;
 }
 
 export async function loadGeneratedAds(
@@ -428,40 +422,52 @@ export async function loadGeneratedAds(
 
   if (!rows || rows.length === 0) return [];
 
-  // Use public URLs instead of downloading images — instant load
-  const ads: GeneratedAd[] = rows.map((row) => {
-    const { data: urlData } = sb.storage
-      .from("generated-ads")
-      .getPublicUrl(row.image_path);
-
-    let debugInfo: GeneratedAd["_debug"] | undefined;
-    if (row.debug_info) {
+  // Download all images in parallel — loading state stays until complete
+  const results = await Promise.all(
+    rows.map(async (row): Promise<GeneratedAd | null> => {
       try {
-        debugInfo = typeof row.debug_info === "string"
-          ? JSON.parse(row.debug_info)
-          : row.debug_info;
-      } catch { /* ignore parse errors */ }
-    }
+        const { data: fileData } = await sb.storage
+          .from("generated-ads")
+          .download(row.image_path);
 
-    return {
-      id: row.id,
-      format: row.format,
-      imageBase64: "",  // Not downloaded — use imageUrl for display
-      imageUrl: urlData.publicUrl,
-      mimeType: row.image_path.endsWith(".png") ? "image/png" : "image/jpeg",
-      headline: row.headline || "",
-      bodyText: row.body_text || "",
-      callToAction: row.call_to_action || "",
-      productId: row.product_local_id || undefined,
-      offerId: row.offer_local_id || undefined,
-      templateId: row.template_id || undefined,
-      isFavorite: row.is_favorite || false,
-      timestamp: new Date(row.created_at).getTime(),
-      _debug: debugInfo,
-    };
-  });
+        if (!fileData) return null;
 
-  return ads;
+        const buffer = await fileData.arrayBuffer();
+        const base64 = btoa(
+          new Uint8Array(buffer).reduce((d, b) => d + String.fromCharCode(b), "")
+        );
+
+        let debugInfo: GeneratedAd["_debug"] | undefined;
+        if (row.debug_info) {
+          try {
+            debugInfo = typeof row.debug_info === "string"
+              ? JSON.parse(row.debug_info)
+              : row.debug_info;
+          } catch { /* ignore parse errors */ }
+        }
+
+        return {
+          id: row.id,
+          format: row.format,
+          imageBase64: base64,
+          mimeType: row.image_path.endsWith(".png") ? "image/png" : "image/jpeg",
+          headline: row.headline || "",
+          bodyText: row.body_text || "",
+          callToAction: row.call_to_action || "",
+          productId: row.product_local_id || undefined,
+          offerId: row.offer_local_id || undefined,
+          templateId: row.template_id || undefined,
+          isFavorite: row.is_favorite || false,
+          timestamp: new Date(row.created_at).getTime(),
+          _debug: debugInfo,
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return results.filter((ad): ad is GeneratedAd => ad !== null);
 }
 
 export async function deleteGeneratedAd(
