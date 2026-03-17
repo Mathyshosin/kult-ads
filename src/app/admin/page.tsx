@@ -1,7 +1,337 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, ChevronRight, Bot, Image, FileText, Cpu } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { useAuthStore } from "@/lib/auth-store";
+import {
+  ChevronDown,
+  ChevronRight,
+  Bot,
+  Image,
+  FileText,
+  Cpu,
+  Check,
+  X,
+  Loader2,
+  ShieldCheck,
+  Inbox,
+} from "lucide-react";
+import { INDUSTRY_TAGS, AD_TYPE_TAGS, PRODUCT_TYPE_TAGS } from "@/lib/template-tags";
+
+const ADMIN_EMAIL = "mathys.hosin@gmail.com";
+
+const CATEGORIES = [
+  { value: "promo", label: "Promo" },
+  { value: "lifestyle", label: "Lifestyle" },
+  { value: "product-showcase", label: "Product Showcase" },
+  { value: "comparison", label: "Comparaison" },
+  { value: "testimonial", label: "Témoignage" },
+  { value: "launch", label: "Lancement" },
+  { value: "brand-awareness", label: "Notoriété" },
+];
+
+// ══════════════════════════════════════════
+// Types
+// ══════════════════════════════════════════
+
+interface PendingTemplate {
+  id: string;
+  filename: string;
+  mime_type: string;
+  format: "square" | "story";
+  status: string;
+  submitted_by: string;
+  created_at: string;
+  imageUrl: string;
+}
+
+// ══════════════════════════════════════════
+// Moderation Card
+// ══════════════════════════════════════════
+
+function PendingCard({
+  item,
+  onApprove,
+  onReject,
+  loading,
+}: {
+  item: PendingTemplate;
+  onApprove: (item: PendingTemplate, meta: { name: string; format: string; category: string; tags: { industry: string[]; adType: string[]; productType: string[] } }) => void;
+  onReject: (item: PendingTemplate) => void;
+  loading: boolean;
+}) {
+  const [format, setFormat] = useState(item.format);
+  const [category, setCategory] = useState("product-showcase");
+  const [industry, setIndustry] = useState<string[]>([]);
+  const [adType, setAdType] = useState<string[]>([]);
+  const [productType, setProductType] = useState<string[]>(["produit-physique"]);
+  const [name, setName] = useState(
+    `Template ${new Date(item.created_at).toLocaleDateString("fr-FR")}`
+  );
+
+  const toggleTag = (arr: string[], val: string, setter: (v: string[]) => void) => {
+    setter(arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val]);
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+      {/* Image */}
+      <div className="relative aspect-square bg-gray-100">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={item.imageUrl}
+          alt="Pending template"
+          className="w-full h-full object-cover"
+        />
+        <span className="absolute top-2 left-2 text-[10px] font-semibold bg-black/70 text-white px-2 py-0.5 rounded-full">
+          {new Date(item.created_at).toLocaleDateString("fr-FR")}
+        </span>
+      </div>
+
+      {/* Controls */}
+      <div className="p-3 space-y-2.5">
+        {/* Name */}
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          placeholder="Nom du template"
+        />
+
+        {/* Format + Category */}
+        <div className="flex gap-2">
+          <select
+            value={format}
+            onChange={(e) => setFormat(e.target.value as "square" | "story")}
+            className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white"
+          >
+            <option value="square">Carré</option>
+            <option value="story">Story</option>
+          </select>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white"
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Industry Tags */}
+        <div>
+          <span className="text-[10px] font-semibold text-gray-500 uppercase">Industrie</span>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {INDUSTRY_TAGS.map((tag) => (
+              <button
+                key={tag.value}
+                onClick={() => toggleTag(industry, tag.value, setIndustry)}
+                className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                  industry.includes(tag.value)
+                    ? "bg-blue-500 text-white border-blue-500"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                {tag.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Ad Type Tags */}
+        <div>
+          <span className="text-[10px] font-semibold text-gray-500 uppercase">Type d&apos;ad</span>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {AD_TYPE_TAGS.map((tag) => (
+              <button
+                key={tag.value}
+                onClick={() => toggleTag(adType, tag.value, setAdType)}
+                className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                  adType.includes(tag.value)
+                    ? "bg-purple-500 text-white border-purple-500"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                {tag.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Product Type Tags */}
+        <div>
+          <span className="text-[10px] font-semibold text-gray-500 uppercase">Type produit</span>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {PRODUCT_TYPE_TAGS.map((tag) => (
+              <button
+                key={tag.value}
+                onClick={() => toggleTag(productType, tag.value, setProductType)}
+                className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                  productType.includes(tag.value)
+                    ? "bg-green-500 text-white border-green-500"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                {tag.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={() =>
+              onApprove(item, {
+                name,
+                format,
+                category,
+                tags: { industry, adType, productType },
+              })
+            }
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold bg-green-500 hover:bg-green-600 text-white rounded-xl py-2 transition-colors disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+            Approuver
+          </button>
+          <button
+            onClick={() => onReject(item)}
+            disabled={loading}
+            className="flex items-center justify-center gap-1.5 text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-600 rounded-xl px-4 py-2 transition-colors disabled:opacity-50"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
+// Moderation Tab
+// ══════════════════════════════════════════
+
+function ModerationTab() {
+  const [pending, setPending] = useState<PendingTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const fetchPending = useCallback(async () => {
+    try {
+      const res = await fetch("/api/pending-templates");
+      if (res.ok) {
+        const data = await res.json();
+        setPending(data.pending || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch pending:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPending();
+  }, [fetchPending]);
+
+  const handleApprove = async (
+    item: PendingTemplate,
+    meta: { name: string; format: string; category: string; tags: { industry: string[]; adType: string[]; productType: string[] } }
+  ) => {
+    setActionLoading(item.id);
+    try {
+      const res = await fetch("/api/pending-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "approve",
+          id: item.id,
+          filename: item.filename,
+          ...meta,
+        }),
+      });
+      if (res.ok) {
+        setPending((prev) => prev.filter((p) => p.id !== item.id));
+      }
+    } catch (err) {
+      console.error("Approve failed:", err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleReject = async (item: PendingTemplate) => {
+    setActionLoading(item.id);
+    try {
+      const res = await fetch("/api/pending-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "reject",
+          id: item.id,
+          filename: item.filename,
+        }),
+      });
+      if (res.ok) {
+        setPending((prev) => prev.filter((p) => p.id !== item.id));
+      }
+    } catch (err) {
+      console.error("Reject failed:", err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+        <span className="ml-2 text-sm text-gray-500">Chargement...</span>
+      </div>
+    );
+  }
+
+  if (pending.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+          <Inbox className="w-7 h-7 text-gray-400" />
+        </div>
+        <h3 className="text-base font-semibold text-gray-700">Aucun template en attente</h3>
+        <p className="text-sm text-gray-400 mt-1">
+          Les ads uploadées par les clients apparaîtront ici.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p className="text-sm text-gray-500 mb-4">
+        {pending.length} template{pending.length > 1 ? "s" : ""} en attente de modération
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {pending.map((item) => (
+          <PendingCard
+            key={item.id}
+            item={item}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            loading={actionLoading === item.id}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
+// Prompts Tab (existing content)
+// ══════════════════════════════════════════
 
 interface PromptSection {
   id: string;
@@ -17,152 +347,38 @@ const PROMPTS: PromptSection[] = [
   {
     id: "analyze",
     title: "Analyse de marque",
-    model: "Claude Sonnet 4 (claude-sonnet-4-20250514)",
+    model: "Claude Sonnet 4",
     icon: <Bot className="w-4 h-4" />,
-    description: "Analyse les données scrappées d'un site web et extrait marque, produits, offres, ton, couleurs, etc.",
-    systemPrompt: `Tu es un expert en marketing digital et analyse de marque.
-Analyse les données suivantes extraites d'un site web et retourne un JSON structuré.
-Réponds UNIQUEMENT avec du JSON valide, sans markdown, sans backticks, sans explication.
-
-Le JSON doit suivre exactement cette structure:
-{
-  "brandName": "string",
-  "brandDescription": "string (2-3 phrases décrivant la marque)",
-  "tone": "string (un parmi: professionnel, fun, luxe, minimaliste, audacieux, chaleureux)",
-  "colors": ["#hex1", "#hex2"],
-  "products": [{"id":"prod-1","name":"...","description":"...","price":"...","features":["..."]}],
-  "offers": [{"id":"offer-1","title":"...","description":"...","discountType":"percentage|fixed|freeShipping|other","discountValue":"..."}],
-  "targetAudience": "string",
-  "uniqueSellingPoints": ["string", "string"]
-}
-
-Règles:
-- Identifie TOUS les produits visibles sur le site
-- Identifie TOUTES les offres/promotions en cours
-- Si aucune offre n'est trouvée, retourne un tableau vide pour offers
-- Les IDs doivent être "prod-1", "prod-2", etc. et "offer-1", "offer-2", etc.
-- Les couleurs doivent être en format hex
-- Sois précis et fidèle aux informations du site`,
-    userPromptTemplate: `Données du site web à analyser:
-
-{scrapedData}`,
+    description: "Analyse les données scrappées d'un site web.",
+    systemPrompt: `Tu es un expert en marketing digital et analyse de marque...`,
+    userPromptTemplate: `Données du site web à analyser: {scrapedData}`,
   },
   {
     id: "copy",
     title: "Copywriting publicitaire",
-    model: "Claude Sonnet 4 (claude-sonnet-4-20250514)",
+    model: "Claude Sonnet 4",
     icon: <FileText className="w-4 h-4" />,
-    description: "Génère le texte publicitaire (headline, body, CTA) en français, optimisé pour la conversion.",
-    systemPrompt: `Tu es un copywriter expert en publicité digitale française, spécialisé dans les ads à haute conversion.
-Génère du texte publicitaire percutant et optimisé pour la conversion.
-Réponds UNIQUEMENT avec du JSON valide, sans markdown, sans backticks.
-
-Le JSON doit suivre cette structure:
-{
-  "headline": "string (max 8 mots, percutant, accrocheur, qui stoppe le scroll)",
-  "bodyText": "string (max 25 mots, persuasif, qui donne envie d'acheter)",
-  "callToAction": "string (max 4 mots, action claire et urgente)"
-}
-
-Règles de copywriting:
-- Le headline doit créer une émotion immédiate (curiosité, désir, urgence)
-- Le bodyText doit donner UNE raison concrète d'acheter MAINTENANT
-- Le CTA doit pousser à l'action immédiate
-- Utilise des mots puissants : exclusif, gratuit, immédiat, limité, secret, nouveau
-- Adapte le ton à la marque mais garde toujours l'intention de conversion`,
-    userPromptTemplate: `Marque: {brandName}
-Ton: {tone}
-Produit: {productName} - {productDescription}
-{offer}
-Format: {format}
-
-ANGLE DE CONVERSION À UTILISER:
-{conversionAngle}
-
-IMPORTANT: Le texte doit être DIFFÉRENT et UNIQUE. Pas de formules génériques. Adapte-toi spécifiquement à ce produit et cet angle.
-
-Génère le texte publicitaire en français.`,
+    description: "Génère le texte publicitaire en français.",
+    systemPrompt: `Tu es un copywriter expert en publicité digitale française...`,
+    userPromptTemplate: `Marque: {brandName}\nProduit: {productName}\nAngle: {conversionAngle}`,
   },
   {
     id: "gemini-library",
-    title: "Gemini — Mode Bibliothèque (produit)",
-    model: "Gemini 3.1 Flash Image (gemini-3.1-flash-image-preview)",
+    title: "Gemini — Mode Bibliothèque",
+    model: "Gemini 3.1 Flash Image",
     icon: <Image className="w-4 h-4" />,
-    description: "Claude analyse le template → décrit la scène adaptée → Gemini génère l'image avec la photo produit. Si le template est text-only, le mode textuel est activé automatiquement.",
-    systemPrompt: `(Pas de system prompt — Gemini utilise un prompt direct)
-
-Image de référence envoyée :
-1. [PRODUCT] — "use this EXACT product in the image. Do NOT create variants."
-(Pas d'image de référence si template text-only)`,
-    userPromptTemplate: `{aspectRatio} professional advertising photo for "{brandName}".
-
-Scene: {sceneDescription — générée par Claude à partir du template}
-
-RULES:
-- The ONLY product allowed is "{productName}" from the PRODUCT reference.
-- Keep the product IDENTICAL — same shape, colors, packaging.
-- Colors: {colors}. Photorealistic, professional camera, high-end lighting.
-- {textInstruction — si imageText: inclure le texte / sinon: pas de texte}`,
-  },
-  {
-    id: "gemini-textonly",
-    title: "Gemini — Mode Text-Only",
-    model: "Gemini 3.1 Flash Image (gemini-3.1-flash-image-preview)",
-    icon: <Image className="w-4 h-4" />,
-    description: "Activé automatiquement quand Claude détecte un template purement textuel (pas de photo produit). Génère un visuel typographique/graphique sans photo produit.",
-    systemPrompt: `(Pas de system prompt — Gemini utilise un prompt direct)
-
-AUCUNE image de référence envoyée (pas de photo produit).`,
-    userPromptTemplate: `{aspectRatio} bold graphic advertising design for "{brandName}".
-
-Scene: {sceneDescription — générée par Claude}
-
-This is a TEXT-FOCUSED graphic ad — NO product photography, NO physical objects.
-
-RULES:
-- TYPOGRAPHIC / GRAPHIC design. Bold typography, colors, shapes, patterns, gradients.
-- {textContent — headline adapté à la marque}
-- Colors: {colors}. Premium, on-brand.
-- Text = hero of the image. Large, readable.
-- NO product photos, NO physical objects, NO people.
-- Professional graphic design quality, clean layout.`,
-  },
-  {
-    id: "gemini-custom",
-    title: "Gemini — Mode Personnalisé",
-    model: "Gemini 3.1 Flash Image (gemini-3.1-flash-image-preview)",
-    icon: <Image className="w-4 h-4" />,
-    description: "L'utilisateur écrit sa propre description de scène. Gemini crée une NOUVELLE image de zéro à partir de cette description en intégrant le produit.",
-    systemPrompt: `(Pas de system prompt — Gemini utilise un prompt direct avec image produit)
-
-Image de référence envoyée :
-1. [PRODUCT] — "this is the exact product to feature in the new ad. Do NOT modify it."`,
-    userPromptTemplate: `Create a brand new {aspectRatio} advertising photo from scratch for "{brandName}".
-
-{customPrompt}
-
-Rules:
-- The PRODUCT is the hero. Feature it prominently, it must be the clear focal point.
-- Keep the product IDENTICAL to the PRODUCT reference — same packaging, colors, shape. Do NOT redesign, add ribbons, change labels, or alter it.
-- If a person appears in the scene, they MUST be holding or wearing the product. Never a person next to the product without direct interaction.
-- Photorealistic, shot on professional camera, shallow depth of field on background.
-- Leave breathing room in the image (top or bottom third) for text overlay later.
-- Absolutely NO text, words, letters, numbers, watermarks, or UI elements.`,
+    description: "Template comme direction créative → Gemini génère l'image.",
+    systemPrompt: `Ref images: template (creative direction), product, logo`,
+    userPromptTemplate: `Create a professional Instagram ad inspired by template style...`,
   },
   {
     id: "gemini-config",
     title: "Configuration Gemini",
     model: "Gemini 3.1 Flash Image Preview",
     icon: <Cpu className="w-4 h-4" />,
-    description: "Paramètres techniques de l'appel Gemini : modèle, retry, backoff.",
-    systemPrompt: `Modèle : gemini-3.1-flash-image-preview
-Response modalities : ["IMAGE", "TEXT"]
-Max retries : 3
-Backoff : exponentiel (1s, 2s, 3s)
-
-L'image est envoyée en tant que inlineData (base64) dans le champ contents.
-Les images de référence sont ajoutées avec un label textuel avant chaque image.`,
-    userPromptTemplate: `(Voir les prompts de génération d'image ci-dessus)`,
+    description: "Paramètres techniques de l'appel Gemini.",
+    systemPrompt: `Modèle : gemini-3.1-flash-image-preview\nResponse modalities : ["IMAGE", "TEXT"]\nMax retries : 3`,
+    userPromptTemplate: `(Voir les prompts de génération ci-dessus)`,
   },
 ];
 
@@ -170,59 +386,33 @@ function PromptBlock({ prompt }: { prompt: PromptSection }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border border-border rounded-xl overflow-hidden bg-white">
+    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors text-left"
       >
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary flex-shrink-0">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex-shrink-0">
           {prompt.icon}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-foreground">{prompt.title}</h3>
-          <p className="text-[11px] text-muted truncate">{prompt.model}</p>
+          <h3 className="text-sm font-semibold text-gray-800">{prompt.title}</h3>
+          <p className="text-[11px] text-gray-400 truncate">{prompt.model}</p>
         </div>
-        {open ? (
-          <ChevronDown className="w-4 h-4 text-muted flex-shrink-0" />
-        ) : (
-          <ChevronRight className="w-4 h-4 text-muted flex-shrink-0" />
-        )}
+        {open ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
       </button>
 
       {open && (
         <div className="px-4 pb-4 space-y-4">
-          <p className="text-xs text-muted">{prompt.description}</p>
-
+          <p className="text-xs text-gray-500">{prompt.description}</p>
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
-                System Prompt
-              </span>
-              <button
-                onClick={() => navigator.clipboard.writeText(prompt.systemPrompt)}
-                className="text-[10px] text-muted hover:text-foreground transition-colors"
-              >
-                Copier
-              </button>
-            </div>
-            <pre className="bg-gray-900 text-green-400 text-[11px] p-4 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed font-mono max-h-[400px] overflow-y-auto">
+            <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">System Prompt</span>
+            <pre className="bg-gray-900 text-green-400 text-[11px] p-4 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed font-mono max-h-[300px] overflow-y-auto mt-1.5">
               {prompt.systemPrompt}
             </pre>
           </div>
-
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">
-                User Prompt (template)
-              </span>
-              <button
-                onClick={() => navigator.clipboard.writeText(prompt.userPromptTemplate)}
-                className="text-[10px] text-muted hover:text-foreground transition-colors"
-              >
-                Copier
-              </button>
-            </div>
-            <pre className="bg-gray-900 text-amber-300 text-[11px] p-4 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed font-mono max-h-[300px] overflow-y-auto">
+            <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">User Prompt</span>
+            <pre className="bg-gray-900 text-amber-300 text-[11px] p-4 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed font-mono max-h-[300px] overflow-y-auto mt-1.5">
               {prompt.userPromptTemplate}
             </pre>
           </div>
@@ -232,45 +422,71 @@ function PromptBlock({ prompt }: { prompt: PromptSection }) {
   );
 }
 
-export default function AdminPage() {
+function PromptsTab() {
   return (
-    <div className="min-h-screen bg-surface">
-      <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Admin — Prompts IA</h1>
-          <p className="text-sm text-muted mt-1">
-            Tous les prompts utilisés par Claude et Gemini dans Kult-ads.
-          </p>
+    <div className="space-y-3">
+      {PROMPTS.map((p) => (
+        <PromptBlock key={p.id} prompt={p} />
+      ))}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
+// Main Admin Page
+// ══════════════════════════════════════════
+
+export default function AdminPage() {
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const [activeTab, setActiveTab] = useState<"moderation" | "prompts">("moderation");
+
+  const isAdmin = currentUser?.email === ADMIN_EMAIL;
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <ShieldCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <h2 className="text-lg font-semibold text-gray-700">Accès restreint</h2>
+          <p className="text-sm text-gray-400 mt-1">Cette page est réservée aux administrateurs.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-5xl mx-auto py-8 px-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-xl font-bold text-gray-800">Admin</h1>
+          {/* Tabs */}
+          <div className="flex bg-white rounded-xl border border-gray-200 p-1">
+            <button
+              onClick={() => setActiveTab("moderation")}
+              className={`text-xs font-medium px-4 py-1.5 rounded-lg transition-colors ${
+                activeTab === "moderation"
+                  ? "bg-gray-900 text-white"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Modération
+            </button>
+            <button
+              onClick={() => setActiveTab("prompts")}
+              className={`text-xs font-medium px-4 py-1.5 rounded-lg transition-colors ${
+                activeTab === "prompts"
+                  ? "bg-gray-900 text-white"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Prompts IA
+            </button>
+          </div>
         </div>
 
-        {/* Summary */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-xl border border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 rounded-md bg-purple-100 flex items-center justify-center">
-                <Bot className="w-3.5 h-3.5 text-purple-600" />
-              </div>
-              <span className="text-xs font-semibold text-foreground">Claude Sonnet 4</span>
-            </div>
-            <p className="text-[11px] text-muted">2 prompts : analyse de marque, copywriting</p>
-          </div>
-          <div className="bg-white rounded-xl border border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 rounded-md bg-blue-100 flex items-center justify-center">
-                <Image className="w-3.5 h-3.5 text-blue-600" />
-              </div>
-              <span className="text-xs font-semibold text-foreground">Gemini 3.1 Flash</span>
-            </div>
-            <p className="text-[11px] text-muted">3 modes : bibliothèque, text-only (auto), personnalisé</p>
-          </div>
-        </div>
-
-        {/* Prompts */}
-        <div className="space-y-3">
-          {PROMPTS.map((p) => (
-            <PromptBlock key={p.id} prompt={p} />
-          ))}
-        </div>
+        {/* Content */}
+        {activeTab === "moderation" ? <ModerationTab /> : <PromptsTab />}
       </div>
     </div>
   );

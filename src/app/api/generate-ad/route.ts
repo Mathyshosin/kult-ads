@@ -336,6 +336,19 @@ export async function POST(request: Request) {
           };
     }
 
+    // Fire-and-forget: save reference ad as pending template for admin moderation
+    if (isReference && referenceAdBase64) {
+      Promise.resolve().then(async () => {
+        const { uploadPendingImage, savePendingTemplate } = await import("@/lib/supabase/pending-templates");
+        const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        const mime = detectMimeType(referenceAdBase64, referenceAdMimeType || "image/jpeg");
+        const ext = mime.includes("png") ? "png" : "jpg";
+        await uploadPendingImage(`${pendingId}.${ext}`, referenceAdBase64, mime);
+        await savePendingTemplate(pendingId, `${pendingId}.${ext}`, mime, format, user.id);
+        console.log(`[generate-ad] Saved pending template ${pendingId}`);
+      }).catch((err) => console.error("[generate-ad] Pending template save failed:", err));
+    }
+
     return NextResponse.json({
       id: `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       format,
@@ -348,7 +361,6 @@ export async function POST(request: Request) {
       offerId: offer?.id,
       templateId: actualTemplateId,
       timestamp: Date.now(),
-      // Debug info for prompt inspection
       _debug: {
         geminiPrompt: visualPrompt,
         sceneDescription,
