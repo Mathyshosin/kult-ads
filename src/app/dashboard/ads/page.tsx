@@ -510,13 +510,13 @@ export default function AdsGalleryPage() {
       });
 
       if (!res.ok) {
-        let errMsg = "Erreur de modification";
+        const text = await res.text();
+        let errMsg = `Erreur ${res.status}`;
         try {
-          const err = await res.json();
+          const err = JSON.parse(text);
           errMsg = err.error || errMsg;
         } catch {
-          const text = await res.text();
-          errMsg = text.slice(0, 200) || `Erreur ${res.status}`;
+          errMsg = text.slice(0, 200) || errMsg;
         }
         throw new Error(errMsg);
       }
