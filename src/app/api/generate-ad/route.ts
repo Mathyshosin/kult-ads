@@ -194,8 +194,31 @@ export async function POST(request: Request) {
           label: `Logo for "${brandAnalysis.brandName}" — place this exact logo in the ad as-is, no modification, no background shape added.`,
         });
       }
+    } else if (isReference && referenceAdBase64) {
+      // REFERENCE MODE: treat uploaded ad same as template — creative direction first
+      referenceImages.push({
+        base64: referenceAdBase64,
+        mimeType: detectMimeType(referenceAdBase64, referenceAdMimeType || "image/jpeg"),
+        label: `Creative direction reference — use this ad's style, color palette, mood, and marketing approach as inspiration. Do NOT copy its products, logo, text, or decorative elements. Only draw inspiration from its overall visual direction.`,
+      });
+
+      if (productImageBase64) {
+        referenceImages.push({
+          base64: productImageBase64,
+          mimeType: detectMimeType(productImageBase64, productImageMimeType || "image/jpeg"),
+          label: `Product photo for "${product.name}" — feature this exact product in the ad. Copy it identically: same colors, shape, textures, proportions. Do not modify the product.`,
+        });
+      }
+
+      if (brandLogoBase64) {
+        referenceImages.push({
+          base64: brandLogoBase64,
+          mimeType: detectMimeType(brandLogoBase64, brandLogoMimeType || "image/png"),
+          label: `Logo for "${brandAnalysis.brandName}" — place this exact logo in the ad as-is, no modification, no background shape added.`,
+        });
+      }
     } else {
-      // NON-TEMPLATE MODES: product first, then logo, then refs
+      // NO TEMPLATE / NO REFERENCE: product first, then logo
       if (productImageBase64) {
         referenceImages.push({
           base64: productImageBase64,
@@ -211,14 +234,6 @@ export async function POST(request: Request) {
           label: `Official logo for "${brandAnalysis.brandName}". Place as-is without modification.`,
         });
       }
-    }
-
-    if (isReference && referenceAdBase64) {
-      referenceImages.push({
-        base64: referenceAdBase64,
-        mimeType: detectMimeType(referenceAdBase64, referenceAdMimeType || "image/jpeg"),
-        label: `Reference ad to reproduce. Copy its exact layout, composition, and colors, but swap products and branding for "${brandAnalysis.brandName}".`,
-      });
     }
 
     // (modification image already added at the top of referenceImages)
@@ -244,7 +259,16 @@ export async function POST(request: Request) {
       visualPrompt = `You are an image editor. The provided image is an existing advertisement. Your job is to make ONE specific edit to it: "${modificationPrompt}". CRITICAL: Keep everything else EXACTLY the same — same background, same layout, same product placement, same text style, same colors, same composition. The result must look like the same ad with only the requested modification applied. Do NOT redesign, recreate, or reimagine the ad.`;
 
     } else if (isReference) {
-      visualPrompt = `Edit the reference ad image. Keep the exact same layout, background, colors, and composition. Make these swaps: ${productImageBase64 ? "Replace the product with the product photo provided." : ""} ${brandLogoBase64 ? `Replace the logo with the logo provided for "${brandAnalysis.brandName}".` : `Write "${brandAnalysis.brandName}" as the brand name.`} Replace all text with content about "${brandAnalysis.brandName}" selling "${product.name}" — write a short punchy headline. The result must look like the same ad but for a different brand.`;
+      // Same approach as template mode — use the uploaded ad as creative direction
+      const refProductInstruction = productImageBase64
+        ? `Feature the product from the product photo — copy it exactly as-is (same colors, shape, texture), fully visible, never cropped.`
+        : "";
+
+      const refLogoInstruction = brandLogoBase64
+        ? `Use the provided logo for "${brandAnalysis.brandName}" exactly as-is, no modification.`
+        : `Write "${brandAnalysis.brandName}" in clean, modern typography.`;
+
+      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). Use the reference image as creative direction — match its overall style, color palette, mood, and marketing approach. ${refProductInstruction} ${refLogoInstruction} Write a short, punchy headline about "${headlineHint}" (2-5 words max). Add a CTA button saying "Découvrir".${priceText} Do NOT copy decorative elements from the reference (flowers, leaves, cotton, props) — keep the background clean. Do NOT invent product features or claims. Only use real information about "${product.name}". All text must be sharp and readable. The result should be a polished, modern ad inspired by the reference's style.`;
 
     } else if (template && layout) {
       // TEMPLATE INSPIRATION MODE — use template as creative direction reference
