@@ -442,8 +442,7 @@ export default function AdsGalleryPage() {
           product,
           format: ad.format,
           modificationPrompt: prompt,
-          previousAdBase64: ad.imageBase64,
-          previousAdMimeType: ad.mimeType,
+          previousAdId: ad.id,
           productImageBase64: productImage?.base64,
           productImageMimeType: productImage?.mimeType,
           brandLogoBase64: brandLogo?.base64,
@@ -452,8 +451,15 @@ export default function AdsGalleryPage() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Erreur de modification");
+        let errMsg = "Erreur de modification";
+        try {
+          const err = await res.json();
+          errMsg = err.error || errMsg;
+        } catch {
+          const text = await res.text();
+          errMsg = text.slice(0, 200) || `Erreur ${res.status}`;
+        }
+        throw new Error(errMsg);
       }
 
       const data = await res.json();

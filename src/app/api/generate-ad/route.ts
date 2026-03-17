@@ -32,8 +32,9 @@ export async function POST(request: Request) {
       referenceAdBase64,
       referenceAdMimeType,
       modificationPrompt,
-      previousAdBase64,
-      previousAdMimeType,
+      previousAdBase64: rawPreviousAdBase64,
+      previousAdMimeType: rawPreviousAdMimeType,
+      previousAdId,
     } = await request.json();
 
     if (!brandAnalysis || !product || !format) {
@@ -62,6 +63,28 @@ export async function POST(request: Request) {
       offerTitle: offer?.title,
       offerDescription: offer?.description,
     };
+
+    // ── Fetch previous ad from Supabase if needed ──
+    let previousAdBase64 = rawPreviousAdBase64;
+    let previousAdMimeType = rawPreviousAdMimeType;
+    if (modificationPrompt && previousAdId && !previousAdBase64) {
+      const { data: adRow } = await supabase
+        .from("generated_ads")
+        .select("image_path")
+        .eq("id", previousAdId)
+        .eq("user_id", user.id)
+        .single();
+      if (adRow?.image_path) {
+        const { data: fileData } = await supabase.storage
+          .from("generated-ads")
+          .download(adRow.image_path);
+        if (fileData) {
+          const buffer = await fileData.arrayBuffer();
+          previousAdBase64 = Buffer.from(buffer).toString("base64");
+          previousAdMimeType = adRow.image_path.endsWith(".png") ? "image/png" : "image/jpeg";
+        }
+      }
+    }
 
     // ── Mode detection ──
     const isModification = !!(modificationPrompt && previousAdBase64);
