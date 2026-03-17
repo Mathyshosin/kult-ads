@@ -320,22 +320,24 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
         set({
           brandAnalysis: result.analysis,
           brandAnalysisId: result.id,
-          isHydrated: true,
         });
 
-        // Load images and ads in parallel — don't block rendering
+        // Load images and ads in parallel — wait for everything before marking hydrated
         const [{ images, logo }, ads] = await Promise.all([
           loadUploadedImages(userId, result.id),
           loadGeneratedAds(userId, result.id),
         ]);
-        set({ uploadedImages: images, brandLogo: logo });
-        if (ads.length > 0) {
-          set({ generatedAds: ads });
-        }
+        set({
+          uploadedImages: images,
+          brandLogo: logo,
+          generatedAds: ads.length > 0 ? ads : [],
+          isHydrated: true,
+        });
+      } else {
+        set({ isHydrated: true });
       }
     } catch (err) {
       console.error("[sync] Error hydrating from Supabase:", err);
-    } finally {
       set({ isHydrated: true });
     }
   },
