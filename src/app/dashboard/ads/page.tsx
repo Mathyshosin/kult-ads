@@ -482,6 +482,7 @@ export default function AdsGalleryPage() {
   const completeGeneration = useWizardStore((s) => s.completeGeneration);
   const failGeneration = useWizardStore((s) => s.failGeneration);
   const syncGeneratedAd = useWizardStore((s) => s.syncGeneratedAd);
+  const brandAnalysisId = useWizardStore((s) => s.brandAnalysisId);
 
   const handleModify = async (ad: GeneratedAd, prompt: string) => {
     if (!brandAnalysis) return;
@@ -490,7 +491,11 @@ export default function AdsGalleryPage() {
     if (!product) return;
 
     const productImage = uploadedImages.find((img) => img.productId === product.id);
-    const tempId = startGeneration({ format: ad.format, productId: product.id });
+    const originalId = ad.id;
+
+    // Put the original ad in "generating" state (in-place, no new card)
+    updateGeneratedAd(originalId, { status: "generating", error: undefined });
+    setSelectedAd(null); // close modal during generation
 
     try {
       const res = await fetch("/api/generate-ad", {
@@ -501,7 +506,7 @@ export default function AdsGalleryPage() {
           product,
           format: ad.format,
           modificationPrompt: prompt,
-          previousAdId: ad.id,
+          previousAdId: originalId,
           productImageBase64: productImage?.base64,
           productImageMimeType: productImage?.mimeType,
           brandLogoBase64: brandLogo?.base64,
@@ -522,14 +527,33 @@ export default function AdsGalleryPage() {
       }
 
       const data = await res.json();
-      completeGeneration(tempId, data);
 
-      const newAd = useWizardStore.getState().generatedAds.find((a) => a.id === tempId);
-      if (newAd && currentUser) {
-        syncGeneratedAd(currentUser.id, newAd);
+      // Replace the original ad in-place with the new result
+      updateGeneratedAd(originalId, {
+        imageBase64: data.imageBase64,
+        mimeType: data.mimeType,
+        headline: data.headline,
+        bodyText: data.bodyText,
+        callToAction: data.callToAction,
+        _debug: data._debug,
+        status: "completed",
+        error: undefined,
+      });
+
+      // Sync to Supabase: delete old, save updated
+      if (currentUser && brandAnalysisId) {
+        const updatedAd = useWizardStore.getState().generatedAds.find((a) => a.id === originalId);
+        if (updatedAd) {
+          syncDeleteGeneratedAd(currentUser.id, originalId).catch(console.error);
+          syncGeneratedAd(currentUser.id, updatedAd);
+        }
       }
     } catch (err) {
-      failGeneration(tempId, err instanceof Error ? err.message : "Erreur");
+      // Restore the ad to completed state with error message
+      updateGeneratedAd(originalId, {
+        status: "completed",
+        error: err instanceof Error ? err.message : "Échec de la modification",
+      });
     }
   };
 
