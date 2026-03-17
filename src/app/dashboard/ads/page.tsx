@@ -507,6 +507,8 @@ export default function AdsGalleryPage() {
           format: ad.format,
           modificationPrompt: prompt,
           previousAdId: originalId,
+          previousAdBase64: ad.imageBase64,
+          previousAdMimeType: ad.mimeType,
           productImageBase64: productImage?.base64,
           productImageMimeType: productImage?.mimeType,
           brandLogoBase64: brandLogo?.base64,
