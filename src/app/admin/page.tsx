@@ -438,9 +438,18 @@ function PromptsTab() {
 
 export default function AdminPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const [activeTab, setActiveTab] = useState<"moderation" | "prompts">("moderation");
 
   const isAdmin = currentUser?.email === ADMIN_EMAIL;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   if (!isAdmin) {
     return (
