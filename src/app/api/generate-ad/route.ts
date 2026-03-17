@@ -154,7 +154,14 @@ export async function POST(request: Request) {
 
     const templateShowsProduct = metadata?.templateHasProductPhoto !== false;
 
-    if (template) {
+    // MODIFICATION MODE: send ONLY the previous ad — no other images
+    if (isModification && previousAdBase64) {
+      referenceImages.push({
+        base64: previousAdBase64,
+        mimeType: previousAdMimeType || "image/png",
+        label: `This is the existing ad to edit. Apply ONLY this modification: "${modificationPrompt}". Keep absolutely everything else identical — same layout, colors, text placement, images, composition. The output must be visually identical except for the requested change.`,
+      });
+    } else if (template) {
       // TEMPLATE MODE: template as creative direction reference
       // Template first so Gemini sees the style before anything else
       referenceImages.push({
@@ -205,13 +212,7 @@ export async function POST(request: Request) {
       });
     }
 
-    if (isModification && previousAdBase64) {
-      referenceImages.push({
-        base64: previousAdBase64,
-        mimeType: previousAdMimeType || "image/png",
-        label: `Previous ad version. Apply this change: "${modificationPrompt}". Keep everything else identical.`,
-      });
-    }
+    // (modification image already added at the top of referenceImages)
 
     // ── Build Gemini prompt ──
     let visualPrompt: string;
@@ -231,7 +232,7 @@ export async function POST(request: Request) {
     }
 
     if (isModification) {
-      visualPrompt = `Edit the previous ad image. Apply this change: "${modificationPrompt}". Keep everything else identical. Brand: "${brandAnalysis.brandName}", product: "${product.name}".`;
+      visualPrompt = `You are an image editor. The provided image is an existing advertisement. Your job is to make ONE specific edit to it: "${modificationPrompt}". CRITICAL: Keep everything else EXACTLY the same — same background, same layout, same product placement, same text style, same colors, same composition. The result must look like the same ad with only the requested modification applied. Do NOT redesign, recreate, or reimagine the ad.`;
 
     } else if (isReference) {
       visualPrompt = `Edit the reference ad image. Keep the exact same layout, background, colors, and composition. Make these swaps: ${productImageBase64 ? "Replace the product with the product photo provided." : ""} ${brandLogoBase64 ? `Replace the logo with the logo provided for "${brandAnalysis.brandName}".` : `Write "${brandAnalysis.brandName}" as the brand name.`} Replace all text with content about "${brandAnalysis.brandName}" selling "${product.name}" — write a short punchy headline. The result must look like the same ad but for a different brand.`;
