@@ -24,23 +24,20 @@ export default function DashboardHeader() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 glass border-b border-border/40">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="h-14 flex items-center justify-between">
+    <nav className="sticky top-0 z-50 glass border-b border-border/30">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="h-12 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/dashboard" className="flex items-center gap-2.5 group">
-            <div className="relative">
-              <div className="w-8 h-8 btn-gradient rounded-xl flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-primary/20 to-accent/20 blur-sm -z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Link href="/dashboard" className="flex items-center gap-2 group">
+            <div className="w-7 h-7 bg-primary rounded-[8px] flex items-center justify-center shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-base font-bold text-foreground tracking-tight">
+            <span className="text-[15px] font-bold text-foreground tracking-tight">
               Kult<span className="text-gradient">ads</span>
             </span>
           </Link>
 
-          {/* Tabs */}
+          {/* iOS Segmented Control */}
           <div className="toggle-pill flex items-center gap-0.5">
             {tabs.map((tab) => {
               const isActive = pathname.startsWith(tab.href);
@@ -48,13 +45,13 @@ export default function DashboardHeader() {
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-[10px] transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 px-3 py-[6px] text-[13px] font-medium rounded-[8px] transition-all duration-200 ${
                     isActive
                       ? "toggle-pill-active"
                       : "text-muted hover:text-foreground"
                   }`}
                 >
-                  <tab.icon className={`w-4 h-4 ${isActive ? "text-primary" : ""}`} />
+                  <tab.icon className={`w-3.5 h-3.5 ${isActive ? "text-primary" : ""}`} />
                   <span className="hidden sm:inline">{tab.label}</span>
                 </Link>
               );
@@ -62,22 +59,22 @@ export default function DashboardHeader() {
           </div>
 
           {/* User */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {currentUser && (
               <div className="hidden sm:flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary/15 to-accent/15 flex items-center justify-center ring-1 ring-border/60">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
                   <span className="text-xs font-semibold text-primary">
                     {(currentUser.name || currentUser.email || "U").charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <span className="text-xs font-medium text-muted">
+                <span className="text-[13px] font-medium text-muted">
                   {currentUser.name || currentUser.email}
                 </span>
               </div>
             )}
             <button
               onClick={handleLogout}
-              className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-colors"
+              className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-black/5 transition-colors"
               title="Se déconnecter"
             >
               <LogOut className="w-4 h-4" />
