@@ -48,6 +48,7 @@ export interface GeneratedAd {
   id: string;
   format: "square" | "story";
   imageBase64: string;          // Full scene image from Gemini (product integrated)
+  imageUrl?: string;            // Supabase Storage public URL (for fast display)
   mimeType: string;
   headline: string;
   bodyText: string;

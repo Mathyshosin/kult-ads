@@ -271,7 +271,15 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
     const { brandAnalysisId } = get();
     if (!brandAnalysisId) return;
     try {
-      await saveGeneratedAd(userId, brandAnalysisId, ad);
+      const imageUrl = await saveGeneratedAd(userId, brandAnalysisId, ad);
+      // Store the public URL so we don't need base64 for display
+      if (imageUrl) {
+        set((s) => ({
+          generatedAds: s.generatedAds.map((a) =>
+            a.id === ad.id ? { ...a, imageUrl } : a
+          ),
+        }));
+      }
     } catch (err) {
       console.error("[sync] Error saving generated ad:", err);
     }

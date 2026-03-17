@@ -22,6 +22,13 @@ import {
 } from "lucide-react";
 import { toPng } from "html-to-image";
 
+// Helper: use public URL when available, fallback to base64
+function adImageSrc(ad: GeneratedAd): string {
+  if (ad.imageUrl) return ad.imageUrl;
+  if (ad.imageBase64) return `data:${ad.mimeType};base64,${ad.imageBase64}`;
+  return "";
+}
+
 // ── Growth hacking & marketing fun facts ──
 const FUN_FACTS = [
   "Dropbox a augmenté ses inscriptions de 60% grâce à un simple programme de parrainage offrant 500 Mo gratuits.",
@@ -158,7 +165,7 @@ function CompletedCard({ ad, onClick, onToggleFavorite }: { ad: GeneratedAd; onC
       } rounded-2xl overflow-hidden bg-black shadow-soft hover:shadow-glow-lg transition-all duration-300 cursor-pointer active:scale-[0.98]`}
     >
       <img
-        src={`data:${ad.mimeType};base64,${ad.imageBase64}`}
+        src={adImageSrc(ad)}
         alt="Ad"
         className="absolute inset-0 w-full h-full object-cover"
         loading="lazy"
@@ -212,7 +219,7 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
       link.click();
     } catch {
       const link = document.createElement("a");
-      link.href = `data:${ad.mimeType};base64,${ad.imageBase64}`;
+      link.href = ad.imageUrl || `data:${ad.mimeType};base64,${ad.imageBase64}`;
       link.download = `kult-ad-${ad.format}-${ad.id}.png`;
       link.click();
     }
@@ -245,7 +252,7 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
             className={`relative ${isStory ? "aspect-[9/16]" : "aspect-square"} rounded-2xl overflow-hidden bg-black`}
           >
             <img
-              src={`data:${ad.mimeType};base64,${ad.imageBase64}`}
+              src={adImageSrc(ad)}
               alt="Ad"
               className="absolute inset-0 w-full h-full object-cover"
             />
