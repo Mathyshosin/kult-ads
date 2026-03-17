@@ -336,9 +336,9 @@ export async function POST(request: Request) {
           };
     }
 
-    // Fire-and-forget: save reference ad as pending template for admin moderation
+    // Save reference ad as pending template for admin moderation (must await on Vercel)
     if (isReference && referenceAdBase64) {
-      Promise.resolve().then(async () => {
+      try {
         const { uploadPendingImage, savePendingTemplate } = await import("@/lib/supabase/pending-templates");
         const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
         const mime = detectMimeType(referenceAdBase64, referenceAdMimeType || "image/jpeg");
@@ -346,7 +346,9 @@ export async function POST(request: Request) {
         await uploadPendingImage(`${pendingId}.${ext}`, referenceAdBase64, mime);
         await savePendingTemplate(pendingId, `${pendingId}.${ext}`, mime, format, user.id);
         console.log(`[generate-ad] Saved pending template ${pendingId}`);
-      }).catch((err) => console.error("[generate-ad] Pending template save failed:", err));
+      } catch (err) {
+        console.error("[generate-ad] Pending template save failed:", err);
+      }
     }
 
     return NextResponse.json({
