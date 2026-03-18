@@ -60,12 +60,14 @@ export async function getPendingTemplates(): Promise<
     return [];
   }
 
-  return (data as PendingTemplateRow[]).map((row) => {
-    const { data: urlData } = supabase.storage
+  const results: (PendingTemplateRow & { imageUrl: string })[] = [];
+  for (const row of data as PendingTemplateRow[]) {
+    const { data: urlData } = await supabase.storage
       .from("pending-templates")
-      .getPublicUrl(row.filename);
-    return { ...row, imageUrl: urlData.publicUrl };
-  });
+      .createSignedUrl(row.filename, 3600); // 1h signed URL
+    results.push({ ...row, imageUrl: urlData?.signedUrl || "" });
+  }
+  return results;
 }
 
 // ── Update status ──

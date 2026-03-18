@@ -14,20 +14,11 @@ import {
   Loader2,
   ShieldCheck,
   Inbox,
+  Package,
+  Briefcase,
 } from "lucide-react";
-import { INDUSTRY_TAGS, AD_TYPE_TAGS, PRODUCT_TYPE_TAGS } from "@/lib/template-tags";
 
 const ADMIN_EMAIL = "mathys.hosin@gmail.com";
-
-const CATEGORIES = [
-  { value: "promo", label: "Promo" },
-  { value: "lifestyle", label: "Lifestyle" },
-  { value: "product-showcase", label: "Product Showcase" },
-  { value: "comparison", label: "Comparaison" },
-  { value: "testimonial", label: "Témoignage" },
-  { value: "launch", label: "Lancement" },
-  { value: "brand-awareness", label: "Notoriété" },
-];
 
 // ══════════════════════════════════════════
 // Types
@@ -45,7 +36,7 @@ interface PendingTemplate {
 }
 
 // ══════════════════════════════════════════
-// Moderation Card
+// Moderation Card — simplified: just Produit / Service
 // ══════════════════════════════════════════
 
 function PendingCard({
@@ -55,22 +46,11 @@ function PendingCard({
   loading,
 }: {
   item: PendingTemplate;
-  onApprove: (item: PendingTemplate, meta: { name: string; format: string; category: string; tags: { industry: string[]; adType: string[]; productType: string[] } }) => void;
+  onApprove: (item: PendingTemplate, meta: { type: "produit" | "service" }) => void;
   onReject: (item: PendingTemplate) => void;
   loading: boolean;
 }) {
-  const [format, setFormat] = useState(item.format);
-  const [category, setCategory] = useState("product-showcase");
-  const [industry, setIndustry] = useState<string[]>([]);
-  const [adType, setAdType] = useState<string[]>([]);
-  const [productType, setProductType] = useState<string[]>(["produit-physique"]);
-  const [name, setName] = useState(
-    `Template ${new Date(item.created_at).toLocaleDateString("fr-FR")}`
-  );
-
-  const toggleTag = (arr: string[], val: string, setter: (v: string[]) => void) => {
-    setter(arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val]);
-  };
+  const [type, setType] = useState<"produit" | "service">("produit");
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
@@ -81,119 +61,52 @@ function PendingCard({
           src={item.imageUrl}
           alt="Pending template"
           className="w-full h-full object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = "none";
+          }}
         />
         <span className="absolute top-2 left-2 text-[10px] font-semibold bg-black/70 text-white px-2 py-0.5 rounded-full">
           {new Date(item.created_at).toLocaleDateString("fr-FR")}
         </span>
+        <span className="absolute top-2 right-2 text-[10px] font-semibold bg-blue-500/90 text-white px-2 py-0.5 rounded-full capitalize">
+          {item.format}
+        </span>
       </div>
 
-      {/* Controls */}
-      <div className="p-3 space-y-2.5">
-        {/* Name */}
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400"
-          placeholder="Nom du template"
-        />
-
-        {/* Format + Category */}
+      {/* Controls — simplified */}
+      <div className="p-3 space-y-3">
+        {/* Type selector: Produit or Service */}
         <div className="flex gap-2">
-          <select
-            value={format}
-            onChange={(e) => setFormat(e.target.value as "square" | "story")}
-            className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white"
+          <button
+            onClick={() => setType("produit")}
+            className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold rounded-xl py-2.5 border-2 transition-all ${
+              type === "produit"
+                ? "border-blue-500 bg-blue-50 text-blue-700"
+                : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
+            }`}
           >
-            <option value="square">Carré</option>
-            <option value="story">Story</option>
-          </select>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white"
+            <Package className="w-3.5 h-3.5" />
+            Produit
+          </button>
+          <button
+            onClick={() => setType("service")}
+            className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold rounded-xl py-2.5 border-2 transition-all ${
+              type === "service"
+                ? "border-purple-500 bg-purple-50 text-purple-700"
+                : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
+            }`}
           >
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Industry Tags */}
-        <div>
-          <span className="text-[10px] font-semibold text-gray-500 uppercase">Industrie</span>
-          <div className="flex flex-wrap gap-1 mt-1">
-            {INDUSTRY_TAGS.map((tag) => (
-              <button
-                key={tag.value}
-                onClick={() => toggleTag(industry, tag.value, setIndustry)}
-                className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                  industry.includes(tag.value)
-                    ? "bg-blue-500 text-white border-blue-500"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                {tag.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Ad Type Tags */}
-        <div>
-          <span className="text-[10px] font-semibold text-gray-500 uppercase">Type d&apos;ad</span>
-          <div className="flex flex-wrap gap-1 mt-1">
-            {AD_TYPE_TAGS.map((tag) => (
-              <button
-                key={tag.value}
-                onClick={() => toggleTag(adType, tag.value, setAdType)}
-                className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                  adType.includes(tag.value)
-                    ? "bg-purple-500 text-white border-purple-500"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                {tag.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Product Type Tags */}
-        <div>
-          <span className="text-[10px] font-semibold text-gray-500 uppercase">Type produit</span>
-          <div className="flex flex-wrap gap-1 mt-1">
-            {PRODUCT_TYPE_TAGS.map((tag) => (
-              <button
-                key={tag.value}
-                onClick={() => toggleTag(productType, tag.value, setProductType)}
-                className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                  productType.includes(tag.value)
-                    ? "bg-green-500 text-white border-green-500"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                {tag.label}
-              </button>
-            ))}
-          </div>
+            <Briefcase className="w-3.5 h-3.5" />
+            Service
+          </button>
         </div>
 
         {/* Action buttons */}
-        <div className="flex gap-2 pt-1">
+        <div className="flex gap-2">
           <button
-            onClick={() =>
-              onApprove(item, {
-                name,
-                format,
-                category,
-                tags: { industry, adType, productType },
-              })
-            }
+            onClick={() => onApprove(item, { type })}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold bg-green-500 hover:bg-green-600 text-white rounded-xl py-2 transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold bg-green-500 hover:bg-green-600 text-white rounded-xl py-2.5 transition-colors disabled:opacity-50"
           >
             {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
             Approuver
@@ -201,7 +114,7 @@ function PendingCard({
           <button
             onClick={() => onReject(item)}
             disabled={loading}
-            className="flex items-center justify-center gap-1.5 text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-600 rounded-xl px-4 py-2 transition-colors disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-600 rounded-xl px-4 py-2.5 transition-colors disabled:opacity-50"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -240,7 +153,7 @@ function ModerationTab() {
 
   const handleApprove = async (
     item: PendingTemplate,
-    meta: { name: string; format: string; category: string; tags: { industry: string[]; adType: string[]; productType: string[] } }
+    meta: { type: "produit" | "service" }
   ) => {
     setActionLoading(item.id);
     try {
@@ -251,7 +164,14 @@ function ModerationTab() {
           action: "approve",
           id: item.id,
           filename: item.filename,
-          ...meta,
+          name: `Template ${new Date(item.created_at).toLocaleDateString("fr-FR")}`,
+          format: item.format,
+          category: "product-showcase",
+          tags: {
+            industry: [],
+            adType: [],
+            productType: [meta.type === "produit" ? "produit-physique" : "service"],
+          },
         }),
       });
       if (res.ok) {
@@ -314,7 +234,7 @@ function ModerationTab() {
       <p className="text-sm text-gray-500 mb-4">
         {pending.length} template{pending.length > 1 ? "s" : ""} en attente de modération
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {pending.map((item) => (
           <PendingCard
             key={item.id}
@@ -330,7 +250,7 @@ function ModerationTab() {
 }
 
 // ══════════════════════════════════════════
-// Prompts Tab (existing content)
+// Prompts Tab
 // ══════════════════════════════════════════
 
 interface PromptSection {
