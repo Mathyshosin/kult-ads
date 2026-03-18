@@ -60,13 +60,23 @@ export async function getPendingTemplates(): Promise<
     return [];
   }
 
-  const results: (PendingTemplateRow & { imageUrl: string })[] = [];
-  for (const row of data as PendingTemplateRow[]) {
-    const { data: urlData } = await supabase.storage
-      .from("pending-templates")
-      .createSignedUrl(row.filename, 3600); // 1h signed URL
-    results.push({ ...row, imageUrl: urlData?.signedUrl || "" });
-  }
+  // Download images as base64 data URLs (storage bucket is private)
+  const results = await Promise.all(
+    (data as PendingTemplateRow[]).map(async (row) => {
+      try {
+        const { data: fileData } = await supabase.storage
+          .from("pending-templates")
+          .download(row.filename);
+        if (!fileData) return { ...row, imageUrl: "" };
+        const buffer = await fileData.arrayBuffer();
+        const base64 = Buffer.from(buffer).toString("base64");
+        const dataUrl = `data:${row.mime_type};base64,${base64}`;
+        return { ...row, imageUrl: dataUrl };
+      } catch {
+        return { ...row, imageUrl: "" };
+      }
+    })
+  );
   return results;
 }
 
