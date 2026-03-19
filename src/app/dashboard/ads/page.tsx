@@ -204,7 +204,7 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
   ad: GeneratedAd;
   onClose: () => void;
   onDelete: (id: string) => void;
-  onModify: (ad: GeneratedAd, prompt: string) => void;
+  onModify: (ad: GeneratedAd, prompt: string, formatOverride?: "square" | "story") => void;
   onToggleFavorite: (id: string) => void;
 }) {
   const isStory = ad.format === "story";
@@ -307,7 +307,7 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
             {!isStory && (
               <button
                 onClick={() => {
-                  onModify(ad, "Étends cette image au format vertical 9:16 (story) en ajoutant du fond décoratif au-dessus et en-dessous. Garde TOUT le contenu existant identique (texte, produit, logo, mise en page). Agrandis légèrement les éléments si nécessaire pour remplir l'espace.");
+                  onModify(ad, "Étends cette image au format vertical 9:16 (story) en ajoutant du fond décoratif au-dessus et en-dessous. Garde TOUT le contenu existant identique (texte, produit, logo, mise en page). Agrandis légèrement les éléments si nécessaire pour remplir l'espace.", "story");
                   onClose();
                 }}
                 className="w-12 h-12 rounded-xl flex items-center justify-center bg-white ring-1 ring-gray-200 text-gray-400 hover:text-violet-500 hover:ring-violet-200 hover:bg-violet-50 transition-all active:scale-90"
@@ -505,7 +505,7 @@ export default function AdsGalleryPage() {
   const syncGeneratedAd = useWizardStore((s) => s.syncGeneratedAd);
   const brandAnalysisId = useWizardStore((s) => s.brandAnalysisId);
 
-  const handleModify = async (ad: GeneratedAd, prompt: string) => {
+  const handleModify = async (ad: GeneratedAd, prompt: string, formatOverride?: "square" | "story") => {
     if (!brandAnalysis) return;
 
     const product = brandAnalysis.products.find((p) => p.id === ad.productId) || brandAnalysis.products[0];
@@ -513,8 +513,18 @@ export default function AdsGalleryPage() {
 
     const productImage = uploadedImages.find((img) => img.productId === product.id);
     const originalId = ad.id;
+    const targetFormat = formatOverride || ad.format;
 
-    updateGeneratedAd(originalId, { status: "generating", error: undefined });
+    const isFormatConversion = !!formatOverride && formatOverride !== ad.format;
+
+    // For format conversion: create a new ad placeholder; otherwise edit in-place
+    let targetId: string;
+    if (isFormatConversion) {
+      targetId = startGeneration({ format: targetFormat, productId: ad.productId });
+    } else {
+      targetId = originalId;
+      updateGeneratedAd(originalId, { status: "generating", error: undefined });
+    }
     setSelectedAd(null);
 
     try {
@@ -524,7 +534,7 @@ export default function AdsGalleryPage() {
         body: JSON.stringify({
           brandAnalysis,
           product,
-          format: ad.format,
+          format: targetFormat,
           modificationPrompt: prompt,
           previousAdId: originalId,
           previousAdBase64: ad.imageBase64,
@@ -550,29 +560,41 @@ export default function AdsGalleryPage() {
 
       const data = await res.json();
 
-      updateGeneratedAd(originalId, {
-        imageBase64: data.imageBase64,
-        mimeType: data.mimeType,
-        headline: data.headline,
-        bodyText: data.bodyText,
-        callToAction: data.callToAction,
-        _debug: data._debug,
-        status: "completed",
-        error: undefined,
-      });
+      if (isFormatConversion) {
+        // Complete the new placeholder
+        completeGeneration(targetId, { ...data, format: targetFormat });
+        if (currentUser && brandAnalysisId) {
+          syncGeneratedAd(currentUser.id, { ...data, id: targetId, format: targetFormat });
+        }
+      } else {
+        updateGeneratedAd(originalId, {
+          imageBase64: data.imageBase64,
+          mimeType: data.mimeType,
+          headline: data.headline,
+          bodyText: data.bodyText,
+          callToAction: data.callToAction,
+          _debug: data._debug,
+          status: "completed",
+          error: undefined,
+        });
 
-      if (currentUser && brandAnalysisId) {
-        const updatedAd = useWizardStore.getState().generatedAds.find((a) => a.id === originalId);
-        if (updatedAd) {
-          syncDeleteGeneratedAd(currentUser.id, originalId).catch(console.error);
-          syncGeneratedAd(currentUser.id, updatedAd);
+        if (currentUser && brandAnalysisId) {
+          const updatedAd = useWizardStore.getState().generatedAds.find((a) => a.id === originalId);
+          if (updatedAd) {
+            syncDeleteGeneratedAd(currentUser.id, originalId).catch(console.error);
+            syncGeneratedAd(currentUser.id, updatedAd);
+          }
         }
       }
     } catch (err) {
-      updateGeneratedAd(originalId, {
-        status: "completed",
-        error: err instanceof Error ? err.message : "Échec de la modification",
-      });
+      if (isFormatConversion) {
+        failGeneration(targetId, err instanceof Error ? err.message : "Échec de la conversion");
+      } else {
+        updateGeneratedAd(originalId, {
+          status: "completed",
+          error: err instanceof Error ? err.message : "Échec de la modification",
+        });
+      }
     }
   };
 
