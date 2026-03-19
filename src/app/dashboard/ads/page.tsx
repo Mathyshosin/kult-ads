@@ -155,57 +155,85 @@ function FailedCard({ ad, onRetry, onDelete }: { ad: GeneratedAd; onRetry?: () =
   );
 }
 
-// ── Completed card ──
-function CompletedCard({ ad, onClick, onToggleFavorite }: { ad: GeneratedAd; onClick: () => void; onToggleFavorite: () => void }) {
+// ── Completed card with actions below ──
+function CompletedCard({ ad, onClick, onToggleFavorite, onModify, onDownload }: {
+  ad: GeneratedAd;
+  onClick: () => void;
+  onToggleFavorite: () => void;
+  onModify: (ad: GeneratedAd, prompt: string, formatOverride?: "square" | "story") => void;
+  onDownload: (ad: GeneratedAd) => void;
+}) {
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleFavorite();
   };
 
+  const isSquare = ad.format === "square";
+
   return (
-    <div
-      onClick={onClick}
-      className={`group relative ${
-        ad.format === "story" ? "aspect-[9/16]" : "aspect-square"
-      } rounded-2xl overflow-hidden bg-gray-100 cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-0.5 active:scale-[0.98]`}
-    >
-      <img
-        src={adImageSrc(ad)}
-        alt="Ad"
-        className="absolute inset-0 w-full h-full object-cover"
-        loading="lazy"
-      />
-      {/* Gradient overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      {/* Format badge */}
-      <div className="absolute top-3 left-3 z-10">
-        <span className="bg-white/90 backdrop-blur-sm text-gray-700 text-[10px] font-semibold px-2.5 py-1 rounded-lg shadow-sm">
-          {ad.format === "story" ? "Story" : "Carré"}
-        </span>
-      </div>
-      {/* Favorite button */}
-      <button
-        onClick={handleFavorite}
-        className="absolute top-3 right-3 z-20 w-8 h-8 rounded-xl flex items-center justify-center bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white transition-all active:scale-90"
-        title={ad.isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+    <div className="space-y-2">
+      {/* Image */}
+      <div
+        onClick={onClick}
+        className={`group relative ${
+          ad.format === "story" ? "aspect-[9/16]" : "aspect-square"
+        } rounded-2xl overflow-hidden bg-gray-100 cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-0.5 active:scale-[0.98]`}
       >
-        <Heart
-          className={`w-4 h-4 transition-colors ${
-            ad.isFavorite ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-gray-600"
-          }`}
+        <img
+          src={adImageSrc(ad)}
+          alt="Ad"
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="lazy"
         />
-      </button>
+        {/* Hover overlay with download */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <button
+          onClick={(e) => { e.stopPropagation(); onDownload(ad); }}
+          className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/90 backdrop-blur-sm text-gray-700 text-[11px] font-semibold shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-white active:scale-95"
+        >
+          <Download className="w-3 h-3" />
+          Télécharger
+        </button>
+        {/* Favorite */}
+        <button
+          onClick={handleFavorite}
+          className="absolute top-3 right-3 z-20 w-8 h-8 rounded-xl flex items-center justify-center bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white transition-all active:scale-90"
+        >
+          <Heart className={`w-4 h-4 transition-colors ${ad.isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+        </button>
+      </div>
+
+      {/* Action buttons below card */}
+      <div className="flex gap-1.5">
+        {isSquare && (
+          <button
+            onClick={() => onModify(ad, "Étends cette image au format vertical 9:16 (story) en ajoutant du fond décoratif au-dessus et en-dessous. Garde TOUT le contenu existant identique (texte, produit, logo, mise en page). Agrandis légèrement les éléments si nécessaire pour remplir l'espace.", "story")}
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-500 text-[11px] font-medium hover:border-violet-300 hover:text-violet-500 hover:bg-violet-50 transition-all"
+          >
+            <Smartphone className="w-3 h-3" />
+            Story
+          </button>
+        )}
+        <button
+          onClick={onClick}
+          className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-500 text-[11px] font-medium hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50 transition-all"
+        >
+          <Pencil className="w-3 h-3" />
+          Modifier
+        </button>
+      </div>
     </div>
   );
 }
 
 // ── Ad detail modal ──
-function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
+function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite, isAdmin }: {
   ad: GeneratedAd;
   onClose: () => void;
   onDelete: (id: string) => void;
   onModify: (ad: GeneratedAd, prompt: string, formatOverride?: "square" | "story") => void;
   onToggleFavorite: (id: string) => void;
+  isAdmin?: boolean;
 }) {
   const isStory = ad.format === "story";
   const cardRef = useRef<HTMLDivElement>(null);
@@ -316,7 +344,7 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
                 <Smartphone className="w-4 h-4" />
               </button>
             )}
-            {ad._debug && (
+            {ad._debug && isAdmin && (
               <button
                 onClick={() => setShowDebug(!showDebug)}
                 className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
@@ -459,9 +487,20 @@ export default function AdsGalleryPage() {
   const syncDeleteGeneratedAd = useWizardStore((s) => s.syncDeleteGeneratedAd);
   const isHydrated = useWizardStore((s) => s.isHydrated);
   const currentUser = useAuthStore((s) => s.currentUser);
+  const isAdmin = currentUser?.email === "mathys.hosin@gmail.com";
 
   const [filter, setFilter] = useState<"all" | "square" | "story" | "favorites">("all");
   const [selectedAd, setSelectedAd] = useState<GeneratedAd | null>(null);
+
+  // Quick download helper
+  const handleQuickDownload = (ad: GeneratedAd) => {
+    const src = adImageSrc(ad);
+    if (!src) return;
+    const link = document.createElement("a");
+    link.href = src;
+    link.download = `kult-ad-${ad.format}-${ad.id}.png`;
+    link.click();
+  };
 
   // Sort: generating first, then by timestamp desc
   const sorted = [...generatedAds].sort((a, b) => {
@@ -697,6 +736,8 @@ export default function AdsGalleryPage() {
                 ad={ad}
                 onClick={() => setSelectedAd(ad)}
                 onToggleFavorite={() => handleToggleFavorite(ad.id)}
+                onModify={handleModify}
+                onDownload={handleQuickDownload}
               />
             );
           })}
@@ -711,6 +752,7 @@ export default function AdsGalleryPage() {
           onDelete={handleDelete}
           onModify={handleModify}
           onToggleFavorite={handleToggleFavorite}
+          isAdmin={isAdmin}
         />
       )}
     </div>

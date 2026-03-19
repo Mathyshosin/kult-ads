@@ -6,7 +6,7 @@ import { useWizardStore } from "@/lib/store";
 import { useAuthStore } from "@/lib/auth-store";
 import { useToastStore } from "@/components/toast";
 import ImageUploadZone from "@/components/image-upload-zone";
-import type { Product } from "@/lib/types";
+import type { Product, GenerationMode } from "@/lib/types";
 import {
   Loader2,
   Sparkles,
@@ -16,15 +16,32 @@ import {
   Pencil,
   ImageIcon,
   X,
-  Wand2,
-  Layers,
   ChevronLeft,
   Smartphone,
   RectangleHorizontal,
   Package,
   ArrowRight,
   Tag,
+  BookOpen,
+  Copy,
+  Crown,
+  Plus,
 } from "lucide-react";
+
+// ── Step indicator ──
+function StepIndicator({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex items-center gap-2 mb-8">
+      {Array.from({ length: total }, (_, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full transition-all ${
+            i < current ? "bg-blue-500" : i === current ? "bg-blue-500 w-6" : "bg-gray-200"
+          }`} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function GeneratePage() {
   const router = useRouter();
@@ -44,24 +61,20 @@ export default function GeneratePage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const addToast = useToastStore((s) => s.addToast);
 
-  // Product selection step
+  const [step, setStep] = useState<"mode" | "product" | "options">("mode");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedImage, setSelectedImage] = useState("");
-  const [selectedProductType, setSelectedProductType] = useState<"produit" | "service">("produit");
   const [customPrompt, setCustomPrompt] = useState("");
   const [launching, setLaunching] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
-  // Auto-select the correct product image when a product is selected
+  // Auto-select image for product
   useEffect(() => {
     if (!selectedProduct || uploadedImages.length === 0) return;
-    // Find image linked to this product
-    const productImg = uploadedImages.find(
-      (img) => img.productId === selectedProduct.id
-    );
+    const productImg = uploadedImages.find((img) => img.productId === selectedProduct.id);
     if (productImg) {
       setSelectedImage(productImg.id);
     } else if (!selectedImage) {
-      // Fallback: first image if nothing selected yet
       setSelectedImage(uploadedImages[0].id);
     }
   }, [selectedProduct, uploadedImages, selectedImage]);
@@ -81,7 +94,11 @@ export default function GeneratePage() {
     [setReferenceAd]
   );
 
-  // Fire-and-forget generation
+  const handleModeSelect = (mode: GenerationMode) => {
+    setGenerationMode(mode);
+    setStep("product");
+  };
+
   async function handleGenerate() {
     if (!brandAnalysis || !selectedProduct) return;
     setLaunching(true);
@@ -89,16 +106,13 @@ export default function GeneratePage() {
     const image = uploadedImages.find((i) => i.id === selectedImage) || uploadedImages[0];
     const offer = brandAnalysis.offers.find((o) => o.productId === selectedProduct.id) || null;
 
-    // Create placeholder in store
     const placeholderId = startGeneration({
       format: selectedFormat,
       productId: selectedProduct.id,
     });
 
-    // Redirect immediately
     router.push("/dashboard/ads");
 
-    // Fire-and-forget
     doGeneration(placeholderId, selectedProduct, offer, image).catch(console.error);
   }
 
@@ -109,17 +123,13 @@ export default function GeneratePage() {
     image: (typeof uploadedImages)[number] | undefined
   ) {
     try {
-      // Template selection for auto mode
-      let templateId: string | undefined;
-      if (generationMode === "auto") {
+      let templateId: string | undefined = selectedTemplateId || undefined;
+
+      if (generationMode === "auto" && !templateId) {
         const selectRes = await fetch("/api/templates/select", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            format: selectedFormat,
-            count: 1,
-            productType: selectedProductType,
-          }),
+          body: JSON.stringify({ format: selectedFormat, count: 1 }),
         });
         if (selectRes.ok) {
           const { templateIds } = await selectRes.json();
@@ -136,13 +146,10 @@ export default function GeneratePage() {
         brandLogoBase64: brandLogo?.base64,
         brandLogoMimeType: brandLogo?.mimeType,
         format: selectedFormat,
-        templateId,
-        customPrompt:
-          generationMode === "custom" ? customPrompt.trim() || undefined : undefined,
-        referenceAdBase64:
-          generationMode === "reference" ? referenceAd?.base64 : undefined,
-        referenceAdMimeType:
-          generationMode === "reference" ? referenceAd?.mimeType : undefined,
+        templateId: generationMode === "library" ? selectedTemplateId : templateId,
+        customPrompt: generationMode === "custom" ? customPrompt.trim() || undefined : undefined,
+        referenceAdBase64: generationMode === "reference" ? referenceAd?.base64 : undefined,
+        referenceAdMimeType: generationMode === "reference" ? referenceAd?.mimeType : undefined,
         referenceInstruction:
           generationMode === "reference"
             ? customPrompt.trim() || "Réalise cette ads pour ma marque en retirant tous les éléments visuels de l'autre marque"
@@ -179,27 +186,29 @@ export default function GeneratePage() {
         message: "Publicité générée !",
         action: { label: "Voir", href: "/dashboard/ads" },
       });
-    } catch (err) {
+    } catch {
       failGeneration(placeholderId, "Erreur réseau.");
       addToast({ type: "error", message: "Erreur réseau lors de la génération" });
     }
   }
 
+  // ── Not configured ──
   if (!brandAnalysis) {
     return (
       <div className="-mt-8 flex items-center justify-center h-[calc(100vh-3.5rem)]">
-        <div className="text-center space-y-4 animate-fade-in-up">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/5 flex items-center justify-center">
-            <AlertCircle className="w-7 h-7 text-gray-500" />
+        <div className="text-center space-y-4 animate-fade-in">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center">
+            <AlertCircle className="w-7 h-7 text-gray-400" />
           </div>
-          <p className="text-sm text-gray-500">
-            Configure d&apos;abord ta marque dans &quot;Ma Marque&quot;
-          </p>
+          <div>
+            <p className="text-base font-semibold text-gray-900">Configurez votre marque</p>
+            <p className="text-sm text-gray-400 mt-1">Analysez votre site pour commencer à créer des ads</p>
+          </div>
           <button
             onClick={() => router.push("/dashboard/brand")}
             className="text-sm text-blue-500 font-semibold hover:underline"
           >
-            Aller à Ma Marque
+            Configurer ma marque →
           </button>
         </div>
       </div>
@@ -211,84 +220,172 @@ export default function GeneratePage() {
     (generationMode !== "custom" || !!customPrompt.trim()) &&
     (generationMode !== "reference" || !!referenceAd);
 
-  // ── STEP 1: Product Selection ──
-  if (!selectedProduct) {
+  // ══════════════════════════════════════════
+  // STEP 0: Choose Generation Mode
+  // ══════════════════════════════════════════
+  if (step === "mode") {
+    const modes: { key: GenerationMode; icon: React.ElementType; title: string; description: string; badge?: string; gradient: string }[] = [
+      {
+        key: "auto",
+        icon: Shuffle,
+        title: "Ads Aléatoire",
+        description: "L'IA choisit le meilleur template et crée votre ad automatiquement",
+        badge: "Le plus utilisé",
+        gradient: "from-blue-500 to-cyan-400",
+      },
+      {
+        key: "library",
+        icon: BookOpen,
+        title: "Depuis la Bibliothèque",
+        description: "Parcourez notre catalogue d'ads performantes et copiez celle qui vous plaît",
+        badge: "Recommandé",
+        gradient: "from-violet-500 to-purple-400",
+      },
+      {
+        key: "reference",
+        icon: Copy,
+        title: "Copy-Ads",
+        description: "Uploadez une ad que vous aimez et on la reproduit pour votre marque",
+        gradient: "from-amber-500 to-orange-400",
+      },
+      {
+        key: "custom",
+        icon: Pencil,
+        title: "Prompt Personnalisé",
+        description: "Décrivez exactement l'ad que vous voulez avec vos propres instructions",
+        gradient: "from-emerald-500 to-teal-400",
+      },
+    ];
+
     return (
       <div className="-mt-8 flex items-center justify-center min-h-[calc(100vh-3.5rem)] py-12">
-        <div className="max-w-2xl w-full px-6 animate-fade-in-up">
-          <div className="text-center mb-8">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center mb-4">
-              <Package className="w-7 h-7 text-blue-500" />
+        <div className="max-w-3xl w-full px-6 animate-fade-in-up">
+          <div className="text-center mb-10">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-blue-50 to-violet-50 flex items-center justify-center mb-4">
+              <Zap className="w-7 h-7 text-blue-500" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Quel produit veux-tu promouvoir ?
+              Comment voulez-vous créer votre ad ?
             </h1>
-            <p className="text-sm text-gray-500 mt-2">
-              Sélectionne un produit pour créer une publicité
+            <p className="text-sm text-gray-400 mt-2">
+              Choisissez votre méthode de création
             </p>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {modes.map((mode) => (
+              <button
+                key={mode.key}
+                onClick={() => handleModeSelect(mode.key)}
+                className="group relative bg-white rounded-2xl border border-gray-200 p-6 text-left hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98]"
+              >
+                {mode.badge && (
+                  <span className="absolute -top-2.5 left-4 text-[10px] font-bold text-white bg-gradient-to-r from-blue-500 to-violet-500 px-3 py-1 rounded-full shadow-sm">
+                    {mode.badge}
+                  </span>
+                )}
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${mode.gradient} flex items-center justify-center mb-4 shadow-sm`}>
+                  <mode.icon className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-base font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                  {mode.title}
+                </h3>
+                <p className="text-sm text-gray-400 mt-1.5 leading-relaxed">
+                  {mode.description}
+                </p>
+                <ArrowRight className="absolute top-6 right-5 w-4 h-4 text-gray-300 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════
+  // STEP 1: Product Selection
+  // ══════════════════════════════════════════
+  if (step === "product" || !selectedProduct) {
+    return (
+      <div className="-mt-8 flex items-center justify-center min-h-[calc(100vh-3.5rem)] py-12">
+        <div className="max-w-2xl w-full px-6 animate-fade-in-up">
+          <StepIndicator current={1} total={3} />
+
+          <div className="flex items-center gap-3 mb-8">
+            <button
+              onClick={() => { setStep("mode"); setSelectedProduct(null); }}
+              className="p-2 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-gray-900 hover:border-blue-200 transition-all shadow-sm"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">
+                Quel produit promouvoir ?
+              </h1>
+              <p className="text-sm text-gray-400 mt-0.5">
+                {generationMode === "auto" ? "Ads Aléatoire" : generationMode === "library" ? "Depuis la Bibliothèque" : generationMode === "reference" ? "Copy-Ads" : "Prompt Personnalisé"}
+              </p>
+            </div>
+          </div>
+
           {brandAnalysis.products.length === 0 ? (
-            <div className="text-center py-12 space-y-4">
+            <div className="text-center py-16 space-y-4">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center">
+                <Package className="w-6 h-6 text-gray-300" />
+              </div>
               <p className="text-sm text-gray-500">Aucun produit configuré</p>
               <button
                 onClick={() => router.push("/dashboard/brand")}
                 className="text-sm text-blue-500 font-semibold hover:underline"
               >
-                Ajouter des produits dans Ma Marque
+                Ajouter des produits →
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-3">
               {brandAnalysis.products.map((product) => {
-                // Find product image
-                const productImage = uploadedImages.find(
-                  (img) => img.productId === product.id
-                ) || uploadedImages[0];
-
+                const productImage = uploadedImages.find((img) => img.productId === product.id) || uploadedImages[0];
                 return (
                   <button
                     key={product.id}
-                    onClick={() => setSelectedProduct(product)}
-                    className="group bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-left transition-all duration-300 hover:shadow-lg shadow-blue-500/5 hover:border-primary/30"
+                    onClick={() => { setSelectedProduct(product); setStep("options"); }}
+                    className="group w-full bg-white rounded-2xl border border-gray-200 p-4 text-left hover:border-blue-200 hover:shadow-md transition-all duration-200"
                   >
-                    <div className="flex items-start gap-3.5">
-                      {/* Product image */}
+                    <div className="flex items-center gap-4">
                       {productImage ? (
-                        <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-200/40 flex-shrink-0">
-                          <img
-                            src={productImage.previewUrl}
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                          />
+                        <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-100 flex-shrink-0">
+                          <img src={productImage.previewUrl} alt={product.name} className="w-full h-full object-cover" />
                         </div>
                       ) : (
-                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/5 to-accent/5 border border-gray-200/40 flex items-center justify-center flex-shrink-0">
-                          <Package className="w-6 h-6 text-blue-500/30" />
+                        <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
+                          <Package className="w-6 h-6 text-gray-300" />
                         </div>
                       )}
-
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-blue-500 transition-colors">
+                        <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
                           {product.name}
                         </h3>
                         {product.description && (
-                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                            {product.description}
-                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{product.description}</p>
                         )}
                         {product.price && (
-                          <p className="text-xs font-semibold text-blue-500 mt-1.5">
-                            {product.price}
-                          </p>
+                          <p className="text-xs font-semibold text-blue-500 mt-1">{product.price}</p>
                         )}
                       </div>
-
-                      <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-blue-500 transition-colors flex-shrink-0 mt-1" />
+                      <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-blue-400 group-hover:translate-x-1 transition-all flex-shrink-0" />
                     </div>
                   </button>
                 );
               })}
+
+              {/* Add new product */}
+              <button
+                onClick={() => router.push("/dashboard/brand")}
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-gray-200 text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="text-sm font-medium">Ajouter un produit</span>
+              </button>
             </div>
           )}
         </div>
@@ -296,29 +393,29 @@ export default function GeneratePage() {
     );
   }
 
-  // ── STEP 2: Generation Options ──
+  // ══════════════════════════════════════════
+  // STEP 2: Generation Options
+  // ══════════════════════════════════════════
   return (
     <div className="-mt-8 flex items-center justify-center min-h-[calc(100vh-3.5rem)] py-12">
       <div className="max-w-lg w-full px-6 animate-fade-in-up">
-        {/* Selected product header */}
+        <StepIndicator current={2} total={3} />
+
+        {/* Back + selected product */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => setSelectedProduct(null)}
-            className="p-2 rounded-xl border border-gray-200/60 bg-white text-gray-500 hover:text-gray-900 hover:border-primary/20 transition-all shadow-sm"
+            onClick={() => { setSelectedProduct(null); setStep("product"); }}
+            className="p-2 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-gray-900 hover:border-blue-200 transition-all shadow-sm"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <div className="flex-1 flex items-center gap-3 bg-white rounded-2xl border border-gray-200 shadow-sm px-4 py-3">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-50 to-violet-50 flex items-center justify-center flex-shrink-0">
               <Package className="w-4 h-4 text-blue-500" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">
-                {selectedProduct.name}
-              </p>
-              {selectedProduct.price && (
-                <p className="text-xs text-blue-500 font-medium">{selectedProduct.price}</p>
-              )}
+              <p className="text-sm font-semibold text-gray-900 truncate">{selectedProduct.name}</p>
+              {selectedProduct.price && <p className="text-xs text-blue-500 font-medium">{selectedProduct.price}</p>}
             </div>
           </div>
         </div>
@@ -331,22 +428,17 @@ export default function GeneratePage() {
             ? `${offer.discountType === "percentage" ? "-" : ""}${String(offer.discountValue).replace(/%+$/, "").replace(/€+$/, "")}${offer.discountType === "percentage" ? "%" : "€"}`
             : null;
           return (
-            <div className="flex items-center gap-3 bg-white rounded-2xl border border-gray-200 shadow-sm px-4 py-3 mb-5 border-emerald-200/60 bg-emerald-50/30">
+            <div className="flex items-center gap-3 bg-emerald-50/50 rounded-2xl border border-emerald-200/60 px-4 py-3 mb-5">
               <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
                 <Tag className="w-4 h-4 text-emerald-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-emerald-700 truncate">
-                  {offer.title}
-                </p>
+                <p className="text-xs font-semibold text-emerald-700 truncate">{offer.title}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  {discount && (
-                    <span className="text-xs font-bold text-emerald-600">{discount}</span>
-                  )}
+                  {discount && <span className="text-xs font-bold text-emerald-600">{discount}</span>}
                   {offer.originalPrice && offer.salePrice && (
                     <span className="text-[11px] text-gray-500">
-                      <span className="line-through">{offer.originalPrice}</span>
-                      {" → "}
+                      <span className="line-through">{offer.originalPrice}</span>{" → "}
                       <span className="font-semibold text-emerald-600">{offer.salePrice}</span>
                     </span>
                   )}
@@ -357,176 +449,133 @@ export default function GeneratePage() {
         })()}
 
         <div className="space-y-5">
-          {/* Images — show only images linked to selected product */}
+          {/* Product images */}
           {(() => {
-            const productImages = uploadedImages.filter(
-              (img) => img.productId === selectedProduct.id
-            );
+            const productImages = uploadedImages.filter((img) => img.productId === selectedProduct.id);
             const imagesToShow = productImages.length > 0 ? productImages : uploadedImages;
             return imagesToShow.length > 0 ? (
-            <section className="space-y-2.5">
-              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
-                Image produit
-              </h3>
-              <div className="flex gap-2 flex-wrap">
-                {imagesToShow.map((img) => (
-                  <button
-                    key={img.id}
-                    onClick={() => setSelectedImage(img.id)}
-                    className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all duration-200 flex-shrink-0 ${
-                      selectedImage === img.id
-                        ? "border-primary shadow-lg shadow-blue-500/5 ring-1 ring-primary/20"
-                        : "border-gray-200/40 hover:border-primary/30"
-                    }`}
-                  >
-                    <img src={img.previewUrl} alt={img.name} className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            </section>
-          ) : null;
+              <section className="space-y-2.5">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                  <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
+                  Image produit
+                </h3>
+                <div className="flex gap-2 flex-wrap">
+                  {imagesToShow.map((img) => (
+                    <button
+                      key={img.id}
+                      onClick={() => setSelectedImage(img.id)}
+                      className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all duration-200 flex-shrink-0 ${
+                        selectedImage === img.id
+                          ? "border-blue-500 shadow-lg shadow-blue-500/10 ring-1 ring-blue-500/20"
+                          : "border-gray-200 hover:border-blue-300"
+                      }`}
+                    >
+                      <img src={img.previewUrl} alt={img.name} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ) : null;
           })()}
 
-          {/* Type + Format */}
-          <section className="space-y-4">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-              <Layers className="w-3.5 h-3.5 text-blue-500" />
-              Options
-            </h3>
-
-            {/* Type */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-gray-500">Type</label>
-              <div className="bg-gray-100/80 rounded-xl p-1 flex gap-0.5">
-                {(["produit", "service"] as const).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setSelectedProductType(type)}
-                    className={`flex-1 py-2 rounded-[10px] text-xs font-medium transition-all duration-200 ${
-                      selectedProductType === type
-                        ? "bg-white shadow-sm text-gray-900"
-                        : "text-gray-500 hover:text-gray-900"
-                    }`}
-                  >
-                    {type === "produit" ? "Produit" : "Service"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Format */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-gray-500">Format</label>
-              <div className="bg-gray-100/80 rounded-xl p-1 flex gap-0.5">
-                {([
-                  { key: "square" as const, label: "Carré", icon: RectangleHorizontal },
-                  { key: "story" as const, label: "Story", icon: Smartphone },
-                ]).map(({ key, label, icon: Icon }) => (
-                  <button
-                    key={key}
-                    onClick={() => setSelectedFormat(key)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-xs font-medium transition-all duration-200 ${
-                      selectedFormat === key
-                        ? "bg-white shadow-sm text-gray-900"
-                        : "text-gray-500 hover:text-gray-900"
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <div className="border-t border-gray-200/30" />
-
-          {/* Mode */}
-          <section className="space-y-3">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-              <Wand2 className="w-3.5 h-3.5 text-blue-500" />
-              Mode
-            </h3>
-
-            <div className="bg-gray-100/80 rounded-xl p-1 flex gap-0.5">
+          {/* Format */}
+          <section className="space-y-2.5">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Format</h3>
+            <div className="flex gap-3">
               {([
-                { key: "auto" as const, label: "Auto", icon: Shuffle },
-                { key: "custom" as const, label: "Prompt", icon: Pencil },
-                { key: "reference" as const, label: "Réf.", icon: ImageIcon },
-              ]).map(({ key, label, icon: Icon }) => (
+                { key: "square" as const, label: "Carré", sub: "1:1", icon: RectangleHorizontal },
+                { key: "story" as const, label: "Story", sub: "9:16", icon: Smartphone },
+              ]).map(({ key, label, sub, icon: Icon }) => (
                 <button
                   key={key}
-                  onClick={() => setGenerationMode(key)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-xs font-medium transition-all duration-200 ${
-                    generationMode === key
-                      ? "bg-white shadow-sm text-gray-900"
-                      : "text-gray-500 hover:text-gray-900"
+                  onClick={() => setSelectedFormat(key)}
+                  className={`flex-1 flex flex-col items-center gap-1.5 py-4 rounded-2xl border-2 transition-all ${
+                    selectedFormat === key
+                      ? "border-blue-500 bg-blue-50/50 text-blue-600"
+                      : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
-                  {label}
+                  <Icon className="w-5 h-5" />
+                  <span className="text-xs font-semibold">{label}</span>
+                  <span className="text-[10px] text-gray-400">{sub}</span>
                 </button>
               ))}
             </div>
-
-            {/* Mode content */}
-            <div>
-              {generationMode === "auto" && (
-                <div className="flex items-center gap-2.5 bg-gradient-to-r from-primary/[0.04] to-accent/[0.04] rounded-xl px-3.5 py-3 border border-primary/10">
-                  <Sparkles className="w-4 h-4 text-blue-500/60 flex-shrink-0" />
-                  <p className="text-xs text-gray-500 leading-relaxed">
-                    L&apos;IA choisit le meilleur template automatiquement.
-                  </p>
-                </div>
-              )}
-
-              {generationMode === "custom" && (
-                <textarea
-                  value={customPrompt}
-                  onChange={(e) => setCustomPrompt(e.target.value)}
-                  placeholder="Ex: Le produit posé sur une table en marbre blanc avec un fond rose doux..."
-                  rows={3}
-                  className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 outline-none text-sm placeholder:text-gray-500/40 resize-none"
-                />
-              )}
-
-              {generationMode === "reference" && (
-                <div className="space-y-2.5">
-                  {referenceAd ? (
-                    <div className="relative group">
-                      <img
-                        src={`data:${referenceAd.mimeType};base64,${referenceAd.base64}`}
-                        alt="Référence"
-                        className="w-full rounded-xl border border-gray-200/60"
-                      />
-                      <button
-                        onClick={() => setReferenceAd(null)}
-                        className="absolute top-2 right-2 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <ImageUploadZone onFilesSelected={handleReferenceUpload} />
-                  )}
-                  <textarea
-                    value={customPrompt}
-                    onChange={(e) => setCustomPrompt(e.target.value)}
-                    placeholder="Réalise cette ads pour ma marque en retirant tous les éléments visuels de l'autre marque"
-                    rows={2}
-                    className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 outline-none text-sm placeholder:text-gray-500/40 resize-none"
-                  />
-                </div>
-              )}
-            </div>
           </section>
+
+          {/* Mode-specific content */}
+          {generationMode === "custom" && (
+            <section className="space-y-2.5">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                <Pencil className="w-3.5 h-3.5 text-blue-500" />
+                Votre prompt
+              </h3>
+              <textarea
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+                placeholder="Ex: Le produit posé sur une table en marbre blanc avec un fond rose doux..."
+                rows={3}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 outline-none resize-none"
+              />
+            </section>
+          )}
+
+          {generationMode === "reference" && (
+            <section className="space-y-2.5">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                <Copy className="w-3.5 h-3.5 text-blue-500" />
+                Ad à copier
+              </h3>
+              {referenceAd ? (
+                <div className="relative group">
+                  <img
+                    src={`data:${referenceAd.mimeType};base64,${referenceAd.base64}`}
+                    alt="Référence"
+                    className="w-full rounded-xl border border-gray-200"
+                  />
+                  <button
+                    onClick={() => setReferenceAd(null)}
+                    className="absolute top-2 right-2 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <ImageUploadZone onFilesSelected={handleReferenceUpload} />
+              )}
+              <textarea
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+                placeholder="Réalise cette ads pour ma marque en retirant tous les éléments visuels de l'autre marque"
+                rows={2}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 outline-none resize-none"
+              />
+            </section>
+          )}
+
+          {generationMode === "auto" && (
+            <div className="flex items-center gap-3 bg-blue-50/50 rounded-2xl px-4 py-3 border border-blue-100">
+              <Sparkles className="w-5 h-5 text-blue-400 flex-shrink-0" />
+              <p className="text-sm text-gray-500">
+                L&apos;IA choisit le meilleur template et génère votre ad automatiquement.
+              </p>
+            </div>
+          )}
+
+          {generationMode === "library" && (
+            <div className="flex items-center gap-3 bg-violet-50/50 rounded-2xl px-4 py-3 border border-violet-100">
+              <BookOpen className="w-5 h-5 text-violet-400 flex-shrink-0" />
+              <p className="text-sm text-gray-500">
+                Un template sera sélectionné depuis notre bibliothèque pour créer votre ad.
+              </p>
+            </div>
+          )}
 
           {/* Generate button */}
           <button
             onClick={handleGenerate}
             disabled={launching || !canGenerate}
-            className="bg-gradient-to-r from-blue-500 to-violet-500 hover:shadow-lg hover:shadow-blue-500/20 w-full flex items-center justify-center gap-2.5 text-white py-3.5 rounded-xl text-sm font-semibold mt-2"
+            className="w-full flex items-center justify-center gap-2.5 text-white py-4 rounded-2xl text-sm font-semibold bg-gradient-to-r from-blue-500 to-violet-500 hover:shadow-lg hover:shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed mt-2"
           >
             {launching ? (
               <>
