@@ -125,7 +125,7 @@ export default function TemplatesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
       </div>
     );
   }
@@ -133,13 +133,13 @@ export default function TemplatesPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-8 py-8 px-6">
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-medium px-3 py-1 rounded-full mb-3">
+        <div className="inline-flex items-center gap-2 bg-blue-500/10 text-blue-500 text-xs font-medium px-3 py-1 rounded-full mb-3">
           🔒 Admin uniquement
         </div>
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-2xl font-bold text-gray-900">
           Bibliothèque de templates
         </h1>
-        <p className="mt-2 text-muted max-w-lg mx-auto">
+        <p className="mt-2 text-gray-500 max-w-lg mx-auto">
           Uploadez vos ads qui marchent. Le système les sélectionnera
           automatiquement pour reproduire le style avec les produits des clients.
         </p>
@@ -149,7 +149,7 @@ export default function TemplatesPage() {
       <div className="max-w-lg mx-auto">
         <ImageUploadZone onFilesSelected={handleUpload} disabled={uploading} />
         {uploading && (
-          <div className="flex items-center gap-2 text-sm text-muted mt-3 justify-center">
+          <div className="flex items-center gap-2 text-sm text-gray-500 mt-3 justify-center">
             <Loader2 className="w-4 h-4 animate-spin" />
             Upload en cours...
           </div>
@@ -167,7 +167,7 @@ export default function TemplatesPage() {
       {templates.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-muted uppercase tracking-wide">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
               {filteredTemplates.length} template
               {filteredTemplates.length > 1 ? "s" : ""}
             </h2>
@@ -178,8 +178,8 @@ export default function TemplatesPage() {
                   onClick={() => setFilterFormat(f)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     filterFormat === f
-                      ? "bg-primary text-white"
-                      : "bg-surface border border-border text-foreground hover:bg-gray-100"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-50 border border-gray-200 text-gray-900 hover:bg-gray-100"
                   }`}
                 >
                   {f === "all" ? "Tous" : f === "square" ? "Carré" : "Story"}
@@ -205,10 +205,10 @@ export default function TemplatesPage() {
       {templates.length === 0 && (
         <div className="text-center py-12">
           <LayoutGrid className="w-12 h-12 text-border mx-auto mb-3" />
-          <h3 className="text-lg font-medium text-foreground">
+          <h3 className="text-lg font-medium text-gray-900">
             Aucun template
           </h3>
-          <p className="text-sm text-muted mt-1 max-w-sm mx-auto">
+          <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">
             Uploadez vos meilleures publicités pour que l&apos;IA puisse les
             reproduire avec les produits de vos clients.
           </p>

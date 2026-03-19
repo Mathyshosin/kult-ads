@@ -59,24 +59,24 @@ function Section({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="card-tech overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-6 py-4 hover:bg-surface/30 transition-colors cursor-pointer"
+        className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50/30 transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-3">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-            <Icon className="w-4 h-4 text-primary" />
+            <Icon className="w-4 h-4 text-blue-500" />
           </div>
-          <span className="text-sm font-semibold text-foreground">{title}</span>
+          <span className="text-sm font-semibold text-gray-900">{title}</span>
           {badge !== undefined && (
-            <span className="text-[10px] bg-primary/8 text-primary font-semibold px-2 py-0.5 rounded-full">
+            <span className="text-[10px] bg-blue-500/8 text-blue-500 font-semibold px-2 py-0.5 rounded-full">
               {badge}
             </span>
           )}
         </div>
         <ChevronDown
-          className={`w-4 h-4 text-muted transition-transform duration-200 ${
+          className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
             open ? "rotate-180" : ""
           }`}
         />
@@ -96,7 +96,7 @@ function Section({
 function SaveIndicator({ show }: { show: boolean }) {
   if (!show) return null;
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium shadow-glow animate-scale-in">
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg shadow-blue-500/5 animate-scale-in">
       <CheckCircle2 className="w-4 h-4" />
       Sauvegardé
     </div>
@@ -472,8 +472,8 @@ export default function BrandPage() {
 
       {/* Page header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">Ma Marque</h1>
-        <p className="mt-1 text-sm text-muted">
+        <h1 className="text-2xl font-bold text-gray-900">Ma Marque</h1>
+        <p className="mt-1 text-sm text-gray-500">
           Configurez votre marque, vos produits et vos images en un seul endroit.
         </p>
       </div>
@@ -489,14 +489,14 @@ export default function BrandPage() {
         >
           {/* Existing analysis summary */}
           {brandAnalysis && !isLoading && (
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4">
+            <div className="bg-blue-500/5 border border-primary/20 rounded-xl p-4 mb-4">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-sm font-medium text-gray-900">
                     {brandAnalysis.brandName}
                   </p>
-                  <p className="text-xs text-muted mt-0.5">
+                  <p className="text-xs text-gray-500 mt-0.5">
                     {brandAnalysis.products.length} produit
                     {brandAnalysis.products.length > 1 ? "s" : ""} &middot;{" "}
                     {brandAnalysis.offers.length} offre
@@ -512,19 +512,19 @@ export default function BrandPage() {
             <div>
               <label
                 htmlFor="brand-url"
-                className="block text-xs font-medium text-foreground mb-1.5"
+                className="block text-xs font-medium text-gray-900 mb-1.5"
               >
                 {brandAnalysis ? "Re-analyser un site" : "URL de votre site"}
               </label>
               <div className="relative">
-                <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <input
                   id="brand-url"
                   type="text"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://votre-site.com"
-                  className="w-full pl-11 pr-4 py-3 input-tech text-sm"
+                  className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 outline-none text-sm"
                   disabled={isLoading}
                   required
                 />
@@ -540,9 +540,9 @@ export default function BrandPage() {
 
             {isLoading ? (
               <div className="flex flex-col items-center py-6 gap-3">
-                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                 <div className="text-center">
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-sm font-medium text-gray-900">
                     {phases[phase]}
                   </p>
                   <div className="flex justify-center gap-1.5 mt-2">
@@ -550,7 +550,7 @@ export default function BrandPage() {
                       <div
                         key={i}
                         className={`w-2 h-2 rounded-full transition-colors ${
-                          i <= phase ? "bg-primary" : "bg-border"
+                          i <= phase ? "bg-blue-500" : "bg-border"
                         }`}
                       />
                     ))}
@@ -560,7 +560,7 @@ export default function BrandPage() {
             ) : (
               <button
                 type="submit"
-                className="w-full bg-primary text-white py-3 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
+                className="w-full bg-blue-500 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-500-dark transition-colors"
               >
                 {brandAnalysis ? "Re-analyser" : "Analyser le site"}
               </button>
@@ -617,17 +617,17 @@ export default function BrandPage() {
               {/* Colors */}
               {brandAnalysis.colors.length > 0 && (
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-2">
+                  <label className="block text-xs font-medium text-gray-500 mb-2">
                     Couleurs de la marque
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {brandAnalysis.colors.map((color, i) => (
                       <div key={i} className="flex items-center gap-1.5">
                         <div
-                          className="w-7 h-7 rounded-lg border border-border"
+                          className="w-7 h-7 rounded-lg border border-gray-200"
                           style={{ backgroundColor: color }}
                         />
-                        <span className="text-xs text-muted font-mono">
+                        <span className="text-xs text-gray-500 font-mono">
                           {color}
                         </span>
                       </div>
@@ -638,12 +638,12 @@ export default function BrandPage() {
 
               {/* Logo */}
               <div>
-                <label className="block text-xs font-medium text-muted mb-2">
+                <label className="block text-xs font-medium text-gray-500 mb-2">
                   Logo de la marque
                 </label>
                 {brandLogo ? (
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-xl overflow-hidden border border-border flex-shrink-0 bg-gray-50 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0 bg-gray-50 flex items-center justify-center">
                       <img
                         src={brandLogo.previewUrl}
                         alt="Logo"
@@ -661,7 +661,7 @@ export default function BrandPage() {
                     </button>
                   </div>
                 ) : (
-                  <label className="inline-flex items-center gap-2 cursor-pointer bg-surface border border-border px-4 py-2 rounded-xl text-xs font-medium text-foreground hover:bg-gray-100 transition-colors">
+                  <label className="inline-flex items-center gap-2 cursor-pointer bg-gray-50 border border-gray-200 px-4 py-2 rounded-xl text-xs font-medium text-gray-900 hover:bg-gray-100 transition-colors">
                     Uploader le logo
                     <input
                       type="file"
@@ -699,17 +699,17 @@ export default function BrandPage() {
                 return (
                   <div
                     key={product.id}
-                    className="border border-border rounded-xl overflow-hidden"
+                    className="border border-gray-200 rounded-xl overflow-hidden"
                   >
                     {/* Compact card header */}
                     <div
                       onClick={() =>
                         setExpandedProduct(isExpanded ? null : product.id)
                       }
-                      className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface/50 transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50/50 transition-colors"
                     >
                       {productImage ? (
-                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-border flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
                           <img
                             src={productImage.previewUrl}
                             alt={product.name}
@@ -756,22 +756,22 @@ export default function BrandPage() {
                         </label>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
+                        <p className="text-sm font-medium text-gray-900 truncate">
                           {product.name}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           {product.salePrice && (
-                            <span className="text-xs font-semibold text-primary">
+                            <span className="text-xs font-semibold text-blue-500">
                               {product.salePrice}
                             </span>
                           )}
                           {product.price && !product.salePrice && (
-                            <span className="text-xs text-muted">
+                            <span className="text-xs text-gray-500">
                               {product.price}
                             </span>
                           )}
                           {product.price && product.salePrice && (
-                            <span className="text-xs text-muted line-through">
+                            <span className="text-xs text-gray-500 line-through">
                               {product.price}
                             </span>
                           )}
@@ -789,7 +789,7 @@ export default function BrandPage() {
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                         <ChevronDown
-                          className={`w-4 h-4 text-muted transition-transform duration-200 ${
+                          className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
                             isExpanded ? "rotate-180" : ""
                           }`}
                         />
@@ -798,7 +798,7 @@ export default function BrandPage() {
 
                     {/* Expanded edit fields */}
                     {isExpanded && (
-                      <div className="px-4 pb-4 pt-1 border-t border-border space-y-3">
+                      <div className="px-4 pb-4 pt-1 border-t border-gray-200 space-y-3">
                         <InlineEditableField
                           label="Nom"
                           value={product.name}
@@ -892,7 +892,7 @@ export default function BrandPage() {
                   setExpandedProduct(newId);
                   debouncedSync();
                 }}
-                className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-border rounded-xl text-sm text-muted hover:text-foreground hover:border-primary/40 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:text-gray-900 hover:border-primary/40 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Ajouter un produit
@@ -912,7 +912,7 @@ export default function BrandPage() {
           >
             <div className="space-y-3">
               {brandAnalysis.offers.length === 0 && (
-                <p className="text-sm text-muted text-center py-2">
+                <p className="text-sm text-gray-500 text-center py-2">
                   Aucune offre pour le moment.
                 </p>
               )}
@@ -926,26 +926,26 @@ export default function BrandPage() {
                 return (
                   <div
                     key={offer.id}
-                    className="border border-border rounded-xl overflow-hidden"
+                    className="border border-gray-200 rounded-xl overflow-hidden"
                   >
                     <div
                       onClick={() =>
                         setExpandedOffer(isExpanded ? null : offer.id)
                       }
-                      className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface/50 transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50/50 transition-colors"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
+                        <p className="text-sm font-medium text-gray-900 truncate">
                           {offer.title}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           {offer.discountValue && (
-                            <span className="text-xs font-semibold text-primary">
+                            <span className="text-xs font-semibold text-blue-500">
                               -{offer.discountValue}
                             </span>
                           )}
                           {linkedProduct && (
-                            <span className="text-xs text-muted">
+                            <span className="text-xs text-gray-500">
                               {linkedProduct.name}
                             </span>
                           )}
@@ -963,7 +963,7 @@ export default function BrandPage() {
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                         <ChevronDown
-                          className={`w-4 h-4 text-muted transition-transform duration-200 ${
+                          className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
                             isExpanded ? "rotate-180" : ""
                           }`}
                         />
@@ -971,7 +971,7 @@ export default function BrandPage() {
                     </div>
 
                     {isExpanded && (
-                      <div className="px-4 pb-4 pt-1 border-t border-border space-y-3">
+                      <div className="px-4 pb-4 pt-1 border-t border-gray-200 space-y-3">
                         <InlineEditableField
                           label="Titre"
                           value={offer.title}
@@ -1025,7 +1025,7 @@ export default function BrandPage() {
 
                         {/* Product link dropdown */}
                         <div>
-                          <label className="block text-xs font-medium text-muted mb-1">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">
                             Produit lié
                           </label>
                           <select
@@ -1036,7 +1036,7 @@ export default function BrandPage() {
                               });
                               debouncedSync();
                             }}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                           >
                             <option value="">Aucun produit</option>
                             {brandAnalysis.products.map((p) => (
@@ -1077,7 +1077,7 @@ export default function BrandPage() {
                   setExpandedOffer(newId);
                   debouncedSync();
                 }}
-                className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-border rounded-xl text-sm text-muted hover:text-foreground hover:border-primary/40 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:text-gray-900 hover:border-primary/40 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Ajouter une offre
@@ -1097,10 +1097,10 @@ export default function BrandPage() {
           >
             <div className="space-y-6">
               {/* Tip */}
-              <div className="flex items-start gap-3 bg-primary/[0.04] border border-primary/10 rounded-xl px-4 py-3">
-                <Camera className="w-4 h-4 text-primary/60 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-muted leading-relaxed">
-                  <span className="font-semibold text-foreground">Conseil :</span> Utilisez des photos de vos produits avec leur packaging réel. Cela permet à l&apos;IA de reproduire fidèlement votre produit sans inventer un packaging fictif.
+              <div className="flex items-start gap-3 bg-blue-500/[0.04] border border-primary/10 rounded-xl px-4 py-3">
+                <Camera className="w-4 h-4 text-blue-500/60 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  <span className="font-semibold text-gray-900">Conseil :</span> Utilisez des photos de vos produits avec leur packaging réel. Cela permet à l&apos;IA de reproduire fidèlement votre produit sans inventer un packaging fictif.
                 </p>
               </div>
 
@@ -1111,7 +1111,7 @@ export default function BrandPage() {
                   disabled={uploading}
                 />
                 {uploading && (
-                  <div className="flex items-center gap-2 text-sm text-muted mt-2">
+                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Upload en cours...
                   </div>
@@ -1121,13 +1121,13 @@ export default function BrandPage() {
               {/* Image gallery */}
               {uploadedImages.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                     Galerie ({uploadedImages.length})
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {uploadedImages.map((img) => (
                       <div key={img.id} className="space-y-2">
-                        <div className="relative group rounded-xl overflow-hidden border border-border aspect-square">
+                        <div className="relative group rounded-xl overflow-hidden border border-gray-200 aspect-square">
                           {/* Checkerboard bg */}
                           <div
                             className="absolute inset-0"
@@ -1155,7 +1155,7 @@ export default function BrandPage() {
                           )}
                           {/* Badges */}
                           {img.isAiGenerated && (
-                            <div className="absolute top-2 left-2 bg-primary/90 text-white text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <div className="absolute top-2 left-2 bg-blue-500/90 text-white text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
                               <Wand2 className="w-2.5 h-2.5" />
                               IA
                             </div>
@@ -1173,7 +1173,7 @@ export default function BrandPage() {
                                 <button
                                   onClick={() => removeBackground(img.id)}
                                   disabled={removingBgId !== null}
-                                  className="bg-black/50 hover:bg-primary text-white p-1.5 rounded-lg transition-colors disabled:opacity-50"
+                                  className="bg-black/50 hover:bg-blue-500 text-white p-1.5 rounded-lg transition-colors disabled:opacity-50"
                                   title="Supprimer le fond"
                                 >
                                   <Scissors className="w-3.5 h-3.5" />
@@ -1197,7 +1197,7 @@ export default function BrandPage() {
                           onChange={(e) =>
                             handleImageProductChange(img.id, e.target.value)
                           }
-                          className="w-full px-2 py-1.5 border border-border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         >
                           <option value="">Aucun produit</option>
                           {brandAnalysis.products.map((p) => (
@@ -1214,18 +1214,18 @@ export default function BrandPage() {
 
               {/* AI generation section */}
               <div>
-                <h3 className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                   Génération IA
                 </h3>
-                <div className="bg-surface rounded-xl border border-border p-4 space-y-4">
+                <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-4">
                   <div>
-                    <label className="block text-xs font-medium text-foreground mb-1.5">
+                    <label className="block text-xs font-medium text-gray-900 mb-1.5">
                       Produit
                     </label>
                     <select
                       value={selectedProduct}
                       onChange={(e) => setSelectedProduct(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     >
                       {brandAnalysis.products.map((p) => (
                         <option key={p.id} value={p.id}>
@@ -1236,7 +1236,7 @@ export default function BrandPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-foreground mb-1.5">
+                    <label className="block text-xs font-medium text-gray-900 mb-1.5">
                       Type de scène
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -1246,8 +1246,8 @@ export default function BrandPage() {
                           onClick={() => setSceneType(s.id)}
                           className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                             sceneType === s.id
-                              ? "bg-primary text-white"
-                              : "bg-white border border-border text-foreground hover:bg-gray-100"
+                              ? "bg-blue-500 text-white"
+                              : "bg-white border border-gray-200 text-gray-900 hover:bg-gray-100"
                           }`}
                         >
                           {s.label}
@@ -1258,7 +1258,7 @@ export default function BrandPage() {
 
                   {sceneType === "custom" && (
                     <div>
-                      <label className="block text-xs font-medium text-foreground mb-1.5">
+                      <label className="block text-xs font-medium text-gray-900 mb-1.5">
                         Décrivez la scène
                       </label>
                       <textarea
@@ -1266,7 +1266,7 @@ export default function BrandPage() {
                         onChange={(e) => setCustomPrompt(e.target.value)}
                         placeholder="Ex: Le produit posé sur du sable avec la mer en arrière-plan..."
                         rows={3}
-                        className="w-full px-3 py-2.5 border border-border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
                       />
                     </div>
                   )}
@@ -1278,7 +1278,7 @@ export default function BrandPage() {
                       (sceneType === "custom" && !customPrompt) ||
                       brandAnalysis.products.length === 0
                     }
-                    className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 bg-blue-500 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-500-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {generating ? (
                       <>
@@ -1317,7 +1317,7 @@ export default function BrandPage() {
                 saveTimerRef.current = setTimeout(() => setShowSaved(false), 2000);
               }
             }}
-            className="btn-gradient flex items-center gap-2 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-glow-lg"
+            className="bg-gradient-to-r from-blue-500 to-violet-500 hover:shadow-lg hover:shadow-blue-500/20 flex items-center gap-2 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/5-lg"
           >
             <Save className="w-4 h-4" />
             Sauvegarder les modifications

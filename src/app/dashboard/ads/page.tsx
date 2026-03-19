@@ -20,6 +20,7 @@ import {
   Lightbulb,
   Images,
   Filter,
+  Smartphone,
 } from "lucide-react";
 import { toPng } from "html-to-image";
 
@@ -298,9 +299,23 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
                   ? "bg-blue-500 text-white ring-1 ring-blue-500"
                   : "bg-white ring-1 ring-gray-200 text-gray-400 hover:text-gray-600"
               }`}
+              title="Modifier"
             >
               <Pencil className="w-4 h-4" />
             </button>
+            {/* Convert to Story — only for square ads */}
+            {!isStory && (
+              <button
+                onClick={() => {
+                  onModify(ad, "Étends cette image au format vertical 9:16 (story) en ajoutant du fond décoratif au-dessus et en-dessous. Garde TOUT le contenu existant identique (texte, produit, logo, mise en page). Agrandis légèrement les éléments si nécessaire pour remplir l'espace.");
+                  onClose();
+                }}
+                className="w-12 h-12 rounded-xl flex items-center justify-center bg-white ring-1 ring-gray-200 text-gray-400 hover:text-violet-500 hover:ring-violet-200 hover:bg-violet-50 transition-all active:scale-90"
+                title="Adapter en Story"
+              >
+                <Smartphone className="w-4 h-4" />
+              </button>
+            )}
             {ad._debug && (
               <button
                 onClick={() => setShowDebug(!showDebug)}

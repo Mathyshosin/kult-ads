@@ -190,14 +190,14 @@ export default function GeneratePage() {
       <div className="-mt-8 flex items-center justify-center h-[calc(100vh-3.5rem)]">
         <div className="text-center space-y-4 animate-fade-in-up">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/5 flex items-center justify-center">
-            <AlertCircle className="w-7 h-7 text-muted" />
+            <AlertCircle className="w-7 h-7 text-gray-500" />
           </div>
-          <p className="text-sm text-muted">
+          <p className="text-sm text-gray-500">
             Configure d&apos;abord ta marque dans &quot;Ma Marque&quot;
           </p>
           <button
             onClick={() => router.push("/dashboard/brand")}
-            className="text-sm text-primary font-semibold hover:underline"
+            className="text-sm text-blue-500 font-semibold hover:underline"
           >
             Aller à Ma Marque
           </button>
@@ -218,22 +218,22 @@ export default function GeneratePage() {
         <div className="max-w-2xl w-full px-6 animate-fade-in-up">
           <div className="text-center mb-8">
             <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center mb-4">
-              <Package className="w-7 h-7 text-primary" />
+              <Package className="w-7 h-7 text-blue-500" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-2xl font-bold text-gray-900">
               Quel produit veux-tu promouvoir ?
             </h1>
-            <p className="text-sm text-muted mt-2">
+            <p className="text-sm text-gray-500 mt-2">
               Sélectionne un produit pour créer une publicité
             </p>
           </div>
 
           {brandAnalysis.products.length === 0 ? (
             <div className="text-center py-12 space-y-4">
-              <p className="text-sm text-muted">Aucun produit configuré</p>
+              <p className="text-sm text-gray-500">Aucun produit configuré</p>
               <button
                 onClick={() => router.push("/dashboard/brand")}
-                className="text-sm text-primary font-semibold hover:underline"
+                className="text-sm text-blue-500 font-semibold hover:underline"
               >
                 Ajouter des produits dans Ma Marque
               </button>
@@ -250,12 +250,12 @@ export default function GeneratePage() {
                   <button
                     key={product.id}
                     onClick={() => setSelectedProduct(product)}
-                    className="group card-tech p-4 text-left transition-all duration-300 hover:shadow-glow hover:border-primary/30"
+                    className="group bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-left transition-all duration-300 hover:shadow-lg shadow-blue-500/5 hover:border-primary/30"
                   >
                     <div className="flex items-start gap-3.5">
                       {/* Product image */}
                       {productImage ? (
-                        <div className="w-14 h-14 rounded-xl overflow-hidden border border-border/40 flex-shrink-0">
+                        <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-200/40 flex-shrink-0">
                           <img
                             src={productImage.previewUrl}
                             alt={product.name}
@@ -263,28 +263,28 @@ export default function GeneratePage() {
                           />
                         </div>
                       ) : (
-                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/5 to-accent/5 border border-border/40 flex items-center justify-center flex-shrink-0">
-                          <Package className="w-6 h-6 text-primary/30" />
+                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/5 to-accent/5 border border-gray-200/40 flex items-center justify-center flex-shrink-0">
+                          <Package className="w-6 h-6 text-blue-500/30" />
                         </div>
                       )}
 
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                        <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-blue-500 transition-colors">
                           {product.name}
                         </h3>
                         {product.description && (
-                          <p className="text-xs text-muted mt-0.5 line-clamp-2">
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
                             {product.description}
                           </p>
                         )}
                         {product.price && (
-                          <p className="text-xs font-semibold text-primary mt-1.5">
+                          <p className="text-xs font-semibold text-blue-500 mt-1.5">
                             {product.price}
                           </p>
                         )}
                       </div>
 
-                      <ArrowRight className="w-4 h-4 text-muted group-hover:text-primary transition-colors flex-shrink-0 mt-1" />
+                      <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-blue-500 transition-colors flex-shrink-0 mt-1" />
                     </div>
                   </button>
                 );
@@ -304,20 +304,20 @@ export default function GeneratePage() {
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={() => setSelectedProduct(null)}
-            className="p-2 rounded-xl border border-border/60 bg-white text-muted hover:text-foreground hover:border-primary/20 transition-all shadow-soft"
+            className="p-2 rounded-xl border border-gray-200/60 bg-white text-gray-500 hover:text-gray-900 hover:border-primary/20 transition-all shadow-sm"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <div className="flex-1 flex items-center gap-3 card-tech px-4 py-3">
+          <div className="flex-1 flex items-center gap-3 bg-white rounded-2xl border border-gray-200 shadow-sm px-4 py-3">
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center flex-shrink-0">
-              <Package className="w-4 h-4 text-primary" />
+              <Package className="w-4 h-4 text-blue-500" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">
+              <p className="text-sm font-semibold text-gray-900 truncate">
                 {selectedProduct.name}
               </p>
               {selectedProduct.price && (
-                <p className="text-xs text-primary font-medium">{selectedProduct.price}</p>
+                <p className="text-xs text-blue-500 font-medium">{selectedProduct.price}</p>
               )}
             </div>
           </div>
@@ -331,7 +331,7 @@ export default function GeneratePage() {
             ? `${offer.discountType === "percentage" ? "-" : ""}${String(offer.discountValue).replace(/%+$/, "").replace(/€+$/, "")}${offer.discountType === "percentage" ? "%" : "€"}`
             : null;
           return (
-            <div className="flex items-center gap-3 card-tech px-4 py-3 mb-5 border-emerald-200/60 bg-emerald-50/30">
+            <div className="flex items-center gap-3 bg-white rounded-2xl border border-gray-200 shadow-sm px-4 py-3 mb-5 border-emerald-200/60 bg-emerald-50/30">
               <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
                 <Tag className="w-4 h-4 text-emerald-600" />
               </div>
@@ -344,7 +344,7 @@ export default function GeneratePage() {
                     <span className="text-xs font-bold text-emerald-600">{discount}</span>
                   )}
                   {offer.originalPrice && offer.salePrice && (
-                    <span className="text-[11px] text-muted">
+                    <span className="text-[11px] text-gray-500">
                       <span className="line-through">{offer.originalPrice}</span>
                       {" → "}
                       <span className="font-semibold text-emerald-600">{offer.salePrice}</span>
@@ -365,8 +365,8 @@ export default function GeneratePage() {
             const imagesToShow = productImages.length > 0 ? productImages : uploadedImages;
             return imagesToShow.length > 0 ? (
             <section className="space-y-2.5">
-              <h3 className="section-label flex items-center gap-2">
-                <ImageIcon className="w-3.5 h-3.5 text-primary" />
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
                 Image produit
               </h3>
               <div className="flex gap-2 flex-wrap">
@@ -376,8 +376,8 @@ export default function GeneratePage() {
                     onClick={() => setSelectedImage(img.id)}
                     className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all duration-200 flex-shrink-0 ${
                       selectedImage === img.id
-                        ? "border-primary shadow-glow ring-1 ring-primary/20"
-                        : "border-border/40 hover:border-primary/30"
+                        ? "border-primary shadow-lg shadow-blue-500/5 ring-1 ring-primary/20"
+                        : "border-gray-200/40 hover:border-primary/30"
                     }`}
                   >
                     <img src={img.previewUrl} alt={img.name} className="w-full h-full object-cover" />
@@ -390,23 +390,23 @@ export default function GeneratePage() {
 
           {/* Type + Format */}
           <section className="space-y-4">
-            <h3 className="section-label flex items-center gap-2">
-              <Layers className="w-3.5 h-3.5 text-primary" />
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+              <Layers className="w-3.5 h-3.5 text-blue-500" />
               Options
             </h3>
 
             {/* Type */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted">Type</label>
-              <div className="toggle-pill flex gap-0.5">
+              <label className="text-[11px] font-medium text-gray-500">Type</label>
+              <div className="bg-gray-100/80 rounded-xl p-1 flex gap-0.5">
                 {(["produit", "service"] as const).map((type) => (
                   <button
                     key={type}
                     onClick={() => setSelectedProductType(type)}
                     className={`flex-1 py-2 rounded-[10px] text-xs font-medium transition-all duration-200 ${
                       selectedProductType === type
-                        ? "toggle-pill-active"
-                        : "text-muted hover:text-foreground"
+                        ? "bg-white shadow-sm text-gray-900"
+                        : "text-gray-500 hover:text-gray-900"
                     }`}
                   >
                     {type === "produit" ? "Produit" : "Service"}
@@ -417,8 +417,8 @@ export default function GeneratePage() {
 
             {/* Format */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted">Format</label>
-              <div className="toggle-pill flex gap-0.5">
+              <label className="text-[11px] font-medium text-gray-500">Format</label>
+              <div className="bg-gray-100/80 rounded-xl p-1 flex gap-0.5">
                 {([
                   { key: "square" as const, label: "Carré", icon: RectangleHorizontal },
                   { key: "story" as const, label: "Story", icon: Smartphone },
@@ -428,8 +428,8 @@ export default function GeneratePage() {
                     onClick={() => setSelectedFormat(key)}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-xs font-medium transition-all duration-200 ${
                       selectedFormat === key
-                        ? "toggle-pill-active"
-                        : "text-muted hover:text-foreground"
+                        ? "bg-white shadow-sm text-gray-900"
+                        : "text-gray-500 hover:text-gray-900"
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
@@ -440,16 +440,16 @@ export default function GeneratePage() {
             </div>
           </section>
 
-          <div className="border-t border-border/30" />
+          <div className="border-t border-gray-200/30" />
 
           {/* Mode */}
           <section className="space-y-3">
-            <h3 className="section-label flex items-center gap-2">
-              <Wand2 className="w-3.5 h-3.5 text-primary" />
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+              <Wand2 className="w-3.5 h-3.5 text-blue-500" />
               Mode
             </h3>
 
-            <div className="toggle-pill flex gap-0.5">
+            <div className="bg-gray-100/80 rounded-xl p-1 flex gap-0.5">
               {([
                 { key: "auto" as const, label: "Auto", icon: Shuffle },
                 { key: "custom" as const, label: "Prompt", icon: Pencil },
@@ -460,8 +460,8 @@ export default function GeneratePage() {
                   onClick={() => setGenerationMode(key)}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-xs font-medium transition-all duration-200 ${
                     generationMode === key
-                      ? "toggle-pill-active"
-                      : "text-muted hover:text-foreground"
+                      ? "bg-white shadow-sm text-gray-900"
+                      : "text-gray-500 hover:text-gray-900"
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -474,8 +474,8 @@ export default function GeneratePage() {
             <div>
               {generationMode === "auto" && (
                 <div className="flex items-center gap-2.5 bg-gradient-to-r from-primary/[0.04] to-accent/[0.04] rounded-xl px-3.5 py-3 border border-primary/10">
-                  <Sparkles className="w-4 h-4 text-primary/60 flex-shrink-0" />
-                  <p className="text-xs text-muted leading-relaxed">
+                  <Sparkles className="w-4 h-4 text-blue-500/60 flex-shrink-0" />
+                  <p className="text-xs text-gray-500 leading-relaxed">
                     L&apos;IA choisit le meilleur template automatiquement.
                   </p>
                 </div>
@@ -487,7 +487,7 @@ export default function GeneratePage() {
                   onChange={(e) => setCustomPrompt(e.target.value)}
                   placeholder="Ex: Le produit posé sur une table en marbre blanc avec un fond rose doux..."
                   rows={3}
-                  className="w-full px-3.5 py-3 input-tech text-sm placeholder:text-muted/40 resize-none"
+                  className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 outline-none text-sm placeholder:text-gray-500/40 resize-none"
                 />
               )}
 
@@ -498,7 +498,7 @@ export default function GeneratePage() {
                       <img
                         src={`data:${referenceAd.mimeType};base64,${referenceAd.base64}`}
                         alt="Référence"
-                        className="w-full rounded-xl border border-border/60"
+                        className="w-full rounded-xl border border-gray-200/60"
                       />
                       <button
                         onClick={() => setReferenceAd(null)}
@@ -515,7 +515,7 @@ export default function GeneratePage() {
                     onChange={(e) => setCustomPrompt(e.target.value)}
                     placeholder="Réalise cette ads pour ma marque en retirant tous les éléments visuels de l'autre marque"
                     rows={2}
-                    className="w-full px-3.5 py-3 input-tech text-sm placeholder:text-muted/40 resize-none"
+                    className="w-full px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 outline-none text-sm placeholder:text-gray-500/40 resize-none"
                   />
                 </div>
               )}
@@ -526,7 +526,7 @@ export default function GeneratePage() {
           <button
             onClick={handleGenerate}
             disabled={launching || !canGenerate}
-            className="btn-gradient w-full flex items-center justify-center gap-2.5 text-white py-3.5 rounded-xl text-sm font-semibold mt-2"
+            className="bg-gradient-to-r from-blue-500 to-violet-500 hover:shadow-lg hover:shadow-blue-500/20 w-full flex items-center justify-center gap-2.5 text-white py-3.5 rounded-xl text-sm font-semibold mt-2"
           >
             {launching ? (
               <>
