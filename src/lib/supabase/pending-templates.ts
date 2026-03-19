@@ -1,4 +1,12 @@
-import { createClient } from "./server";
+import { createClient as createBrowserClient } from "@supabase/supabase-js";
+
+// Admin client with service role key — bypasses RLS for storage operations
+function adminClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export interface PendingTemplateRow {
   id: string;
@@ -18,8 +26,8 @@ export async function savePendingTemplate(
   format: string,
   submittedBy: string
 ): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase.from("pending_templates").insert({
+  const sb = adminClient();
+  const { error } = await sb.from("pending_templates").insert({
     id,
     filename,
     mime_type: mimeType,
@@ -36,20 +44,20 @@ export async function uploadPendingImage(
   imageBase64: string,
   mimeType: string
 ): Promise<void> {
-  const supabase = await createClient();
+  const sb = adminClient();
   const buffer = Buffer.from(imageBase64, "base64");
-  const { error } = await supabase.storage
+  const { error } = await sb.storage
     .from("pending-templates")
     .upload(filename, buffer, { contentType: mimeType, upsert: true });
   if (error) console.error("[pending-templates] Upload error:", error);
 }
 
-// ── List pending templates with public URLs ──
+// ── List pending templates with images as base64 data URLs ──
 export async function getPendingTemplates(): Promise<
   (PendingTemplateRow & { imageUrl: string })[]
 > {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const sb = adminClient();
+  const { data, error } = await sb
     .from("pending_templates")
     .select("*")
     .eq("status", "pending")
@@ -60,19 +68,24 @@ export async function getPendingTemplates(): Promise<
     return [];
   }
 
-  // Download images as base64 data URLs (storage bucket is private)
+  // Download images in parallel using service role (bypasses RLS)
   const results = await Promise.all(
     (data as PendingTemplateRow[]).map(async (row) => {
       try {
-        const { data: fileData } = await supabase.storage
+        const { data: fileData, error: dlErr } = await sb.storage
           .from("pending-templates")
           .download(row.filename);
+        if (dlErr) {
+          console.error(`[pending-templates] Download error for ${row.filename}:`, dlErr);
+          return { ...row, imageUrl: "" };
+        }
         if (!fileData) return { ...row, imageUrl: "" };
         const buffer = await fileData.arrayBuffer();
         const base64 = Buffer.from(buffer).toString("base64");
         const dataUrl = `data:${row.mime_type};base64,${base64}`;
         return { ...row, imageUrl: dataUrl };
-      } catch {
+      } catch (e) {
+        console.error(`[pending-templates] Error processing ${row.filename}:`, e);
         return { ...row, imageUrl: "" };
       }
     })
@@ -85,8 +98,8 @@ export async function updatePendingStatus(
   id: string,
   status: "approved" | "rejected"
 ): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase
+  const sb = adminClient();
+  const { error } = await sb
     .from("pending_templates")
     .update({ status })
     .eq("id", id);
@@ -97,8 +110,8 @@ export async function updatePendingStatus(
 export async function getPendingImageBase64(
   filename: string
 ): Promise<{ imageBase64: string; mimeType: string } | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.storage
+  const sb = adminClient();
+  const { data, error } = await sb.storage
     .from("pending-templates")
     .download(filename);
 
@@ -116,8 +129,8 @@ export async function getPendingImageBase64(
 
 // ── Delete image from bucket ──
 export async function deletePendingImage(filename: string): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase.storage
+  const sb = adminClient();
+  const { error } = await sb.storage
     .from("pending-templates")
     .remove([filename]);
   if (error) console.error("[pending-templates] Delete error:", error);
