@@ -25,6 +25,7 @@ export async function GET() {
   }
 
   const pending = await getPendingTemplates();
+  console.log(`[admin] ${pending.length} pending templates, imageUrls: ${pending.map(p => p.imageUrl ? `OK (${p.imageUrl.length} chars)` : "EMPTY").join(", ")}`);
   return NextResponse.json({ pending });
 }
 

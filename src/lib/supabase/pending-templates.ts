@@ -38,18 +38,31 @@ export async function savePendingTemplate(
   if (error) console.error("[pending-templates] Insert error:", error);
 }
 
-// ── Upload image to pending-templates bucket ──
+// ── Upload image to pending-templates bucket (auto-creates bucket if needed) ──
 export async function uploadPendingImage(
   filename: string,
   imageBase64: string,
   mimeType: string
 ): Promise<void> {
   const sb = adminClient();
+
+  // Ensure bucket exists (idempotent — ignores "already exists" error)
+  const { error: bucketErr } = await sb.storage.createBucket("pending-templates", {
+    public: false,
+  });
+  if (bucketErr && !bucketErr.message?.includes("already exists")) {
+    console.error("[pending-templates] Bucket creation error:", bucketErr);
+  }
+
   const buffer = Buffer.from(imageBase64, "base64");
   const { error } = await sb.storage
     .from("pending-templates")
     .upload(filename, buffer, { contentType: mimeType, upsert: true });
-  if (error) console.error("[pending-templates] Upload error:", error);
+  if (error) {
+    console.error("[pending-templates] Upload error:", error);
+    throw new Error(`Upload failed: ${error.message}`);
+  }
+  console.log(`[pending-templates] Uploaded ${filename} (${buffer.length} bytes)`);
 }
 
 // ── List pending templates with images as base64 data URLs ──
