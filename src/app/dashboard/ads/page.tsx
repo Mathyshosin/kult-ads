@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import { useWizardStore } from "@/lib/store";
 import { useAuthStore } from "@/lib/auth-store";
-import { updateGeneratedAdFavorite } from "@/lib/supabase/sync";
+import { updateGeneratedAdFavorite, updateGeneratedAdImage } from "@/lib/supabase/sync";
 import type { GeneratedAd } from "@/lib/types";
 import {
   Download,
@@ -617,11 +617,11 @@ export default function AdsGalleryPage() {
           error: undefined,
         });
 
+        // Update the image in Supabase (not delete+insert)
         if (currentUser && brandAnalysisId) {
           const updatedAd = useWizardStore.getState().generatedAds.find((a) => a.id === originalId);
           if (updatedAd) {
-            syncDeleteGeneratedAd(currentUser.id, originalId).catch(console.error);
-            syncGeneratedAd(currentUser.id, updatedAd);
+            updateGeneratedAdImage(currentUser.id, brandAnalysisId, originalId, updatedAd).catch(console.error);
           }
         }
       }

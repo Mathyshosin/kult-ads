@@ -46,6 +46,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
 export default function GeneratePage() {
   const router = useRouter();
   const brandAnalysis = useWizardStore((s) => s.brandAnalysis);
+  const isHydrated = useWizardStore((s) => s.isHydrated);
   const uploadedImages = useWizardStore((s) => s.uploadedImages);
   const brandLogo = useWizardStore((s) => s.brandLogo);
   const generationMode = useWizardStore((s) => s.generationMode);
@@ -207,7 +208,19 @@ export default function GeneratePage() {
     }
   }
 
-  // ── Not configured ──
+  // ── Loading state while hydrating ──
+  if (!isHydrated) {
+    return (
+      <div className="-mt-8 flex items-center justify-center h-[calc(100vh-3.5rem)]">
+        <div className="flex items-center gap-3">
+          <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+          <span className="text-sm text-gray-500">Chargement...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Not configured (only shown after hydration) ──
   if (!brandAnalysis) {
     return (
       <div className="-mt-8 flex items-center justify-center h-[calc(100vh-3.5rem)]">

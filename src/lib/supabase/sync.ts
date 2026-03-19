@@ -407,6 +407,37 @@ export async function saveGeneratedAd(
   return storagePath;
 }
 
+export async function updateGeneratedAdImage(
+  userId: string,
+  brandAnalysisId: string,
+  adId: string,
+  ad: GeneratedAd
+): Promise<void> {
+  const sb = supabase();
+  const ext = ad.mimeType?.split("/")[1] || "png";
+  const storagePath = `${userId}/${brandAnalysisId}/${adId}-v${Date.now()}.${ext}`;
+
+  // Upload new image
+  const blob = base64ToBlob(ad.imageBase64, ad.mimeType || "image/png");
+  const { error: uploadErr } = await sb.storage
+    .from("generated-ads")
+    .upload(storagePath, blob, { contentType: ad.mimeType || "image/png", upsert: true });
+  if (uploadErr) console.error("Error uploading updated ad image:", uploadErr.message);
+
+  // Update metadata row
+  const { error } = await sb.from("generated_ads")
+    .update({
+      image_path: storagePath,
+      headline: ad.headline,
+      body_text: ad.bodyText,
+      call_to_action: ad.callToAction,
+      debug_info: ad._debug ? JSON.stringify(ad._debug) : null,
+    })
+    .eq("id", adId)
+    .eq("user_id", userId);
+  if (error) console.error("Error updating ad:", error.message);
+}
+
 export async function loadGeneratedAds(
   userId: string,
   brandAnalysisId: string
