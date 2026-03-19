@@ -61,12 +61,14 @@ export default function GeneratePage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const addToast = useToastStore((s) => s.addToast);
 
-  const [step, setStep] = useState<"mode" | "product" | "options">("mode");
+  const [step, setStep] = useState<"mode" | "library" | "product" | "options">("mode");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedImage, setSelectedImage] = useState("");
   const [customPrompt, setCustomPrompt] = useState("");
   const [launching, setLaunching] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<{ id: string; format: string; previewUrl: string }[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   // Auto-select image for product
   useEffect(() => {
@@ -94,9 +96,22 @@ export default function GeneratePage() {
     [setReferenceAd]
   );
 
-  const handleModeSelect = (mode: GenerationMode) => {
+  const handleModeSelect = async (mode: GenerationMode) => {
     setGenerationMode(mode);
-    setStep("product");
+    if (mode === "library") {
+      setStep("library");
+      setLoadingTemplates(true);
+      try {
+        const res = await fetch("/api/templates");
+        if (res.ok) {
+          const data = await res.json();
+          setTemplates(data.templates || []);
+        }
+      } catch { /* ignore */ }
+      setLoadingTemplates(false);
+    } else {
+      setStep("product");
+    }
   };
 
   async function handleGenerate() {
@@ -297,6 +312,76 @@ export default function GeneratePage() {
               </button>
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════
+  // STEP: Library — browse and pick a template
+  // ══════════════════════════════════════════
+  if (step === "library") {
+    return (
+      <div className="-mt-8 min-h-[calc(100vh-3.5rem)] py-12">
+        <div className="max-w-5xl mx-auto px-6 animate-fade-in-up">
+          <div className="flex items-center gap-3 mb-8">
+            <button
+              onClick={() => setStep("mode")}
+              className="p-2 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-gray-900 hover:border-blue-200 transition-all shadow-sm"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Choisissez une ad à copier</h1>
+              <p className="text-sm text-gray-400 mt-0.5">
+                {templates.length} ads disponibles — cliquez pour sélectionner
+              </p>
+            </div>
+          </div>
+
+          {loadingTemplates ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+              <span className="ml-2 text-sm text-gray-500">Chargement du catalogue...</span>
+            </div>
+          ) : templates.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
+                <BookOpen className="w-6 h-6 text-gray-300" />
+              </div>
+              <p className="text-sm text-gray-500">Aucun template disponible pour le moment</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {templates.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    setSelectedTemplateId(t.id);
+                    setStep("product");
+                  }}
+                  className={`group relative rounded-2xl overflow-hidden bg-gray-100 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 active:scale-[0.97] ${
+                    selectedTemplateId === t.id ? "ring-3 ring-blue-500" : ""
+                  } ${t.format === "story" ? "aspect-[9/16]" : "aspect-square"}`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={t.previewUrl}
+                    alt="Template"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-blue-600/80 via-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+                    <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-blue-600 text-xs font-bold shadow-lg">
+                      <Copy className="w-3.5 h-3.5" />
+                      Copier cette ad
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );
