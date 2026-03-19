@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sparkles, Building2, LogOut, Wand2, LayoutGrid, Layout } from "lucide-react";
+import { Sparkles, Building2, LogOut, Zap, Images, BookOpen } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 
@@ -17,64 +17,64 @@ export default function DashboardHeader() {
   };
 
   const tabs = [
-    { href: "/dashboard/brand", label: "Ma Marque", icon: Building2 },
-    { href: "/dashboard/generate", label: "Générateur", icon: Wand2 },
-    { href: "/dashboard/ads", label: "Mes Ads", icon: LayoutGrid },
-    { href: "/dashboard/templates", label: "Templates", icon: Layout },
+    { href: "/dashboard/brand", label: "Marque", icon: Building2 },
+    { href: "/dashboard/generate", label: "Créer", icon: Zap },
+    { href: "/dashboard/ads", label: "Mes Ads", icon: Images },
+    { href: "/dashboard/templates", label: "Catalogue", icon: BookOpen },
   ];
 
   return (
-    <nav className="sticky top-0 z-50 glass border-b border-border/30">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="h-12 flex items-center justify-between">
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-5">
+        <div className="h-14 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/dashboard" className="flex items-center gap-2 group">
-            <div className="w-7 h-7 bg-primary rounded-[8px] flex items-center justify-center shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-white" />
+          <Link href="/dashboard" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-violet-500 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <span className="text-[15px] font-bold text-foreground tracking-tight">
-              Kult<span className="text-gradient">ads</span>
+            <span className="text-base font-bold tracking-tight text-gray-900">
+              Kult<span className="text-blue-500">ads</span>
             </span>
           </Link>
 
-          {/* iOS Segmented Control */}
-          <div className="toggle-pill flex items-center gap-0.5">
+          {/* Navigation pills */}
+          <div className="flex items-center bg-gray-100/80 rounded-xl p-1 gap-0.5">
             {tabs.map((tab) => {
               const isActive = pathname.startsWith(tab.href);
               return (
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  className={`flex items-center gap-1.5 px-3 py-[6px] text-[13px] font-medium rounded-[8px] transition-all duration-200 ${
+                  className={`flex items-center gap-2 px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 ${
                     isActive
-                      ? "toggle-pill-active"
-                      : "text-muted hover:text-foreground"
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
-                  <tab.icon className={`w-3.5 h-3.5 ${isActive ? "text-primary" : ""}`} />
-                  <span className="hidden sm:inline">{tab.label}</span>
+                  <tab.icon className={`w-4 h-4 ${isActive ? "text-blue-500" : ""}`} />
+                  <span className="hidden md:inline">{tab.label}</span>
                 </Link>
               );
             })}
           </div>
 
           {/* User */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {currentUser && (
-              <div className="hidden sm:flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-                  <span className="text-xs font-semibold text-primary">
+              <div className="hidden sm:flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-violet-100 flex items-center justify-center ring-2 ring-white">
+                  <span className="text-xs font-bold text-blue-600">
                     {(currentUser.name || currentUser.email || "U").charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <span className="text-[13px] font-medium text-muted">
-                  {currentUser.name || currentUser.email}
+                <span className="text-sm font-medium text-gray-600">
+                  {currentUser.name || currentUser.email?.split("@")[0]}
                 </span>
               </div>
             )}
             <button
               onClick={handleLogout}
-              className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-black/5 transition-colors"
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
               title="Se déconnecter"
             >
               <LogOut className="w-4 h-4" />

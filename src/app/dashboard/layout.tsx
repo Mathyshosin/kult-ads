@@ -23,7 +23,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const isGeneratePage = pathname === "/dashboard/generate";
 
   return (
-    <div className="min-h-screen bg-surface bg-dots">
+    <div className="min-h-screen bg-gray-50/50">
       <DashboardHeader />
       {isGeneratePage ? (
         children

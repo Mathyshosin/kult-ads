@@ -15,10 +15,11 @@ import {
   Heart,
   Pencil,
   Send,
-  LayoutGrid,
   Bug,
   ChevronDown,
   Lightbulb,
+  Images,
+  Filter,
 } from "lucide-react";
 import { toPng } from "html-to-image";
 
@@ -68,28 +69,31 @@ function AdsLoadingState() {
   const fact = useMemo(() => FUN_FACTS[Math.floor(Math.random() * FUN_FACTS.length)], []);
 
   return (
-    <div className="flex flex-col items-center justify-center py-24 gap-6 animate-fade-in">
+    <div className="flex flex-col items-center justify-center py-32 gap-8 animate-fade-in">
       <div className="relative">
-        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <Loader2 className="w-7 h-7 text-primary animate-spin" />
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-50 to-violet-50 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+        </div>
+        <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+          <Sparkles className="w-3 h-3 text-white" />
         </div>
       </div>
-      <div className="text-center max-w-sm">
-        <p className="text-[15px] font-semibold text-foreground">
+      <div className="text-center">
+        <h2 className="text-lg font-semibold text-gray-900">
           Récupération de vos ads...
-        </p>
-        <p className="text-[13px] text-muted mt-1">
+        </h2>
+        <p className="text-sm text-gray-400 mt-1">
           Chargement de votre bibliothèque
         </p>
       </div>
-      <div className="max-w-md bg-white rounded-2xl p-5 shadow-soft mt-2">
+      <div className="max-w-md bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-xl bg-warning/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Lightbulb className="w-4 h-4 text-warning" />
+          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+            <Lightbulb className="w-5 h-5 text-amber-500" />
           </div>
           <div>
-            <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">Le saviez-vous ?</p>
-            <p className="text-[13px] text-foreground/80 leading-relaxed">{fact}</p>
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Le saviez-vous ?</p>
+            <p className="text-sm text-gray-600 leading-relaxed">{fact}</p>
           </div>
         </div>
       </div>
@@ -103,18 +107,18 @@ function GeneratingCard({ ad }: { ad: GeneratedAd }) {
     <div
       className={`relative ${
         ad.format === "story" ? "aspect-[9/16]" : "aspect-square"
-      } rounded-2xl overflow-hidden bg-white shadow-soft`}
+      } rounded-2xl overflow-hidden bg-white border border-gray-100`}
     >
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-primary/8 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-primary animate-pulse" />
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-50 to-violet-50 flex items-center justify-center">
+          <Sparkles className="w-6 h-6 text-blue-500 animate-pulse" />
         </div>
         <div className="text-center px-6">
-          <p className="text-[13px] font-semibold text-foreground">Génération en cours...</p>
-          <p className="text-[11px] text-muted mt-1">Jusqu&apos;à 1 minute</p>
+          <p className="text-sm font-semibold text-gray-900">Création en cours</p>
+          <p className="text-xs text-gray-400 mt-1">~30 secondes</p>
         </div>
-        <div className="w-20 h-1 rounded-full bg-border overflow-hidden">
-          <div className="h-full bg-primary rounded-full animate-[shimmer_2s_ease-in-out_infinite]" style={{ width: "60%" }} />
+        <div className="w-24 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-blue-400 to-violet-400 rounded-full animate-[shimmer_2s_ease-in-out_infinite]" style={{ width: "60%" }} />
         </div>
       </div>
     </div>
@@ -127,21 +131,21 @@ function FailedCard({ ad, onRetry, onDelete }: { ad: GeneratedAd; onRetry?: () =
     <div
       className={`relative ${
         ad.format === "story" ? "aspect-[9/16]" : "aspect-square"
-      } rounded-2xl overflow-hidden bg-white shadow-soft`}
+      } rounded-2xl overflow-hidden bg-white border border-red-100`}
     >
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6">
-        <div className="w-10 h-10 rounded-2xl bg-destructive/8 flex items-center justify-center">
-          <AlertCircle className="w-5 h-5 text-destructive" />
+        <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center">
+          <AlertCircle className="w-5 h-5 text-red-400" />
         </div>
-        <p className="text-[13px] font-medium text-foreground text-center">Échec</p>
-        {ad.error && <p className="text-[11px] text-muted text-center line-clamp-2">{ad.error}</p>}
-        <div className="flex gap-3 mt-1">
+        <p className="text-sm font-medium text-gray-900 text-center">Échec</p>
+        {ad.error && <p className="text-xs text-gray-400 text-center line-clamp-2">{ad.error}</p>}
+        <div className="flex gap-4 mt-1">
           {onRetry && (
-            <button onClick={onRetry} className="text-[12px] font-semibold text-primary">
+            <button onClick={onRetry} className="text-xs font-semibold text-blue-500 hover:text-blue-600">
               Réessayer
             </button>
           )}
-          <button onClick={onDelete} className="text-[12px] font-semibold text-destructive">
+          <button onClick={onDelete} className="text-xs font-semibold text-red-400 hover:text-red-500">
             Supprimer
           </button>
         </div>
@@ -162,7 +166,7 @@ function CompletedCard({ ad, onClick, onToggleFavorite }: { ad: GeneratedAd; onC
       onClick={onClick}
       className={`group relative ${
         ad.format === "story" ? "aspect-[9/16]" : "aspect-square"
-      } rounded-2xl overflow-hidden bg-black shadow-soft hover:shadow-glow-lg transition-all duration-300 cursor-pointer active:scale-[0.98]`}
+      } rounded-2xl overflow-hidden bg-gray-100 cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-0.5 active:scale-[0.98]`}
     >
       <img
         src={adImageSrc(ad)}
@@ -170,21 +174,23 @@ function CompletedCard({ ad, onClick, onToggleFavorite }: { ad: GeneratedAd; onC
         className="absolute inset-0 w-full h-full object-cover"
         loading="lazy"
       />
+      {/* Gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       {/* Format badge */}
-      <div className="absolute top-2.5 left-2.5 z-10">
-        <span className="bg-black/30 backdrop-blur-md text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
+      <div className="absolute top-3 left-3 z-10">
+        <span className="bg-white/90 backdrop-blur-sm text-gray-700 text-[10px] font-semibold px-2.5 py-1 rounded-lg shadow-sm">
           {ad.format === "story" ? "Story" : "Carré"}
         </span>
       </div>
       {/* Favorite button */}
       <button
         onClick={handleFavorite}
-        className="absolute top-2.5 right-2.5 z-20 p-1.5 rounded-full bg-black/20 backdrop-blur-md hover:bg-black/40 transition-all active:scale-90"
+        className="absolute top-3 right-3 z-20 w-8 h-8 rounded-xl flex items-center justify-center bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white transition-all active:scale-90"
         title={ad.isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
       >
         <Heart
           className={`w-4 h-4 transition-colors ${
-            ad.isFavorite ? "fill-red-500 text-red-500" : "text-white/80 hover:text-white"
+            ad.isFavorite ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-gray-600"
           }`}
         />
       </button>
@@ -232,7 +238,7 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
       <div
         className="relative max-w-md w-full animate-scale-in"
         onClick={(e) => e.stopPropagation()}
@@ -240,16 +246,16 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute -top-2 -right-2 z-50 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center text-muted hover:text-foreground transition-colors active:scale-90"
+          className="absolute -top-3 -right-3 z-50 w-9 h-9 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors active:scale-90"
         >
           <X className="w-4 h-4" />
         </button>
 
-        <div className="max-h-[90vh] overflow-y-auto rounded-2xl">
+        <div className="max-h-[90vh] overflow-y-auto rounded-3xl">
           {/* Ad image */}
           <div
             ref={cardRef}
-            className={`relative ${isStory ? "aspect-[9/16]" : "aspect-square"} rounded-2xl overflow-hidden bg-black`}
+            className={`relative ${isStory ? "aspect-[9/16]" : "aspect-square"} rounded-3xl overflow-hidden bg-gray-100`}
           >
             <img
               src={adImageSrc(ad)}
@@ -257,59 +263,59 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
               className="absolute inset-0 w-full h-full object-cover"
             />
             {!isExporting && (
-              <div className="absolute top-3 right-3 z-30">
-                <span className="bg-black/30 backdrop-blur-md text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
+              <div className="absolute top-4 right-4 z-30">
+                <span className="bg-white/90 backdrop-blur-sm text-gray-700 text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-sm">
                   {isStory ? "Story" : "Carré"}
                 </span>
               </div>
             )}
           </div>
 
-          {/* Controls */}
-          <div className="flex items-center gap-2 mt-3">
+          {/* Action bar */}
+          <div className="flex items-center gap-2 mt-4">
             <button
               onClick={handleDownload}
               disabled={isExporting}
-              className="btn-primary flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[13px]"
+              className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-violet-500 rounded-xl hover:shadow-lg hover:shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-50"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-4 h-4" />
               {isExporting ? "Export..." : "Télécharger"}
             </button>
             <button
               onClick={handleToggleFavorite}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
+              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
                 ad.isFavorite
-                  ? "bg-red-50 text-red-500"
-                  : "bg-white border border-border text-muted hover:text-foreground"
+                  ? "bg-red-50 text-red-500 ring-1 ring-red-100"
+                  : "bg-white ring-1 ring-gray-200 text-gray-400 hover:text-gray-600"
               }`}
             >
-              <Heart className={`w-4 h-4 ${ad.isFavorite ? "fill-red-500" : ""}`} />
+              <Heart className={`w-4.5 h-4.5 ${ad.isFavorite ? "fill-red-500" : ""}`} />
+            </button>
+            <button
+              onClick={() => setShowModify(!showModify)}
+              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
+                showModify
+                  ? "bg-blue-500 text-white ring-1 ring-blue-500"
+                  : "bg-white ring-1 ring-gray-200 text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              <Pencil className="w-4 h-4" />
             </button>
             {ad._debug && (
               <button
                 onClick={() => setShowDebug(!showDebug)}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
+                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
                   showDebug
-                    ? "bg-warning text-white"
-                    : "bg-white border border-border text-muted hover:text-foreground"
+                    ? "bg-amber-500 text-white ring-1 ring-amber-500"
+                    : "bg-white ring-1 ring-gray-200 text-gray-400 hover:text-gray-600"
                 }`}
               >
                 <Bug className="w-4 h-4" />
               </button>
             )}
             <button
-              onClick={() => setShowModify(!showModify)}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
-                showModify
-                  ? "bg-primary text-white"
-                  : "bg-white border border-border text-muted hover:text-foreground"
-              }`}
-            >
-              <Pencil className="w-4 h-4" />
-            </button>
-            <button
               onClick={() => { onDelete(ad.id); onClose(); }}
-              className="w-10 h-10 rounded-xl flex items-center justify-center bg-white border border-border text-destructive hover:bg-red-50 transition-all active:scale-90"
+              className="w-12 h-12 rounded-xl flex items-center justify-center bg-white ring-1 ring-gray-200 text-red-400 hover:bg-red-50 hover:ring-red-100 transition-all active:scale-90"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -317,7 +323,7 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
 
           {/* Modify input */}
           {showModify && (
-            <div className="mt-3 animate-fade-in">
+            <div className="mt-4 animate-fade-in">
               <div className="flex items-center gap-2">
                 <input
                   type="text"
@@ -332,7 +338,7 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
                     }
                   }}
                   placeholder="Ex: change le fond en bleu, agrandis le logo..."
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-white border border-border text-[13px] text-foreground placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="flex-1 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 transition-all"
                   autoFocus
                 />
                 <button
@@ -345,29 +351,29 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
                     }
                   }}
                   disabled={!modifyPrompt.trim()}
-                  className="w-10 h-10 rounded-xl btn-primary flex items-center justify-center disabled:opacity-30"
+                  className="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 transition-colors disabled:opacity-30 active:scale-95"
                 >
                   <Send className="w-4 h-4" />
                 </button>
               </div>
-              <p className="text-[11px] text-muted mt-1.5 px-1">Appuyez sur Entrée pour envoyer</p>
+              <p className="text-xs text-gray-400 mt-2 px-1">Appuyez sur Entrée pour envoyer la modification</p>
             </div>
           )}
 
           {/* Debug panel */}
           {showDebug && ad._debug && (
-            <div className="mt-3 bg-gray-900 text-gray-100 rounded-2xl p-4 text-xs space-y-3 max-h-[50vh] overflow-y-auto animate-fade-in">
+            <div className="mt-4 bg-gray-900 text-gray-100 rounded-2xl p-5 text-xs space-y-3 max-h-[50vh] overflow-y-auto animate-fade-in">
               <div className="flex items-center justify-between">
-                <h4 className="font-bold text-warning text-[13px]">Debug</h4>
+                <h4 className="font-bold text-amber-400 text-sm">Debug</h4>
                 <button onClick={() => setShowDebug(false)} className="text-gray-500 hover:text-gray-300">
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
               {ad._debug.templateType && (
-                <div>
-                  <span className="text-gray-400 font-medium">Template type:</span>
-                  <span className="ml-2 text-emerald-400">{ad._debug.templateType}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 text-xs">Template:</span>
+                  <span className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-md text-xs">{ad._debug.templateType}</span>
                 </div>
               )}
 
@@ -403,7 +409,7 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
 
               {ad._debug.referenceImageLabels.length > 0 && (
                 <div>
-                  <span className="text-gray-400 font-medium">References:</span>
+                  <span className="text-gray-500 text-xs">References:</span>
                   <ul className="mt-1 space-y-1">
                     {ad._debug.referenceImageLabels.map((label, i) => (
                       <li key={i} className="text-gray-300 bg-gray-800 rounded-xl px-3 py-1.5">{label}</li>
@@ -414,7 +420,7 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite }: {
 
               {ad._debug.templateImageBase64 && (
                 <div>
-                  <span className="text-gray-400 font-medium">Template :</span>
+                  <span className="text-gray-500 text-xs">Template :</span>
                   <img
                     src={`data:${ad._debug.templateMimeType || "image/png"};base64,${ad._debug.templateImageBase64}`}
                     alt="Template"
@@ -493,9 +499,8 @@ export default function AdsGalleryPage() {
     const productImage = uploadedImages.find((img) => img.productId === product.id);
     const originalId = ad.id;
 
-    // Put the original ad in "generating" state (in-place, no new card)
     updateGeneratedAd(originalId, { status: "generating", error: undefined });
-    setSelectedAd(null); // close modal during generation
+    setSelectedAd(null);
 
     try {
       const res = await fetch("/api/generate-ad", {
@@ -530,7 +535,6 @@ export default function AdsGalleryPage() {
 
       const data = await res.json();
 
-      // Replace the original ad in-place with the new result
       updateGeneratedAd(originalId, {
         imageBase64: data.imageBase64,
         mimeType: data.mimeType,
@@ -542,7 +546,6 @@ export default function AdsGalleryPage() {
         error: undefined,
       });
 
-      // Sync to Supabase: delete old, save updated
       if (currentUser && brandAnalysisId) {
         const updatedAd = useWizardStore.getState().generatedAds.find((a) => a.id === originalId);
         if (updatedAd) {
@@ -551,7 +554,6 @@ export default function AdsGalleryPage() {
         }
       }
     } catch (err) {
-      // Restore the ad to completed state with error message
       updateGeneratedAd(originalId, {
         status: "completed",
         error: err instanceof Error ? err.message : "Échec de la modification",
@@ -562,48 +564,53 @@ export default function AdsGalleryPage() {
   // Show loading state while hydrating from Supabase
   if (!isHydrated) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-5">
         <AdsLoadingState />
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6">
+    <div className="max-w-7xl mx-auto px-5">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <LayoutGrid className="w-5 h-5 text-primary" />
-            Mes Publicités
-            {completedCount > 0 && (
-              <span className="text-[12px] font-semibold text-muted bg-white px-2 py-0.5 rounded-full shadow-sm">
-                {completedCount}
-              </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-violet-50 flex items-center justify-center">
+            <Images className="w-5 h-5 text-blue-500" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              Mes Publicités
+              {completedCount > 0 && (
+                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-0.5 rounded-full">
+                  {completedCount}
+                </span>
+              )}
+            </h1>
+            {generatingCount > 0 && (
+              <p className="text-sm text-gray-400 flex items-center gap-1.5 mt-0.5">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />
+                {generatingCount} en cours...
+              </p>
             )}
-          </h1>
-          {generatingCount > 0 && (
-            <p className="text-[13px] text-muted mt-1 flex items-center gap-1.5">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-              {generatingCount} génération{generatingCount > 1 ? "s" : ""} en cours...
-            </p>
-          )}
+          </div>
         </div>
 
-        {/* Filter — iOS segmented control */}
-        <div className="flex items-center gap-0.5 toggle-pill">
+        {/* Filter pills */}
+        <div className="flex items-center gap-1 bg-gray-100/80 rounded-xl p-1">
+          <Filter className="w-3.5 h-3.5 text-gray-400 ml-2 mr-1" />
           {(["all", "square", "story", "favorites"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-[6px] text-[12px] font-medium rounded-[8px] transition-all flex items-center gap-1 ${
-                filter === f ? "toggle-pill-active" : "text-muted hover:text-foreground"
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 ${
+                filter === f ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              {f === "favorites" && <Heart className={`w-3 h-3 ${filter === "favorites" ? "fill-current" : ""}`} />}
+              {f === "favorites" && <Heart className={`w-3 h-3 ${filter === "favorites" ? "fill-red-500 text-red-500" : ""}`} />}
               {f === "all" ? "Tous" : f === "square" ? "Carré" : f === "story" ? "Story" : "Favoris"}
               {f === "favorites" && favoritesCount > 0 && (
-                <span className="text-[10px] bg-red-100 text-red-500 px-1.5 py-0.5 rounded-full font-semibold">{favoritesCount}</span>
+                <span className="text-[10px] bg-red-100 text-red-500 px-1.5 py-0.5 rounded-full font-bold ml-0.5">{favoritesCount}</span>
               )}
             </button>
           ))}
@@ -612,27 +619,27 @@ export default function AdsGalleryPage() {
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-4 animate-fade-in">
-          <div className="w-14 h-14 rounded-2xl bg-primary/8 flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center py-28 gap-5 animate-fade-in">
+          <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
             {filter === "favorites" ? (
-              <Heart className="w-6 h-6 text-primary/40" />
+              <Heart className="w-7 h-7 text-gray-300" />
             ) : (
-              <Sparkles className="w-6 h-6 text-primary/40" />
+              <Images className="w-7 h-7 text-gray-300" />
             )}
           </div>
           <div className="text-center">
-            <p className="text-[15px] font-semibold text-foreground">
+            <p className="text-base font-semibold text-gray-900">
               {filter === "favorites" ? "Aucun favori" : "Aucune publicité"}
             </p>
-            <p className="text-[13px] text-muted mt-1">
+            <p className="text-sm text-gray-400 mt-1 max-w-xs">
               {filter === "favorites"
-                ? "Cliquez sur le coeur d'une publicité pour l'ajouter aux favoris"
+                ? "Cliquez sur le cœur d'une publicité pour l'ajouter ici"
                 : "Rendez-vous dans le Générateur pour créer votre première pub !"}
             </p>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {filtered.map((ad) => {
             const status = ad.status || "completed";
             if (status === "generating") {
