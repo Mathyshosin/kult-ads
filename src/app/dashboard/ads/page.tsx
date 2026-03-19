@@ -102,26 +102,53 @@ function AdsLoadingState() {
   );
 }
 
-// ── Skeleton card for generating ads ──
+// ── Cooking-style generating card ──
 function GeneratingCard({ ad }: { ad: GeneratedAd }) {
+  const tips = [
+    "Préparation des ingrédients...",
+    "Ajout d'une pincée de créativité...",
+    "Cuisson en cours...",
+    "Touche finale...",
+    "Presque prêt...",
+  ];
+  const tip = useMemo(() => tips[Math.floor(Math.random() * tips.length)], []);
+
   return (
     <div
       className={`relative ${
         ad.format === "story" ? "aspect-[9/16]" : "aspect-square"
-      } rounded-2xl overflow-hidden bg-white border border-gray-100`}
+      } rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50 via-white to-violet-50 border border-blue-100/50`}
     >
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-50 to-violet-50 flex items-center justify-center">
-          <Sparkles className="w-6 h-6 text-blue-500 animate-pulse" />
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
+        {/* Animated pan icon */}
+        <div className="relative">
+          <div className="text-4xl animate-bounce-soft">🍳</div>
+          <div className="absolute -top-2 -right-2 text-lg animate-pulse">✨</div>
         </div>
         <div className="text-center px-6">
-          <p className="text-sm font-semibold text-gray-900">Création en cours</p>
-          <p className="text-xs text-gray-400 mt-1">~30 secondes</p>
+          <p className="text-sm font-semibold text-gray-900">On prépare votre ad</p>
+          <p className="text-xs text-gray-400 mt-1.5 italic">{tip}</p>
         </div>
-        <div className="w-24 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-blue-400 to-violet-400 rounded-full animate-[shimmer_2s_ease-in-out_infinite]" style={{ width: "60%" }} />
+        {/* Progress dots */}
+        <div className="flex gap-1.5">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="w-2 h-2 rounded-full bg-blue-400"
+              style={{
+                animation: `pulse 1.4s ease-in-out ${i * 0.2}s infinite`,
+                opacity: 0.3,
+              }}
+            />
+          ))}
         </div>
       </div>
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 80%, 100% { opacity: 0.3; transform: scale(1); }
+          40% { opacity: 1; transform: scale(1.3); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -551,19 +578,10 @@ export default function AdsGalleryPage() {
     if (!product) return;
 
     const productImage = uploadedImages.find((img) => img.productId === product.id);
-    const originalId = ad.id;
     const targetFormat = formatOverride || ad.format;
 
-    const isFormatConversion = !!formatOverride && formatOverride !== ad.format;
-
-    // For format conversion: create a new ad placeholder; otherwise edit in-place
-    let targetId: string;
-    if (isFormatConversion) {
-      targetId = startGeneration({ format: targetFormat, productId: ad.productId });
-    } else {
-      targetId = originalId;
-      updateGeneratedAd(originalId, { status: "generating", error: undefined });
-    }
+    // Always create a NEW ad — keep the original intact
+    const targetId = startGeneration({ format: targetFormat, productId: ad.productId });
     setSelectedAd(null);
 
     try {
@@ -575,7 +593,7 @@ export default function AdsGalleryPage() {
           product,
           format: targetFormat,
           modificationPrompt: prompt,
-          previousAdId: originalId,
+          previousAdId: ad.id,
           previousAdBase64: ad.imageBase64,
           previousAdMimeType: ad.mimeType,
           productImageBase64: productImage?.base64,
@@ -599,41 +617,13 @@ export default function AdsGalleryPage() {
 
       const data = await res.json();
 
-      if (isFormatConversion) {
-        // Complete the new placeholder
-        completeGeneration(targetId, { ...data, format: targetFormat });
-        if (currentUser && brandAnalysisId) {
-          syncGeneratedAd(currentUser.id, { ...data, id: targetId, format: targetFormat });
-        }
-      } else {
-        updateGeneratedAd(originalId, {
-          imageBase64: data.imageBase64,
-          mimeType: data.mimeType,
-          headline: data.headline,
-          bodyText: data.bodyText,
-          callToAction: data.callToAction,
-          _debug: data._debug,
-          status: "completed",
-          error: undefined,
-        });
-
-        // Update the image in Supabase (not delete+insert)
-        if (currentUser && brandAnalysisId) {
-          const updatedAd = useWizardStore.getState().generatedAds.find((a) => a.id === originalId);
-          if (updatedAd) {
-            updateGeneratedAdImage(currentUser.id, brandAnalysisId, originalId, updatedAd).catch(console.error);
-          }
-        }
+      // Complete the new ad placeholder (original is untouched)
+      completeGeneration(targetId, { ...data, format: targetFormat });
+      if (currentUser && brandAnalysisId) {
+        syncGeneratedAd(currentUser.id, { ...data, id: targetId, format: targetFormat });
       }
     } catch (err) {
-      if (isFormatConversion) {
-        failGeneration(targetId, err instanceof Error ? err.message : "Échec de la conversion");
-      } else {
-        updateGeneratedAd(originalId, {
-          status: "completed",
-          error: err instanceof Error ? err.message : "Échec de la modification",
-        });
-      }
+      failGeneration(targetId, err instanceof Error ? err.message : "Échec de la modification");
     }
   };
 

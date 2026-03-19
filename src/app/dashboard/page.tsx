@@ -6,14 +6,13 @@ import { useWizardStore } from "@/lib/store";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const brandAnalysis = useWizardStore((s) => s.brandAnalysis);
   const isHydrated = useWizardStore((s) => s.isHydrated);
 
   useEffect(() => {
     if (isHydrated) {
-      router.replace(brandAnalysis ? "/dashboard/ads" : "/dashboard/brand");
+      router.replace("/dashboard/ads");
     }
-  }, [router, brandAnalysis, isHydrated]);
+  }, [router, isHydrated]);
 
   return null;
 }
