@@ -455,7 +455,12 @@ export default function GeneratePage() {
               ]).map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
-                  onClick={() => setGenerationMode(key)}
+                  onClick={() => {
+                    setGenerationMode(key);
+                    if (key === "reference" && !customPrompt.trim()) {
+                      setCustomPrompt("Réalise cette ads pour ma marque en retirant tous les éléments visuels de l'autre marque");
+                    }
+                  }}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-xs font-medium transition-all duration-200 ${
                     generationMode === key
                       ? "toggle-pill-active"
