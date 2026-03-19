@@ -2,7 +2,8 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sparkles, LogOut, Zap, Images, User, Building2, Settings, ChevronDown } from "lucide-react";
+import { LogOut, Zap, Images, Building2, Settings, ChevronDown } from "lucide-react";
+import { KultLogoFull } from "./kult-logo";
 import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 
@@ -41,13 +42,8 @@ export default function DashboardHeader() {
       <div className="max-w-7xl mx-auto px-5">
         <div className="h-14 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-violet-500 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-base font-bold tracking-tight text-gray-900">
-              Kult<span className="text-blue-500">ads</span>
-            </span>
+          <Link href="/dashboard" className="group hover:opacity-90 transition-opacity">
+            <KultLogoFull />
           </Link>
 
           {/* Navigation — simplified to 2 main tabs */}
