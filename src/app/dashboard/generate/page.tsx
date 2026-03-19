@@ -144,7 +144,9 @@ export default function GeneratePage() {
         referenceAdMimeType:
           generationMode === "reference" ? referenceAd?.mimeType : undefined,
         referenceInstruction:
-          generationMode === "reference" ? customPrompt.trim() || undefined : undefined,
+          generationMode === "reference"
+            ? customPrompt.trim() || "Réalise cette ads pour ma marque en retirant tous les éléments visuels de l'autre marque"
+            : undefined,
       });
 
       let res = await fetch("/api/generate-ad", {
@@ -455,12 +457,7 @@ export default function GeneratePage() {
               ]).map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
-                  onClick={() => {
-                    setGenerationMode(key);
-                    if (key === "reference" && !customPrompt.trim()) {
-                      setCustomPrompt("Réalise cette ads pour ma marque en retirant tous les éléments visuels de l'autre marque");
-                    }
-                  }}
+                  onClick={() => setGenerationMode(key)}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-xs font-medium transition-all duration-200 ${
                     generationMode === key
                       ? "toggle-pill-active"
@@ -516,7 +513,7 @@ export default function GeneratePage() {
                   <textarea
                     value={customPrompt}
                     onChange={(e) => setCustomPrompt(e.target.value)}
-                    placeholder="Instructions pour adapter la référence..."
+                    placeholder="Réalise cette ads pour ma marque en retirant tous les éléments visuels de l'autre marque"
                     rows={2}
                     className="w-full px-3.5 py-3 input-tech text-sm placeholder:text-muted/40 resize-none"
                   />
