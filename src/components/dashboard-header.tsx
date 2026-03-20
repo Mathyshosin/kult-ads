@@ -38,6 +38,22 @@ export default function DashboardHeader() {
     { href: "/dashboard/ads", label: "Mes Ads", icon: Images },
   ];
 
+  const activeIndex = tabs.findIndex((t) => pathname.startsWith(t.href));
+  const tabRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [pill, setPill] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    const idx = activeIndex >= 0 ? activeIndex : 0;
+    const el = tabRefs.current[idx];
+    const container = containerRef.current;
+    if (el && container) {
+      const cr = container.getBoundingClientRect();
+      const er = el.getBoundingClientRect();
+      setPill({ left: er.left - cr.left, width: er.width });
+    }
+  }, [activeIndex]);
+
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-5">
@@ -47,21 +63,31 @@ export default function DashboardHeader() {
             <KultLogoFull />
           </Link>
 
-          {/* Navigation tabs */}
-          <div className="flex items-center bg-gray-100/80 rounded-xl p-1 gap-0.5">
-            {tabs.map((tab) => {
+          {/* Navigation tabs with sliding pill */}
+          <div ref={containerRef} className="relative flex items-center bg-gray-100/80 rounded-xl p-1 gap-0.5">
+            {/* Animated sliding pill */}
+            <div
+              className="absolute top-1 bottom-1 bg-white rounded-lg shadow-sm will-change-transform"
+              style={{
+                transform: `translateX(${pill.left}px)`,
+                width: pill.width > 0 ? `${pill.width}px` : undefined,
+                transition: "transform 250ms cubic-bezier(0.25, 0.1, 0.25, 1), width 250ms cubic-bezier(0.25, 0.1, 0.25, 1)",
+              }}
+            />
+            {tabs.map((tab, i) => {
               const isActive = pathname.startsWith(tab.href);
               return (
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  className={`flex items-center gap-2 px-5 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 ${
+                  ref={(el) => { tabRefs.current[i] = el; }}
+                  className={`relative z-10 flex items-center gap-2 px-5 py-2 text-[13px] font-medium rounded-lg transition-colors duration-200 whitespace-nowrap ${
                     isActive
-                      ? "bg-white text-gray-900 shadow-sm"
+                      ? "text-gray-900"
                       : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
-                  <tab.icon className={`w-4 h-4 ${isActive ? "text-blue-500" : ""}`} />
+                  <tab.icon className={`w-4 h-4 transition-colors duration-200 ${isActive ? "text-blue-500" : ""}`} />
                   <span>{tab.label}</span>
                 </Link>
               );
