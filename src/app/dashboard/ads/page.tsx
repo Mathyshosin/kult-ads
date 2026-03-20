@@ -371,16 +371,20 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite, isAd
                 <Smartphone className="w-4 h-4" />
               </button>
             )}
-            {ad._debug && isAdmin && (
+            {ad._debug?.templateImageBase64 && (
               <button
                 onClick={() => setShowDebug(!showDebug)}
-                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
+                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all active:scale-90 overflow-hidden ${
                   showDebug
-                    ? "bg-amber-500 text-white ring-1 ring-amber-500"
-                    : "bg-white ring-1 ring-gray-200 text-gray-400 hover:text-gray-600"
+                    ? "ring-2 ring-blue-500"
+                    : "ring-1 ring-gray-200 hover:ring-gray-300"
                 }`}
               >
-                <Bug className="w-4 h-4" />
+                <img
+                  src={`data:${ad._debug.templateMimeType || "image/png"};base64,${ad._debug.templateImageBase64}`}
+                  alt="Ref"
+                  className="w-full h-full object-cover"
+                />
               </button>
             )}
             <button
@@ -430,72 +434,42 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite, isAd
             </div>
           )}
 
-          {/* Debug panel */}
+          {/* Reference image / Debug panel */}
           {showDebug && ad._debug && (
-            <div className="mt-4 bg-gray-900 text-gray-100 rounded-2xl p-5 text-xs space-y-3 max-h-[50vh] overflow-y-auto animate-fade-in">
-              <div className="flex items-center justify-between">
-                <h4 className="font-bold text-amber-400 text-sm">Debug</h4>
-                <button onClick={() => setShowDebug(false)} className="text-gray-500 hover:text-gray-300">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {ad._debug.templateType && (
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500 text-xs">Template:</span>
-                  <span className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-md text-xs">{ad._debug.templateType}</span>
-                </div>
-              )}
-
-              <div>
-                <button
-                  onClick={() => {
-                    const el = document.getElementById("debug-scene");
-                    if (el) el.classList.toggle("hidden");
-                  }}
-                  className="flex items-center gap-1 text-gray-400 font-medium hover:text-gray-200 mb-1"
-                >
-                  Scene Description <ChevronDown className="w-3 h-3" />
-                </button>
-                <pre id="debug-scene" className="whitespace-pre-wrap text-gray-300 bg-gray-800 rounded-xl p-3 leading-relaxed hidden">
-                  {ad._debug.sceneDescription}
-                </pre>
-              </div>
-
-              <div>
-                <button
-                  onClick={() => {
-                    const el = document.getElementById("debug-prompt");
-                    if (el) el.classList.toggle("hidden");
-                  }}
-                  className="flex items-center gap-1 text-gray-400 font-medium hover:text-gray-200 mb-1"
-                >
-                  Prompt Gemini <ChevronDown className="w-3 h-3" />
-                </button>
-                <pre id="debug-prompt" className="whitespace-pre-wrap text-gray-300 bg-gray-800 rounded-xl p-3 leading-relaxed text-[11px] hidden">
-                  {ad._debug.geminiPrompt}
-                </pre>
-              </div>
-
-              {ad._debug.referenceImageLabels.length > 0 && (
-                <div>
-                  <span className="text-gray-500 text-xs">References:</span>
-                  <ul className="mt-1 space-y-1">
-                    {ad._debug.referenceImageLabels.map((label, i) => (
-                      <li key={i} className="text-gray-300 bg-gray-800 rounded-xl px-3 py-1.5">{label}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
+            <div className="mt-4 animate-fade-in">
+              {/* Template/reference image for everyone */}
               {ad._debug.templateImageBase64 && (
-                <div>
-                  <span className="text-gray-500 text-xs">Template :</span>
+                <div className="bg-white rounded-2xl p-3 ring-1 ring-gray-100">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Ad de référence</p>
                   <img
                     src={`data:${ad._debug.templateMimeType || "image/png"};base64,${ad._debug.templateImageBase64}`}
                     alt="Template"
-                    className="mt-2 rounded-xl w-32 h-auto border border-gray-700"
+                    className="rounded-xl w-full h-auto"
                   />
+                </div>
+              )}
+
+              {/* Admin-only debug details */}
+              {isAdmin && (
+                <div className="mt-3 bg-gray-900 text-gray-100 rounded-2xl p-4 text-xs space-y-3 max-h-[40vh] overflow-y-auto">
+                  <h4 className="font-bold text-amber-400 text-sm">Debug</h4>
+                  {ad._debug.templateType && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">Type:</span>
+                      <span className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-md">{ad._debug.templateType}</span>
+                    </div>
+                  )}
+                  <div>
+                    <button
+                      onClick={() => { const el = document.getElementById("debug-prompt"); if (el) el.classList.toggle("hidden"); }}
+                      className="flex items-center gap-1 text-gray-400 font-medium hover:text-gray-200 mb-1"
+                    >
+                      Prompt Gemini <ChevronDown className="w-3 h-3" />
+                    </button>
+                    <pre id="debug-prompt" className="whitespace-pre-wrap text-gray-300 bg-gray-800 rounded-xl p-3 leading-relaxed text-[11px] hidden">
+                      {ad._debug.geminiPrompt}
+                    </pre>
+                  </div>
                 </div>
               )}
             </div>
