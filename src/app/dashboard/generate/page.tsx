@@ -70,6 +70,23 @@ export default function GeneratePage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [templates, setTemplates] = useState<{ id: string; format: string; previewUrl: string }[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [editedOffer, setEditedOffer] = useState<{ title: string; discountValue: string; originalPrice: string; salePrice: string } | null>(null);
+
+  // Auto-load offer for product
+  useEffect(() => {
+    if (!selectedProduct || !brandAnalysis) { setEditedOffer(null); return; }
+    const offer = brandAnalysis.offers.find((o) => o.productId === selectedProduct.id);
+    if (offer) {
+      setEditedOffer({
+        title: offer.title || "",
+        discountValue: offer.discountValue || "",
+        originalPrice: offer.originalPrice || "",
+        salePrice: offer.salePrice || "",
+      });
+    } else {
+      setEditedOffer(null);
+    }
+  }, [selectedProduct, brandAnalysis]);
 
   // Auto-select image for product
   useEffect(() => {
@@ -120,7 +137,8 @@ export default function GeneratePage() {
     setLaunching(true);
 
     const image = uploadedImages.find((i) => i.id === selectedImage) || uploadedImages[0];
-    const offer = brandAnalysis.offers.find((o) => o.productId === selectedProduct.id) || null;
+    const baseOffer = brandAnalysis.offers.find((o) => o.productId === selectedProduct.id) || null;
+    const offer = editedOffer && baseOffer ? { ...baseOffer, ...editedOffer } : baseOffer;
 
     const placeholderId = startGeneration({
       format: selectedFormat,
@@ -518,33 +536,56 @@ export default function GeneratePage() {
           </div>
         </div>
 
-        {/* Linked promotion */}
-        {(() => {
-          const offer = brandAnalysis.offers.find((o) => o.productId === selectedProduct.id);
-          if (!offer) return null;
-          const discount = offer.discountValue
-            ? `${offer.discountType === "percentage" ? "-" : ""}${String(offer.discountValue).replace(/%+$/, "").replace(/€+$/, "")}${offer.discountType === "percentage" ? "%" : "€"}`
-            : null;
-          return (
-            <div className="flex items-center gap-3 bg-emerald-50/50 rounded-2xl border border-emerald-200/60 px-4 py-3 mb-5">
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                <Tag className="w-4 h-4 text-emerald-600" />
+        {/* Editable promotion */}
+        {editedOffer && (
+          <div className="bg-emerald-50/50 rounded-2xl border border-emerald-200/60 px-4 py-3 mb-5 space-y-2">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-6 h-6 rounded-md bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <Tag className="w-3 h-3 text-emerald-600" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-emerald-700 truncate">{offer.title}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {discount && <span className="text-xs font-bold text-emerald-600">{discount}</span>}
-                  {offer.originalPrice && offer.salePrice && (
-                    <span className="text-[11px] text-gray-500">
-                      <span className="line-through">{offer.originalPrice}</span>{" → "}
-                      <span className="font-semibold text-emerald-600">{offer.salePrice}</span>
-                    </span>
-                  )}
-                </div>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">Offre</span>
+            </div>
+            <input
+              type="text"
+              value={editedOffer.title}
+              onChange={(e) => setEditedOffer({ ...editedOffer, title: e.target.value })}
+              className="w-full text-xs font-semibold text-emerald-800 bg-white/60 border border-emerald-200/50 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              placeholder="Nom de l'offre"
+            />
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="text-[10px] text-gray-400 mb-0.5 block">Réduction</label>
+                <input
+                  type="text"
+                  value={editedOffer.discountValue}
+                  onChange={(e) => setEditedOffer({ ...editedOffer, discountValue: e.target.value })}
+                  className="w-full text-xs bg-white/60 border border-emerald-200/50 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                  placeholder="-20%"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-[10px] text-gray-400 mb-0.5 block">Prix d&apos;origine</label>
+                <input
+                  type="text"
+                  value={editedOffer.originalPrice}
+                  onChange={(e) => setEditedOffer({ ...editedOffer, originalPrice: e.target.value })}
+                  className="w-full text-xs bg-white/60 border border-emerald-200/50 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                  placeholder="99€"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-[10px] text-gray-400 mb-0.5 block">Prix promo</label>
+                <input
+                  type="text"
+                  value={editedOffer.salePrice}
+                  onChange={(e) => setEditedOffer({ ...editedOffer, salePrice: e.target.value })}
+                  className="w-full text-xs bg-white/60 border border-emerald-200/50 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-emerald-600 font-semibold"
+                  placeholder="75€"
+                />
               </div>
             </div>
-          );
-        })()}
+          </div>
+        )}
 
         <div className="space-y-5">
           {/* Product images */}
