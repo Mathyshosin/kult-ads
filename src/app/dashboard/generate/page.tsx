@@ -71,6 +71,8 @@ export default function GeneratePage() {
   const [templates, setTemplates] = useState<{ id: string; format: string; previewUrl: string }[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [editedOffer, setEditedOffer] = useState<{ title: string; discountValue: string; originalPrice: string; salePrice: string } | null>(null);
+  const [ctaEnabled, setCtaEnabled] = useState(false);
+  const [ctaText, setCtaText] = useState("");
 
   // Auto-load offer for product
   useEffect(() => {
@@ -188,6 +190,7 @@ export default function GeneratePage() {
           generationMode === "reference"
             ? customPrompt.trim() || "Réalise cette ads pour ma marque en retirant tous les éléments visuels de l'autre marque"
             : undefined,
+        ctaText: ctaEnabled && ctaText.trim() ? ctaText.trim() : undefined,
       });
 
       let res = await fetch("/api/generate-ad", {
@@ -640,6 +643,28 @@ export default function GeneratePage() {
                 </button>
               ))}
             </div>
+          </section>
+
+          {/* CTA option */}
+          <section className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Bouton CTA</h3>
+              <button
+                onClick={() => setCtaEnabled(!ctaEnabled)}
+                className={`relative w-10 h-5.5 rounded-full transition-colors ${ctaEnabled ? "bg-blue-500" : "bg-gray-200"}`}
+              >
+                <div className={`absolute top-0.5 w-4.5 h-4.5 rounded-full bg-white shadow transition-transform ${ctaEnabled ? "translate-x-5" : "translate-x-0.5"}`} />
+              </button>
+            </div>
+            {ctaEnabled && (
+              <input
+                type="text"
+                value={ctaText}
+                onChange={(e) => setCtaText(e.target.value)}
+                placeholder="Ex: Découvrir, Commander, J'en profite..."
+                className="w-full text-sm bg-white border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+              />
+            )}
           </section>
 
           {/* Mode-specific content */}

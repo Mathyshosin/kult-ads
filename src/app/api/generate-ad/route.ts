@@ -45,7 +45,10 @@ export async function POST(request: Request) {
       previousAdBase64: rawPreviousAdBase64,
       previousAdMimeType: rawPreviousAdMimeType,
       previousAdId,
+      ctaText: rawCtaText,
     } = await request.json();
+
+    const ctaText = rawCtaText?.trim() || null;
 
     if (!brandAnalysis || !product || !format) {
       return NextResponse.json(
@@ -282,8 +285,12 @@ export async function POST(request: Request) {
         ? `Use the provided logo for "${brandAnalysis.brandName}" exactly as-is, no modification.`
         : `Write "${brandAnalysis.brandName}" in clean, modern typography.`;
 
+      const ctaInstruction = ctaText
+        ? ` Add a CTA button saying "${ctaText}".`
+        : " Do NOT add any CTA button.";
+
       const textInstruction = metadata?.textElements && metadata.textElements.length > 0
-        ? `Write a short, punchy headline about "${headlineHint}" (2-5 words max). Add a CTA button with a short action text in the brand's language (vary between: "Découvrir", "J'en profite", "Commander", "Voir l'offre", "Acheter", "En savoir plus" — pick the most relevant).${priceText} Use ${layout.typographyStyle || "clean sans-serif"} typography with ${layout.textColor || "white"} text${layout.accentColor ? ` and ${layout.accentColor} accents` : ""}.`
+        ? `Write a short, punchy headline about "${headlineHint}" (2-5 words max).${ctaInstruction}${priceText} Use ${layout.typographyStyle || "clean sans-serif"} typography with ${layout.textColor || "white"} text${layout.accentColor ? ` and ${layout.accentColor} accents` : ""}.`
         : `${logoInstruction}`;
 
       const comparisonNote = metadata?.templateType === "comparison"
@@ -301,7 +308,8 @@ export async function POST(request: Request) {
         ? " IMPORTANT: This is a Story format (9:16). Leave the TOP 15% and BOTTOM 20% of the image EMPTY — these areas are covered by platform UI. Place ALL content in the middle 65%."
         : "";
       // Fallback: no template — create from scratch
-      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). ${productImageBase64 ? "Feature the product exactly as shown in the product photo — same shape, colors, details, fully visible." : ""} ${brandLogoBase64 ? `Place the logo provided for "${brandAnalysis.brandName}" as-is.` : `Write "${brandAnalysis.brandName}" in clean typography.`} Write a short headline about "${headlineHint}". Premium, minimalist, Instagram-ready.${safeZoneNote}`;
+      const fallbackCta = ctaText ? ` Add a CTA button saying "${ctaText}".` : "";
+      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). ${productImageBase64 ? "Feature the product exactly as shown in the product photo — same shape, colors, details, fully visible." : ""} ${brandLogoBase64 ? `Place the logo provided for "${brandAnalysis.brandName}" as-is.` : `Write "${brandAnalysis.brandName}" in clean typography.`} Write a short headline about "${headlineHint}".${fallbackCta} Premium, minimalist, Instagram-ready.${safeZoneNote}`;
     }
 
     // ── PARALLEL: Image + copy at the same time ──
