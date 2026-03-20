@@ -290,7 +290,7 @@ export async function POST(request: Request) {
         : " Do NOT add any CTA button.";
 
       const textInstruction = metadata?.textElements && metadata.textElements.length > 0
-        ? `Write a short, punchy headline about "${headlineHint}" (2-5 words max).${ctaInstruction}${priceText} Use ${layout.typographyStyle || "clean sans-serif"} typography with ${layout.textColor || "white"} text${layout.accentColor ? ` and ${layout.accentColor} accents` : ""}.`
+        ? `Write a short, punchy headline about "${headlineHint}" (2-5 words max).${ctaInstruction}${priceText} Use ${layout.typographyStyle || "clean sans-serif"} typography. NEVER display hex color codes (like #000000 or #E91E7A) as visible text on the image.`
         : `${logoInstruction}`;
 
       const comparisonNote = metadata?.templateType === "comparison"
