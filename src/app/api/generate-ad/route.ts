@@ -283,18 +283,25 @@ export async function POST(request: Request) {
         : `Write "${brandAnalysis.brandName}" in clean, modern typography.`;
 
       const textInstruction = metadata?.textElements && metadata.textElements.length > 0
-        ? `Write a short, punchy headline about "${headlineHint}" (2-5 words max). Add a CTA button saying "Découvrir".${priceText} Use ${layout.typographyStyle || "clean sans-serif"} typography with ${layout.textColor || "white"} text${layout.accentColor ? ` and ${layout.accentColor} accents` : ""}.`
+        ? `Write a short, punchy headline about "${headlineHint}" (2-5 words max). Add a CTA button with a short action text in the brand's language (vary between: "Découvrir", "J'en profite", "Commander", "Voir l'offre", "Acheter", "En savoir plus" — pick the most relevant).${priceText} Use ${layout.typographyStyle || "clean sans-serif"} typography with ${layout.textColor || "white"} text${layout.accentColor ? ` and ${layout.accentColor} accents` : ""}.`
         : `${logoInstruction}`;
 
       const comparisonNote = metadata?.templateType === "comparison"
         ? ` Use a comparison layout: one side shows a generic inferior alternative, the other side shows "${product.name}" looking premium and desirable.`
         : "";
 
-      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). Use the template image as creative direction — match its overall style, color palette (${layout.backgroundStyle || "clean background"}), mood, and marketing approach (${metadata?.templateType || "product-showcase"}). ${productInstruction} ${logoInstruction} ${textInstruction}${comparisonNote} Do NOT copy decorative elements from the template (flowers, leaves, cotton, props) — keep the background clean. Do NOT invent product features or claims. Only use real information about "${product.name}". All text must be sharp and readable. The result should be a polished, modern ad inspired by the template's style.`;
+      const safeZoneNote = format === "story"
+        ? " IMPORTANT: This is a Story format (9:16). Leave the TOP 15% and BOTTOM 20% of the image EMPTY (no text, no important elements) — these areas are covered by platform UI (profile bar at top, swipe-up/CTA at bottom). Place ALL content in the middle 65% of the image."
+        : "";
+
+      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). Use the template image as creative direction — match its overall style, color palette (${layout.backgroundStyle || "clean background"}), mood, and marketing approach (${metadata?.templateType || "product-showcase"}). ${productInstruction} ${logoInstruction} ${textInstruction}${comparisonNote} Do NOT copy decorative elements from the template (flowers, leaves, cotton, props) — keep the background clean. Do NOT invent product features or claims. Only use real information about "${product.name}". All text must be sharp and readable. The result should be a polished, modern ad inspired by the template's style.${safeZoneNote}`;
 
     } else {
+      const safeZoneNote = format === "story"
+        ? " IMPORTANT: This is a Story format (9:16). Leave the TOP 15% and BOTTOM 20% of the image EMPTY — these areas are covered by platform UI. Place ALL content in the middle 65%."
+        : "";
       // Fallback: no template — create from scratch
-      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). ${productImageBase64 ? "Feature the product exactly as shown in the product photo — same shape, colors, details, fully visible." : ""} ${brandLogoBase64 ? `Place the logo provided for "${brandAnalysis.brandName}" as-is.` : `Write "${brandAnalysis.brandName}" in clean typography.`} Write a short headline about "${headlineHint}". Premium, minimalist, Instagram-ready.`;
+      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). ${productImageBase64 ? "Feature the product exactly as shown in the product photo — same shape, colors, details, fully visible." : ""} ${brandLogoBase64 ? `Place the logo provided for "${brandAnalysis.brandName}" as-is.` : `Write "${brandAnalysis.brandName}" in clean typography.`} Write a short headline about "${headlineHint}". Premium, minimalist, Instagram-ready.${safeZoneNote}`;
     }
 
     // ── PARALLEL: Image + copy at the same time ──

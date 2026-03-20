@@ -296,7 +296,7 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite, isAd
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
       <div
-        className="relative max-w-md w-full animate-scale-in"
+        className={`relative w-full animate-scale-in ${isStory ? "max-w-sm" : "max-w-md"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
@@ -307,16 +307,16 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite, isAd
           <X className="w-4 h-4" />
         </button>
 
-        <div className="max-h-[90vh] overflow-y-auto rounded-3xl">
+        <div className="rounded-3xl max-h-[90vh] overflow-y-auto">
           {/* Ad image */}
           <div
             ref={cardRef}
-            className={`relative ${isStory ? "aspect-[9/16]" : "aspect-square"} rounded-3xl overflow-hidden bg-gray-100`}
+            className={`relative ${isStory ? "max-h-[65vh]" : "aspect-square"} rounded-3xl overflow-hidden bg-gray-100`}
           >
             <img
               src={adImageSrc(ad)}
               alt="Ad"
-              className="absolute inset-0 w-full h-full object-cover"
+              className={isStory ? "w-full h-full object-contain" : "absolute inset-0 w-full h-full object-cover"}
             />
             {!isExporting && (
               <div className="absolute top-4 right-4 z-30">
