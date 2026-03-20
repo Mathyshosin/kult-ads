@@ -311,12 +311,13 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite, isAd
           {/* Ad image */}
           <div
             ref={cardRef}
-            className={`relative ${isStory ? "max-h-[65vh]" : "aspect-square"} rounded-3xl overflow-hidden bg-gray-100`}
+            className={`relative ${isStory ? "aspect-[9/16] max-h-[70vh]" : "aspect-square"} rounded-3xl overflow-hidden bg-gray-100 mx-auto`}
+            style={isStory ? { width: "min(100%, calc(70vh * 9 / 16))" } : undefined}
           >
             <img
               src={adImageSrc(ad)}
               alt="Ad"
-              className={isStory ? "w-full h-full object-contain" : "absolute inset-0 w-full h-full object-cover"}
+              className="absolute inset-0 w-full h-full object-cover"
             />
             {!isExporting && (
               <div className="absolute top-4 right-4 z-30">

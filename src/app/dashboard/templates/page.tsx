@@ -4,10 +4,14 @@ import { useState, useEffect, useCallback } from "react";
 import ImageUploadZone from "@/components/image-upload-zone";
 import TemplateCard from "@/components/template-card";
 import type { AdTemplate } from "@/lib/types";
-import { Loader2, LayoutGrid, AlertCircle } from "lucide-react";
+import { Loader2, LayoutGrid, AlertCircle, ShieldAlert } from "lucide-react";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
+import { useAuthStore } from "@/lib/auth-store";
 
 export default function TemplatesPage() {
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const isAdmin = currentUser?.email === "mathys.hosin@gmail.com";
+
   const [templates, setTemplates] = useState<AdTemplate[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -15,6 +19,16 @@ export default function TemplatesPage() {
   const [filterFormat, setFilterFormat] = useState<"all" | "square" | "story">(
     "all"
   );
+
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-400">
+        <ShieldAlert className="w-12 h-12 mb-4 text-gray-300" />
+        <h2 className="text-lg font-semibold text-gray-700">Accès restreint</h2>
+        <p className="text-sm mt-1">Cette page est réservée aux administrateurs.</p>
+      </div>
+    );
+  }
 
   const fetchTemplates = useCallback(async () => {
     try {

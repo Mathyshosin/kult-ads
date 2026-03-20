@@ -13,6 +13,7 @@ export default function DashboardHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const [showProfile, setShowProfile] = useState(false);
+  const isAdmin = currentUser?.email === "mathys.hosin@gmail.com";
   const profileRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
@@ -101,14 +102,16 @@ export default function DashboardHeader() {
                   <Building2 className="w-4 h-4 text-gray-400" />
                   Ma Marque
                 </Link>
-                <Link
-                  href="/dashboard/templates"
-                  onClick={() => setShowProfile(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <Settings className="w-4 h-4 text-gray-400" />
-                  Catalogue
-                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/dashboard/templates"
+                    onClick={() => setShowProfile(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Settings className="w-4 h-4 text-gray-400" />
+                    Catalogue
+                  </Link>
+                )}
                 <div className="border-t border-gray-100 mt-1 pt-1">
                   <button
                     onClick={handleLogout}
