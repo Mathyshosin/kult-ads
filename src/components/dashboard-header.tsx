@@ -47,30 +47,21 @@ export default function DashboardHeader() {
             <KultLogoFull />
           </Link>
 
-          {/* Navigation — sliding tab indicator */}
-          <div className="relative flex items-center bg-gray-100/80 rounded-xl p-1 gap-0.5">
-            {/* Sliding background pill */}
-            <div
-              className="absolute top-1 bottom-1 bg-white rounded-lg shadow-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-              style={{
-                left: `${4 + tabs.findIndex((t) => pathname.startsWith(t.href)) * (100 / tabs.length)}%`,
-                width: `calc(${100 / tabs.length}% - 4px)`,
-              }}
-            />
+          {/* Navigation tabs */}
+          <div className="flex items-center bg-gray-100/80 rounded-xl p-1 gap-0.5">
             {tabs.map((tab) => {
               const isActive = pathname.startsWith(tab.href);
               return (
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  className={`relative z-10 flex items-center gap-2 px-5 py-2 text-[13px] font-medium rounded-lg transition-colors duration-300 ${
+                  className={`flex items-center gap-2 px-5 py-2 text-[13px] font-medium rounded-lg transition-all duration-200 ${
                     isActive
-                      ? "text-gray-900"
+                      ? "bg-white text-gray-900 shadow-sm"
                       : "text-gray-500 hover:text-gray-700"
                   }`}
-                  style={{ flex: 1, justifyContent: "center" }}
                 >
-                  <tab.icon className={`w-4 h-4 transition-colors duration-300 ${isActive ? "text-blue-500" : ""}`} />
+                  <tab.icon className={`w-4 h-4 ${isActive ? "text-blue-500" : ""}`} />
                   <span>{tab.label}</span>
                 </Link>
               );
