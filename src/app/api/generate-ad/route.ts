@@ -271,7 +271,13 @@ export async function POST(request: Request) {
         ? `Use the provided logo for "${brandAnalysis.brandName}" exactly as-is, no modification.`
         : `Write "${brandAnalysis.brandName}" in clean, modern typography.`;
 
-      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). Use the reference image as creative direction — match its overall style, color palette, mood, and marketing approach. ${refProductInstruction} ${refLogoInstruction} Write a short, punchy headline about "${headlineHint}" (2-5 words max). Add a CTA button saying "Découvrir".${priceText} Do NOT copy decorative elements from the reference (flowers, leaves, cotton, props) — keep the background clean. Do NOT invent product features or claims. Only use real information about "${product.name}". All text must be sharp and readable. The result should be a polished, modern ad inspired by the reference's style.`;
+      const refCtaInstruction = ctaText
+        ? ` Add a CTA button saying "${ctaText}".`
+        : " Do NOT add any CTA button.";
+      const refSafeZoneNote = format === "story"
+        ? " IMPORTANT: This is a Story format (9:16). Leave the TOP 15% and BOTTOM 20% of the image EMPTY (no text, no important elements) — these areas are covered by platform UI. Place ALL content in the middle 65% of the image."
+        : "";
+      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). Use the reference image as creative direction — match its overall style, color palette, mood, and marketing approach. ${refProductInstruction} ${refLogoInstruction} Write a short, punchy headline about "${headlineHint}" (2-5 words max).${refCtaInstruction}${priceText} Do NOT copy decorative elements from the reference (flowers, leaves, cotton, props) — keep the background clean. Do NOT invent product features or claims. Only use real information about "${product.name}". All text must be sharp and readable. The result should be a polished, modern ad inspired by the reference's style.${refSafeZoneNote}`;
 
     } else if (template && layout) {
       // TEMPLATE INSPIRATION MODE — use template as creative direction reference
@@ -347,7 +353,7 @@ export async function POST(request: Request) {
         : {
             headline: brandAnalysis.brandName,
             bodyText: product.description?.slice(0, 60) || "",
-            callToAction: "Découvrir",
+            callToAction: ctaText || "",
           };
     }
 
