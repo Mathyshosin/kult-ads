@@ -106,12 +106,32 @@ export async function GET() {
     const templateMap = new Map(
       (templateDetails || []).map((t) => [t.id, t])
     );
-    const topTemplates = topTemplatesRaw.map(([id, count]) => ({
-      template_id: id,
-      count,
-      name: templateMap.get(id)?.name || id,
-      image_path: templateMap.get(id)?.image_path || null,
-    }));
+    // Download template preview images in parallel
+    const topTemplates = await Promise.all(
+      topTemplatesRaw.map(async ([id, count]) => {
+        const tpl = templateMap.get(id);
+        let previewUrl = "";
+        if (tpl?.image_path) {
+          try {
+            const { data: fileData } = await admin.storage
+              .from("templates")
+              .download(tpl.image_path);
+            if (fileData) {
+              const buffer = await fileData.arrayBuffer();
+              const base64 = Buffer.from(buffer).toString("base64");
+              const ext = tpl.image_path.endsWith(".png") ? "image/png" : "image/jpeg";
+              previewUrl = `data:${ext};base64,${base64}`;
+            }
+          } catch { /* ignore */ }
+        }
+        return {
+          template_id: id,
+          count,
+          name: tpl?.name || id,
+          previewUrl,
+        };
+      })
+    );
 
     // 8. Ads per day (last 7 days)
     const adsPerDay: { date: string; count: number }[] = [];

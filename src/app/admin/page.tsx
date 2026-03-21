@@ -378,7 +378,7 @@ interface AdminStats {
     template_id: string;
     count: number;
     name: string;
-    image_path: string | null;
+    previewUrl: string;
   }[];
   adsPerDay: {
     date: string;
@@ -416,6 +416,7 @@ function AnalyticsTab() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [zoomedTemplate, setZoomedTemplate] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchStats() {
@@ -540,22 +541,23 @@ function AnalyticsTab() {
               <p className="text-xs text-gray-400">Aucune donnée</p>
             ) : (
               stats.topTemplates.map((t, i) => (
-                <div
+                <button
                   key={t.template_id}
-                  className="flex items-center gap-3 py-2 px-3 rounded-xl bg-gray-50"
+                  onClick={() => t.previewUrl && setZoomedTemplate(t.previewUrl === zoomedTemplate ? null : t.previewUrl)}
+                  className="w-full flex items-center gap-3 py-2 px-3 rounded-xl bg-gray-50 hover:bg-blue-50 transition-colors cursor-pointer text-left"
                 >
                   <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">
                     {i + 1}
                   </span>
-                  {t.image_path ? (
+                  {t.previewUrl ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
-                      src={t.image_path}
+                      src={t.previewUrl}
                       alt={t.name}
-                      className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-200"
+                      className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-gray-200"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
                       <ImageIcon className="w-4 h-4 text-gray-400" />
                     </div>
                   )}
@@ -566,12 +568,34 @@ function AnalyticsTab() {
                   <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full flex-shrink-0">
                     {t.count} usage{t.count > 1 ? "s" : ""}
                   </span>
-                </div>
+                </button>
               ))
             )}
           </div>
         </div>
       </div>
+
+      {/* Zoomed template modal */}
+      {zoomedTemplate && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-8"
+          onClick={() => setZoomedTemplate(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={zoomedTemplate}
+            alt="Template preview"
+            className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setZoomedTemplate(null)}
+            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center text-gray-700 hover:bg-white transition-colors shadow-lg"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
