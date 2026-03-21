@@ -67,7 +67,7 @@ export default function DashboardHeader() {
       <div className="max-w-7xl mx-auto px-5">
         <div className="h-14 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/dashboard" className="group hover:opacity-90 transition-opacity">
+          <Link href="/dashboard/generate" className="group hover:opacity-90 transition-opacity">
             <KultLogoFull />
           </Link>
 

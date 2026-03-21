@@ -2,17 +2,18 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useWizardStore } from "@/lib/store";
+import { Loader2 } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const isHydrated = useWizardStore((s) => s.isHydrated);
 
   useEffect(() => {
-    if (isHydrated) {
-      router.replace("/dashboard/ads");
-    }
-  }, [router, isHydrated]);
+    router.replace("/dashboard/generate");
+  }, [router]);
 
-  return null;
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+    </div>
+  );
 }
