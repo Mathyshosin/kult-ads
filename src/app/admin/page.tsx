@@ -16,6 +16,10 @@ import {
   Inbox,
   Package,
   Briefcase,
+  BarChart3,
+  Users,
+  ImageIcon,
+  TrendingUp,
 } from "lucide-react";
 
 const ADMIN_EMAIL = "mathys.hosin@gmail.com";
@@ -356,6 +360,223 @@ function PromptsTab() {
 }
 
 // ══════════════════════════════════════════
+// Analytics Tab
+// ══════════════════════════════════════════
+
+interface AdminStats {
+  totalUsers: number;
+  totalAds: number;
+  totalTemplates: number;
+  adsToday: number;
+  recentUsers: {
+    user_id: string;
+    email: string;
+    created_at: string;
+    ad_count: number;
+  }[];
+  topTemplates: {
+    template_id: string;
+    count: number;
+    name: string;
+    image_path: string | null;
+  }[];
+  adsPerDay: {
+    date: string;
+    count: number;
+  }[];
+}
+
+function StatCard({
+  label,
+  value,
+  icon,
+  color,
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  color: string;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <div
+          className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}
+        >
+          {icon}
+        </div>
+      </div>
+      <p className="text-2xl font-bold text-gray-800">{value.toLocaleString("fr-FR")}</p>
+      <p className="text-xs text-gray-400 mt-1">{label}</p>
+    </div>
+  );
+}
+
+function AnalyticsTab() {
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch("/api/admin/stats");
+        if (!res.ok) throw new Error("Erreur API");
+        const data = await res.json();
+        setStats(data);
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
+        setError("Impossible de charger les statistiques.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+        <span className="ml-2 text-sm text-gray-500">Chargement des stats...</span>
+      </div>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <BarChart3 className="w-10 h-10 text-gray-300 mb-3" />
+        <p className="text-sm text-gray-500">{error || "Aucune donnée"}</p>
+      </div>
+    );
+  }
+
+  const maxAdsPerDay = Math.max(...stats.adsPerDay.map((d) => d.count), 1);
+
+  return (
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Utilisateurs"
+          value={stats.totalUsers}
+          icon={<Users className="w-5 h-5 text-blue-600" />}
+          color="bg-blue-50"
+        />
+        <StatCard
+          label="Ads générées"
+          value={stats.totalAds}
+          icon={<ImageIcon className="w-5 h-5 text-violet-600" />}
+          color="bg-violet-50"
+        />
+        <StatCard
+          label="Templates"
+          value={stats.totalTemplates}
+          icon={<Package className="w-5 h-5 text-amber-600" />}
+          color="bg-amber-50"
+        />
+        <StatCard
+          label="Ads aujourd'hui"
+          value={stats.adsToday}
+          icon={<TrendingUp className="w-5 h-5 text-green-600" />}
+          color="bg-green-50"
+        />
+      </div>
+
+      {/* Ads per day chart */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+        <h3 className="text-sm font-semibold text-gray-700 mb-4">Ads par jour (7 derniers jours)</h3>
+        <div className="flex items-end gap-2 h-40">
+          {stats.adsPerDay.map((day) => (
+            <div key={day.date} className="flex-1 flex flex-col items-center gap-1.5">
+              <span className="text-[10px] font-semibold text-gray-600">{day.count}</span>
+              <div
+                className="w-full rounded-lg bg-gradient-to-t from-blue-500 to-violet-500 transition-all"
+                style={{
+                  height: `${Math.max((day.count / maxAdsPerDay) * 100, 4)}%`,
+                  minHeight: "4px",
+                }}
+              />
+              <span className="text-[10px] text-gray-400">{day.date}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Users */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">Utilisateurs récents</h3>
+          <div className="space-y-2">
+            {stats.recentUsers.length === 0 ? (
+              <p className="text-xs text-gray-400">Aucun utilisateur</p>
+            ) : (
+              stats.recentUsers.map((u) => (
+                <div
+                  key={u.user_id}
+                  className="flex items-center justify-between py-2 px-3 rounded-xl bg-gray-50"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-gray-700 truncate">{u.email}</p>
+                    <p className="text-[10px] text-gray-400">
+                      {new Date(u.created_at).toLocaleDateString("fr-FR")}
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-semibold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full flex-shrink-0 ml-2">
+                    {u.ad_count} ad{u.ad_count > 1 ? "s" : ""}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Top Templates */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">Templates les plus utilisés</h3>
+          <div className="space-y-2">
+            {stats.topTemplates.length === 0 ? (
+              <p className="text-xs text-gray-400">Aucune donnée</p>
+            ) : (
+              stats.topTemplates.map((t, i) => (
+                <div
+                  key={t.template_id}
+                  className="flex items-center gap-3 py-2 px-3 rounded-xl bg-gray-50"
+                >
+                  <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">
+                    {i + 1}
+                  </span>
+                  {t.image_path ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={t.image_path}
+                      alt={t.name}
+                      className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+                      <ImageIcon className="w-4 h-4 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-700 truncate">{t.name}</p>
+                    <p className="text-[10px] text-gray-400 truncate">{t.template_id}</p>
+                  </div>
+                  <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full flex-shrink-0">
+                    {t.count} usage{t.count > 1 ? "s" : ""}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
 // Main Admin Page
 // ══════════════════════════════════════════
 
@@ -363,7 +584,7 @@ export default function AdminPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const isLoading = useAuthStore((s) => s.isLoading);
   const initialize = useAuthStore((s) => s.initialize);
-  const [activeTab, setActiveTab] = useState<"moderation" | "prompts">("moderation");
+  const [activeTab, setActiveTab] = useState<"moderation" | "prompts" | "analytics">("moderation");
   const initRef = useRef(false);
 
   useEffect(() => {
@@ -424,11 +645,23 @@ export default function AdminPage() {
             >
               Prompts IA
             </button>
+            <button
+              onClick={() => setActiveTab("analytics")}
+              className={`text-xs font-medium px-4 py-1.5 rounded-lg transition-colors ${
+                activeTab === "analytics"
+                  ? "bg-gray-900 text-white"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Analytics
+            </button>
           </div>
         </div>
 
         {/* Content */}
-        {activeTab === "moderation" ? <ModerationTab /> : <PromptsTab />}
+        {activeTab === "moderation" && <ModerationTab />}
+        {activeTab === "prompts" && <PromptsTab />}
+        {activeTab === "analytics" && <AnalyticsTab />}
       </div>
     </div>
   );
