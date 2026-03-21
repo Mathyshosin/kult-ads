@@ -100,29 +100,35 @@ export async function GET() {
     // Get template details
     const templateIds = topTemplatesRaw.map(([id]) => id);
     const { data: templateDetails } = templateIds.length > 0
-      ? await admin.from("templates").select("id, name, filename").in("id", templateIds)
+      ? await admin.from("templates").select("id, name, filename, image_source").in("id", templateIds)
       : { data: [] };
 
     const templateMap = new Map(
       (templateDetails || []).map((t) => [t.id, t])
     );
-    // Download template preview images in parallel
+    // Build preview URLs — local templates use /templates/ path, supabase ones need download
     const topTemplates = await Promise.all(
       topTemplatesRaw.map(async ([id, count]) => {
         const tpl = templateMap.get(id);
         let previewUrl = "";
         if (tpl?.filename) {
-          try {
-            const { data: fileData } = await admin.storage
-              .from("templates")
-              .download(tpl.filename);
-            if (fileData) {
-              const buffer = await fileData.arrayBuffer();
-              const base64 = Buffer.from(buffer).toString("base64");
-              const ext = tpl.filename.endsWith(".png") ? "image/png" : "image/jpeg";
-              previewUrl = `data:${ext};base64,${base64}`;
-            }
-          } catch { /* ignore */ }
+          if (tpl.image_source === "local") {
+            // Local templates served from /public/templates/
+            previewUrl = `/templates/${tpl.filename}`;
+          } else {
+            // Supabase Storage templates — download as base64
+            try {
+              const { data: fileData } = await admin.storage
+                .from("templates")
+                .download(tpl.filename);
+              if (fileData) {
+                const buffer = await fileData.arrayBuffer();
+                const base64 = Buffer.from(buffer).toString("base64");
+                const ext = tpl.filename.endsWith(".png") ? "image/png" : "image/jpeg";
+                previewUrl = `data:${ext};base64,${base64}`;
+              }
+            } catch { /* ignore */ }
+          }
         }
         return {
           template_id: id,
