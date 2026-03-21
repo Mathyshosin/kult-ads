@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, Zap, Images, Building2, Settings, ChevronDown } from "lucide-react";
@@ -43,15 +43,23 @@ export default function DashboardHeader() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [pill, setPill] = useState({ left: 0, width: 0 });
 
-  useEffect(() => {
-    const idx = activeIndex >= 0 ? activeIndex : 0;
-    const el = tabRefs.current[idx];
-    const container = containerRef.current;
-    if (el && container) {
-      const cr = container.getBoundingClientRect();
-      const er = el.getBoundingClientRect();
-      setPill({ left: er.left - cr.left, width: er.width });
-    }
+  // Measure synchronously before paint to avoid flash
+  const safeLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+  safeLayoutEffect(() => {
+    const measure = () => {
+      const idx = activeIndex >= 0 ? activeIndex : 0;
+      const el = tabRefs.current[idx];
+      const container = containerRef.current;
+      if (el && container) {
+        const cr = container.getBoundingClientRect();
+        const er = el.getBoundingClientRect();
+        setPill({ left: er.left - cr.left, width: er.width });
+      }
+    };
+    measure();
+    // Also re-measure on resize
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
   }, [activeIndex]);
 
   return (
