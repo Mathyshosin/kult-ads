@@ -392,7 +392,7 @@ export default function GeneratePage() {
               <p className="text-sm text-gray-500">Aucun template disponible pour le moment</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="columns-2 sm:columns-3 lg:columns-4 gap-4 space-y-4">
               {templates.map((t) => (
                 <button
                   key={t.id}
@@ -400,7 +400,7 @@ export default function GeneratePage() {
                     setSelectedTemplateId(t.id);
                     setStep("product");
                   }}
-                  className={`group relative rounded-2xl overflow-hidden bg-gray-100 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 active:scale-[0.97] ${
+                  className={`group relative rounded-2xl overflow-hidden bg-gray-100 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 active:scale-[0.97] break-inside-avoid w-full ${
                     selectedTemplateId === t.id ? "ring-3 ring-blue-500" : ""
                   } ${t.format === "story" ? "aspect-[9/16]" : "aspect-square"}`}
                 >

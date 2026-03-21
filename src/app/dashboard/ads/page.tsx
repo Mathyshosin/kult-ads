@@ -199,7 +199,7 @@ function CompletedCard({ ad, onClick, onToggleFavorite, onModify, onDownload, on
   const isSquare = ad.format === "square";
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 break-inside-avoid">
       {/* Image */}
       <div
         onClick={onClick}
@@ -682,7 +682,7 @@ export default function AdsGalleryPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="columns-2 sm:columns-3 lg:columns-4 gap-4 space-y-4">
           {filtered.map((ad) => {
             const status = ad.status || "completed";
             if (status === "generating") {
