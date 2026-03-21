@@ -183,12 +183,13 @@ function FailedCard({ ad, onRetry, onDelete }: { ad: GeneratedAd; onRetry?: () =
 }
 
 // ── Completed card with actions below ──
-function CompletedCard({ ad, onClick, onToggleFavorite, onModify, onDownload }: {
+function CompletedCard({ ad, onClick, onToggleFavorite, onModify, onDownload, onOpenModify }: {
   ad: GeneratedAd;
   onClick: () => void;
   onToggleFavorite: () => void;
   onModify: (ad: GeneratedAd, prompt: string, formatOverride?: "square" | "story") => void;
   onDownload: (ad: GeneratedAd) => void;
+  onOpenModify: () => void;
 }) {
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -242,7 +243,7 @@ function CompletedCard({ ad, onClick, onToggleFavorite, onModify, onDownload }: 
           </button>
         )}
         <button
-          onClick={onClick}
+          onClick={onOpenModify}
           className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-500 text-[11px] font-medium hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50 transition-all"
         >
           <Pencil className="w-3 h-3" />
@@ -254,19 +255,20 @@ function CompletedCard({ ad, onClick, onToggleFavorite, onModify, onDownload }: 
 }
 
 // ── Ad detail modal ──
-function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite, isAdmin }: {
+function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite, isAdmin, initialShowModify }: {
   ad: GeneratedAd;
   onClose: () => void;
   onDelete: (id: string) => void;
   onModify: (ad: GeneratedAd, prompt: string, formatOverride?: "square" | "story") => void;
   onToggleFavorite: (id: string) => void;
   isAdmin?: boolean;
+  initialShowModify?: boolean;
 }) {
   const isStory = ad.format === "story";
   const cardRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
-  const [showModify, setShowModify] = useState(false);
+  const [showModify, setShowModify] = useState(initialShowModify || false);
   const [modifyPrompt, setModifyPrompt] = useState("");
 
   async function handleDownload() {
@@ -492,6 +494,7 @@ export default function AdsGalleryPage() {
 
   const [filter, setFilter] = useState<"all" | "square" | "story" | "favorites">("all");
   const [selectedAd, setSelectedAd] = useState<GeneratedAd | null>(null);
+  const [openModify, setOpenModify] = useState(false);
 
   // Quick download helper
   const handleQuickDownload = (ad: GeneratedAd) => {
@@ -698,10 +701,11 @@ export default function AdsGalleryPage() {
               <CompletedCard
                 key={ad.id}
                 ad={ad}
-                onClick={() => setSelectedAd(ad)}
+                onClick={() => { setOpenModify(false); setSelectedAd(ad); }}
                 onToggleFavorite={() => handleToggleFavorite(ad.id)}
                 onModify={handleModify}
                 onDownload={handleQuickDownload}
+                onOpenModify={() => { setOpenModify(true); setSelectedAd(ad); }}
               />
             );
           })}
@@ -712,11 +716,12 @@ export default function AdsGalleryPage() {
       {selectedAd && (
         <AdDetailModal
           ad={selectedAd}
-          onClose={() => setSelectedAd(null)}
+          onClose={() => { setSelectedAd(null); setOpenModify(false); }}
           onDelete={handleDelete}
           onModify={handleModify}
           onToggleFavorite={handleToggleFavorite}
           isAdmin={isAdmin}
+          initialShowModify={openModify}
         />
       )}
     </div>
