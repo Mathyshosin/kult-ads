@@ -1,3 +1,7 @@
+"use client";
+
+import { FunFact } from "@/components/fun-facts";
+
 export default function AdsLoading() {
   return (
     <div className="max-w-7xl mx-auto px-5 pt-8 animate-pulse">
@@ -10,6 +14,7 @@ export default function AdsLoading() {
           <div key={i} className="aspect-square bg-gray-200 rounded-2xl" />
         ))}
       </div>
+      <FunFact />
     </div>
   );
 }

@@ -1,3 +1,7 @@
+"use client";
+
+import { FunFact } from "@/components/fun-facts";
+
 export default function GenerateLoading() {
   return (
     <div className="max-w-lg mx-auto px-5 pt-12 animate-pulse">
@@ -11,6 +15,7 @@ export default function GenerateLoading() {
           <div key={i} className="h-40 bg-gray-200 rounded-2xl" />
         ))}
       </div>
+      <FunFact />
     </div>
   );
 }
