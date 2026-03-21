@@ -100,7 +100,7 @@ export async function GET() {
     // Get template details
     const templateIds = topTemplatesRaw.map(([id]) => id);
     const { data: templateDetails } = templateIds.length > 0
-      ? await admin.from("templates").select("id, name, image_path").in("id", templateIds)
+      ? await admin.from("templates").select("id, name, filename").in("id", templateIds)
       : { data: [] };
 
     const templateMap = new Map(
@@ -111,15 +111,15 @@ export async function GET() {
       topTemplatesRaw.map(async ([id, count]) => {
         const tpl = templateMap.get(id);
         let previewUrl = "";
-        if (tpl?.image_path) {
+        if (tpl?.filename) {
           try {
             const { data: fileData } = await admin.storage
               .from("templates")
-              .download(tpl.image_path);
+              .download(tpl.filename);
             if (fileData) {
               const buffer = await fileData.arrayBuffer();
               const base64 = Buffer.from(buffer).toString("base64");
-              const ext = tpl.image_path.endsWith(".png") ? "image/png" : "image/jpeg";
+              const ext = tpl.filename.endsWith(".png") ? "image/png" : "image/jpeg";
               previewUrl = `data:${ext};base64,${base64}`;
             }
           } catch { /* ignore */ }
