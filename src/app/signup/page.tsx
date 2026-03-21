@@ -201,12 +201,12 @@ export default function SignupPage() {
 
           <p className="mt-8 text-xs text-muted text-center">
             En créant un compte, vous acceptez nos{" "}
-            <a href="#" className="text-primary hover:underline">
+            <a href="/cgu" className="text-primary hover:underline">
               Conditions
             </a>{" "}
             et notre{" "}
-            <a href="#" className="text-primary hover:underline">
-              Politique de confidentialité
+            <a href="/cgu" className="text-primary hover:underline">
+              Politique de confidentialite
             </a>
             .
           </p>
