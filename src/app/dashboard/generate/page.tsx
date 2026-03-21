@@ -74,6 +74,12 @@ export default function GeneratePage() {
   const [ctaEnabled, setCtaEnabled] = useState(false);
   const [ctaText, setCtaText] = useState("");
 
+  // Clear reference ad on unmount (don't persist between visits)
+  useEffect(() => {
+    return () => { setReferenceAd(null); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Auto-load offer for product
   useEffect(() => {
     if (!selectedProduct || !brandAnalysis) { setEditedOffer(null); return; }
