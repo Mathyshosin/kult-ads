@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, Zap, Images, Building2, Settings, ChevronDown } from "lucide-react";
@@ -38,10 +38,19 @@ export default function DashboardHeader() {
     { href: "/dashboard/ads", label: "Mes Ads", icon: Images },
   ];
 
-  const activeIndex = tabs.findIndex((t) => pathname.startsWith(t.href));
-  const tabRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const [, startTransition] = useTransition();
+  const [clickedIndex, setClickedIndex] = useState<number | null>(null);
+  const realActiveIndex = tabs.findIndex((t) => pathname.startsWith(t.href));
+  // Use clicked index immediately for pill position, fall back to real active
+  const activeIndex = clickedIndex !== null ? clickedIndex : realActiveIndex;
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [pill, setPill] = useState({ left: 0, width: 0 });
+
+  // Reset clickedIndex when pathname catches up
+  useEffect(() => {
+    setClickedIndex(null);
+  }, [pathname]);
 
   // Measure synchronously before paint to avoid flash
   const safeLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -83,13 +92,19 @@ export default function DashboardHeader() {
               }}
             />
             {tabs.map((tab, i) => {
-              const isActive = pathname.startsWith(tab.href);
+              const isActive = i === activeIndex;
               return (
-                <Link
+                <button
                   key={tab.href}
-                  href={tab.href}
                   ref={(el) => { tabRefs.current[i] = el; }}
-                  className={`relative z-10 flex items-center gap-2 px-5 py-2 text-[13px] font-medium rounded-lg transition-colors duration-200 whitespace-nowrap ${
+                  onClick={() => {
+                    if (pathname.startsWith(tab.href)) return;
+                    setClickedIndex(i);
+                    startTransition(() => {
+                      router.push(tab.href);
+                    });
+                  }}
+                  className={`relative z-10 flex items-center gap-2 px-5 py-2 text-[13px] font-medium rounded-lg transition-colors duration-200 whitespace-nowrap cursor-pointer ${
                     isActive
                       ? "text-gray-900"
                       : "text-gray-500 hover:text-gray-700"
@@ -97,7 +112,7 @@ export default function DashboardHeader() {
                 >
                   <tab.icon className={`w-4 h-4 transition-colors duration-200 ${isActive ? "text-blue-500" : ""}`} />
                   <span>{tab.label}</span>
-                </Link>
+                </button>
               );
             })}
           </div>
