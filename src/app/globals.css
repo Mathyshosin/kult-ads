@@ -342,6 +342,16 @@ html {
   animation: hero-line 10s ease-in-out infinite;
 }
 
+/* ── Marquee ticker ── */
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track {
+  animation: marquee-scroll 30s linear infinite;
+  width: max-content;
+}
+
 /* ── Scroll reveal animation ── */
 @keyframes reveal-up {
   from { opacity: 0; transform: translateY(30px); }

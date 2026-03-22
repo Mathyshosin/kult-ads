@@ -1,34 +1,34 @@
 import Link from "next/link";
 import Image from "next/image";
 import { KultLogoFull, KultLogoIcon } from "@/components/kult-logo";
-import { ArrowRight, Check, ChevronDown, Minus } from "lucide-react";
+import { ArrowRight, Check, Zap, Layers, MessageSquare, RefreshCw } from "lucide-react";
 
 /* ─────────────────────── NAVBAR ─────────────────────── */
 
 function Navbar() {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-black/5">
-      <div className="max-w-[1400px] mx-auto px-6 h-14 flex items-center justify-between">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#faf8f5]/80 backdrop-blur-xl border-b border-[#1a1a2e]/5">
+      <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" aria-label="Accueil">
           <KultLogoFull />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <a href="#comment-ca-marche" className="text-[13px] text-black/40 hover:text-black transition-colors font-medium tracking-wide uppercase">
+          <a href="#comment-ca-marche" className="text-[13px] text-[#1a1a2e]/40 hover:text-[#1a1a2e] transition-colors font-medium tracking-wide uppercase">
             Fonctionnement
           </a>
-          <a href="#tarifs" className="text-[13px] text-black/40 hover:text-black transition-colors font-medium tracking-wide uppercase">
+          <a href="#tarifs" className="text-[13px] text-[#1a1a2e]/40 hover:text-[#1a1a2e] transition-colors font-medium tracking-wide uppercase">
             Tarifs
           </a>
         </div>
 
-        <div className="flex items-center gap-6">
-          <Link href="/login" className="hidden sm:inline text-[13px] text-black/50 hover:text-black transition-colors font-medium">
+        <div className="flex items-center gap-5">
+          <Link href="/login" className="hidden sm:inline text-[13px] text-[#1a1a2e]/50 hover:text-[#1a1a2e] transition-colors font-medium">
             Connexion
           </Link>
           <Link
             href="/signup"
-            className="text-[13px] font-semibold text-white bg-black px-5 py-2 hover:bg-black/80 transition-colors"
+            className="text-[13px] font-semibold text-white bg-[#1a1a2e] px-5 py-2.5 rounded-full hover:bg-[#1a1a2e]/85 transition-all hover:shadow-lg hover:shadow-[#1a1a2e]/10"
           >
             Commencer
           </Link>
@@ -42,54 +42,69 @@ function Navbar() {
 
 function Hero() {
   return (
-    <section className="pt-32 pb-8 px-6 bg-white">
+    <section className="pt-36 pb-24 px-6 bg-[#faf8f5] overflow-hidden">
       <div className="max-w-[1400px] mx-auto">
-        {/* Headline — left-aligned, massive */}
-        <div className="max-w-4xl">
-          <h1 className="text-[clamp(2.5rem,7vw,6rem)] font-black text-black leading-[0.92] tracking-tight">
-            Vos concurrents
-            <br />
-            ont de meilleures
-            <br />
-            <span className="text-[#FF6B35]">pubs</span> que vous.
-          </h1>
-          <p className="mt-8 text-lg md:text-xl text-black/40 max-w-lg leading-relaxed font-light">
-            Collez votre URL. On analyse votre marque. 30 secondes plus tard, vous avez une pub qui claque. La premi&egrave;re est offerte.
+        {/* Headline — centered, massive */}
+        <div className="text-center max-w-4xl mx-auto">
+          <p className="text-[13px] font-mono text-[#f97316] tracking-widest uppercase mb-6">
+            Ads intelligence pour e-commerce
           </p>
-          <div className="mt-10 flex items-center gap-6">
+          <h1 className="text-[clamp(2.5rem,7vw,5.5rem)] font-black text-[#1a1a2e] leading-[0.92] tracking-tight">
+            Vos concurrents ont
+            <br />
+            de meilleures{" "}
+            <span className="relative inline-block">
+              <span className="relative z-10">pubs</span>
+              <span className="absolute bottom-1 left-0 right-0 h-[0.3em] bg-[#f97316]/20 -z-0 rounded-full" />
+            </span>{" "}
+            que vous.
+          </h1>
+          <p className="mt-8 text-lg md:text-xl text-[#1a1a2e]/40 max-w-lg mx-auto leading-relaxed font-light">
+            Collez votre URL. On analyse votre marque. 30 secondes plus tard, vous avez une pub qui claque.
+          </p>
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/signup"
-              className="inline-flex items-center gap-3 bg-black text-white font-semibold px-8 py-4 text-base hover:bg-black/80 transition-colors"
+              className="inline-flex items-center gap-3 bg-[#f97316] text-white font-semibold px-8 py-4 text-base rounded-full hover:bg-[#ea580c] transition-all hover:shadow-xl hover:shadow-[#f97316]/20 hover:-translate-y-0.5"
             >
               Cr&eacute;er ma premi&egrave;re pub
               <ArrowRight className="w-4 h-4" />
             </Link>
-            <span className="text-sm text-black/30 font-mono">Gratuit, sans CB</span>
+            <span className="text-sm text-[#1a1a2e]/30 font-mono">Gratuit, sans CB</span>
           </div>
         </div>
 
-        {/* Before / After — side by side, big */}
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          {/* BEFORE — the template */}
-          <div className="relative">
-            <div className="absolute -top-3 left-4 bg-black text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1 z-10">
-              Avant
+        {/* Before / After — creative overlapping layout */}
+        <div className="mt-24 flex justify-center">
+          <div className="relative w-full max-w-3xl">
+            {/* BEFORE — the template (slightly behind, rotated) */}
+            <div className="relative w-[55%] z-10">
+              <div className="absolute -top-3 left-4 bg-[#1a1a2e] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1 z-20 rounded-full">
+                Avant
+              </div>
+              <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-[#1a1a2e]/10 border border-[#1a1a2e]/5 -rotate-2 hover:rotate-0 transition-transform duration-500">
+                <Image src="/after.png" alt="Template g&eacute;n&eacute;rique" fill className="object-cover" sizes="(max-width: 768px) 80vw, 400px" />
+              </div>
+              <p className="mt-3 text-[11px] text-[#1a1a2e]/25 font-mono tracking-wide pl-2">Template d&apos;inspiration</p>
             </div>
-            <div className="relative aspect-square border border-black/10 overflow-hidden">
-              <Image src="/after.png" alt="Template g&eacute;n&eacute;rique" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
-            </div>
-            <p className="mt-2 text-[11px] text-black/30 font-mono tracking-wide">Template d&apos;inspiration</p>
-          </div>
 
-          {/* AFTER — the generated ad */}
-          <div className="relative">
-            <div className="absolute -top-3 left-4 bg-[#FF6B35] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1 z-10">
-              Apr&egrave;s
+            {/* AFTER — the generated ad (overlapping, in front) */}
+            <div className="absolute top-8 right-0 w-[55%] z-20">
+              <div className="absolute -top-3 right-4 bg-[#f97316] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1 z-20 rounded-full">
+                Apr&egrave;s
+              </div>
+              <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-[#f97316]/15 border-2 border-[#f97316]/20 rotate-2 hover:rotate-0 transition-transform duration-500">
+                <Image src="/before.png" alt="Publicit&eacute; g&eacute;n&eacute;r&eacute;e par kultads" fill className="object-cover" sizes="(max-width: 768px) 80vw, 400px" />
+              </div>
+              <p className="mt-3 text-[11px] text-[#1a1a2e]/25 font-mono tracking-wide text-right pr-2">Votre pub — 30 secondes</p>
             </div>
-            <div className="relative aspect-square border border-black/10 overflow-hidden">
-              <Image src="/before.png" alt="Publicit&eacute; g&eacute;n&eacute;r&eacute;e par kultads" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+
+            {/* Decorative element — the connecting arrow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
+              <div className="w-14 h-14 rounded-full bg-white shadow-xl shadow-[#1a1a2e]/10 flex items-center justify-center">
+                <ArrowRight className="w-5 h-5 text-[#f97316]" />
+              </div>
             </div>
-            <p className="mt-2 text-[11px] text-black/30 font-mono tracking-wide">Votre publicit&eacute; — 30 secondes</p>
           </div>
         </div>
       </div>
@@ -97,20 +112,18 @@ function Hero() {
   );
 }
 
-/* ─────────────────────── BOLD STAT ─────────────────────── */
+/* ─────────────────────── MARQUEE ─────────────────────── */
 
-function BoldStat() {
+function Marquee() {
+  const text = "CR\u00c9EZ \u2022 PUBLIEZ \u2022 CONVERTISSEZ \u2022 ";
   return (
-    <section className="py-24 px-6 bg-white border-t border-black/5">
-      <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-baseline gap-6 md:gap-16">
-        <span className="text-[clamp(4rem,12vw,10rem)] font-black text-black leading-none tracking-tighter font-mono">
-          500+
-        </span>
-        <div className="max-w-md">
-          <p className="text-black/40 text-lg leading-relaxed font-light">
-            publicit&eacute;s g&eacute;n&eacute;r&eacute;es. Biblioth&egrave;que d&apos;ads gagnantes mise &agrave; jour chaque jour. Pas du stock — du sur-mesure.
-          </p>
-        </div>
+    <section className="bg-[#1a1a2e] py-5 overflow-hidden select-none">
+      <div className="marquee-track flex whitespace-nowrap">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <span key={i} className="text-[clamp(1rem,2vw,1.25rem)] font-black tracking-[0.15em] uppercase text-white/15 mx-1">
+            {text}
+          </span>
+        ))}
       </div>
     </section>
   );
@@ -138,23 +151,35 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="comment-ca-marche" className="py-24 px-6 bg-[#FAFAFA]">
+    <section id="comment-ca-marche" className="py-28 px-6 bg-[#faf8f5]">
       <div className="max-w-[1400px] mx-auto">
-        <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-black/30 mb-12">
+        <p className="text-[11px] font-mono text-[#f97316] tracking-[0.2em] uppercase mb-4">
           Comment &ccedil;a marche
         </p>
+        <h2 className="text-3xl md:text-5xl font-black text-[#1a1a2e] leading-tight mb-20 max-w-xl">
+          Trois &eacute;tapes.
+          <br />
+          <span className="text-[#1a1a2e]/20">Z&eacute;ro friction.</span>
+        </h2>
 
-        <div className="space-y-0">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-0">
           {steps.map((step, i) => (
-            <div key={step.num} className={`flex flex-col md:flex-row items-start gap-6 md:gap-16 py-12 ${i < steps.length - 1 ? "border-b border-black/5" : ""}`}>
-              <span className="text-6xl md:text-8xl font-black text-black/[0.04] leading-none font-mono shrink-0 select-none">
-                {step.num}
-              </span>
-              <div className="max-w-lg">
-                <h3 className="text-2xl md:text-3xl font-bold text-black mb-3">
+            <div
+              key={step.num}
+              className={`relative group ${i === 1 ? "md:mt-12" : i === 2 ? "md:mt-24" : ""}`}
+            >
+              {/* Connector line between steps (desktop only) */}
+              {i < 2 && (
+                <div className="hidden md:block absolute top-24 -right-3 w-6 h-px bg-[#1a1a2e]/10" />
+              )}
+              <div className="p-8 md:p-10 rounded-3xl bg-white border border-[#1a1a2e]/5 hover:border-[#f97316]/20 transition-all hover:shadow-xl hover:shadow-[#f97316]/5 hover:-translate-y-1 duration-300">
+                <span className="text-7xl font-black text-[#f97316]/10 leading-none font-mono block mb-6 select-none group-hover:text-[#f97316]/20 transition-colors">
+                  {step.num}
+                </span>
+                <h3 className="text-xl font-bold text-[#1a1a2e] mb-3">
                   {step.title}
                 </h3>
-                <p className="text-black/40 text-base leading-relaxed font-light">
+                <p className="text-[#1a1a2e]/40 text-[15px] leading-relaxed font-light">
                   {step.desc}
                 </p>
               </div>
@@ -166,59 +191,71 @@ function HowItWorks() {
   );
 }
 
-/* ─────────────────────── WHY KULTADS ─────────────────────── */
+/* ─────────────────────── FEATURES ─────────────────────── */
 
-function WhyKultads() {
+function FeatureCard({ icon: Icon, label, title, desc, className }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  title: string;
+  desc: string;
+  className?: string;
+}) {
   return (
-    <section className="py-24 px-6 bg-white">
+    <div className={`p-10 rounded-3xl bg-[#faf8f5] border border-[#1a1a2e]/5 group hover:border-[#f97316]/20 transition-all duration-300 ${className ?? ""}`}>
+      <Icon className="w-6 h-6 text-[#f97316] mb-6" />
+      <span className="text-[13px] font-mono text-[#f97316] tracking-wide">{label}</span>
+      <h3 className="text-2xl font-bold text-[#1a1a2e] mt-2 mb-4">{title}</h3>
+      <p className="text-[#1a1a2e]/40 leading-relaxed font-light text-[15px] max-w-md">{desc}</p>
+    </div>
+  );
+}
+
+function Features() {
+  return (
+    <section className="py-28 px-6 bg-white">
       <div className="max-w-[1400px] mx-auto">
-        <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-black/30 mb-6">
+        <p className="text-[11px] font-mono text-[#f97316] tracking-[0.2em] uppercase mb-4">
           Pourquoi kultads
         </p>
-        <h2 className="text-3xl md:text-5xl font-black text-black leading-tight max-w-2xl mb-20">
-          Pas juste un g&eacute;n&eacute;rateur d&apos;images.
+        <h2 className="text-3xl md:text-5xl font-black text-[#1a1a2e] leading-tight max-w-2xl mb-20">
+          Pas juste un g&eacute;n&eacute;rateur.
           <br />
-          <span className="text-black/20">Un syst&egrave;me qui comprend votre marque.</span>
+          <span className="text-[#1a1a2e]/20">Un syst&egrave;me qui comprend votre marque.</span>
         </h2>
 
-        {/* Alternating left/right blocks */}
-        <div className="space-y-20">
-          {/* Block 1 */}
-          <div className="flex flex-col md:flex-row items-start gap-8 md:gap-20">
-            <div className="md:w-1/3 shrink-0">
-              <span className="text-[#FF6B35] text-sm font-bold font-mono">4 modes</span>
-              <h3 className="text-xl font-bold text-black mt-2 mb-3">Cr&eacute;ation flexible</h3>
-              <p className="text-black/40 leading-relaxed font-light text-[15px]">
-                Auto, Biblioth&egrave;que, Copy-Ads ou Prompt libre. Chaque mode r&eacute;pond &agrave; un workflow diff&eacute;rent. Vous choisissez le niveau de contr&ocirc;le.
-              </p>
-            </div>
-            <div className="md:w-1/3 shrink-0 md:mt-16">
-              <span className="text-[#FF6B35] text-sm font-bold font-mono">Carr&eacute; + Story</span>
-              <h3 className="text-xl font-bold text-black mt-2 mb-3">Tous les formats</h3>
-              <p className="text-black/40 leading-relaxed font-light text-[15px]">
-                G&eacute;n&eacute;rez en 1:1 pour le feed ou en 9:16 pour les stories. Convertissez de l&apos;un &agrave; l&apos;autre en un clic.
-              </p>
-            </div>
-            <div className="md:w-1/3 shrink-0">
-              <span className="text-[#FF6B35] text-sm font-bold font-mono">&ldquo;Change le fond en rouge&rdquo;</span>
-              <h3 className="text-xl font-bold text-black mt-2 mb-3">Modification par prompt</h3>
-              <p className="text-black/40 leading-relaxed font-light text-[15px]">
-                Pas de Photoshop. &Eacute;crivez ce que vous voulez changer en fran&ccedil;ais. L&apos;IA applique.
-              </p>
-            </div>
+        {/* Asymmetric 2-column layout — first row big+small, second row small+big */}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <FeatureCard
+              icon={Zap}
+              label="4 modes"
+              title="Cr&eacute;ation flexible"
+              desc="Auto, Biblioth&egrave;que, Copy-Ads ou Prompt libre. Chaque mode r&eacute;pond &agrave; un workflow diff&eacute;rent."
+              className="md:col-span-3"
+            />
+            <FeatureCard
+              icon={Layers}
+              label="Carr&eacute; + Story"
+              title="Tous les formats"
+              desc="G&eacute;n&eacute;rez en 1:1 pour le feed ou en 9:16 pour les stories. Convertissez en un clic."
+              className="md:col-span-2"
+            />
           </div>
-
-          {/* Block 2 — library */}
-          <div className="border-t border-black/5 pt-20 flex flex-col md:flex-row items-start gap-8 md:gap-20">
-            <div className="md:w-2/5 shrink-0">
-              <span className="text-[#FF6B35] text-sm font-bold font-mono">Mise &agrave; jour quotidienne</span>
-              <h3 className="text-2xl md:text-3xl font-bold text-black mt-2 mb-4">
-                Biblioth&egrave;que d&apos;ads qui marchent vraiment
-              </h3>
-              <p className="text-black/40 leading-relaxed font-light text-[15px] max-w-sm">
-                On analyse les pubs les plus performantes du march&eacute;, chaque jour. Vous piochez dedans pour vous inspirer. Pas du th&eacute;orique, du test&eacute;.
-              </p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <FeatureCard
+              icon={MessageSquare}
+              label="&laquo; Change le fond en rouge &raquo;"
+              title="Modification par prompt"
+              desc="Pas de Photoshop. &Eacute;crivez ce que vous voulez changer. L&apos;IA applique en fran&ccedil;ais."
+              className="md:col-span-2"
+            />
+            <FeatureCard
+              icon={RefreshCw}
+              label="Mise &agrave; jour quotidienne"
+              title="Biblioth&egrave;que d&apos;ads gagnantes"
+              desc="On analyse les pubs les plus performantes du march&eacute;, chaque jour. Du test&eacute;, pas du th&eacute;orique."
+              className="md:col-span-3"
+            />
           </div>
         </div>
       </div>
@@ -230,24 +267,24 @@ function WhyKultads() {
 
 function BeforeAfterAnimated() {
   return (
-    <section className="py-24 px-6 bg-[#FAFAFA]">
+    <section className="py-28 px-6 bg-[#faf8f5]">
       <div className="max-w-[1400px] mx-auto">
-        <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-12">
+        <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-16">
           <div>
-            <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-black/30 mb-4">
+            <p className="text-[11px] font-mono text-[#f97316] tracking-[0.2em] uppercase mb-4">
               Le r&eacute;sultat
             </p>
-            <h2 className="text-3xl md:text-4xl font-black text-black">
+            <h2 className="text-3xl md:text-5xl font-black text-[#1a1a2e]">
               Template &rarr; Votre pub
             </h2>
           </div>
-          <p className="text-sm text-black/30 font-light max-w-xs">
-            L&apos;animation montre la transformation en temps r&eacute;el. M&ecirc;me layout, votre marque.
+          <p className="text-sm text-[#1a1a2e]/30 font-light max-w-xs">
+            M&ecirc;me layout, votre marque. La transformation en temps r&eacute;el.
           </p>
         </div>
 
         <div className="max-w-xl mx-auto">
-          <div className="relative aspect-square overflow-hidden border border-black/10">
+          <div className="relative aspect-square overflow-hidden rounded-3xl shadow-2xl shadow-[#1a1a2e]/10 border border-[#1a1a2e]/5">
             {/* Before (Template) */}
             <div className="absolute inset-0">
               <Image src="/after.png" alt="Template d&apos;inspiration" fill className="object-cover" sizes="600px" />
@@ -264,10 +301,10 @@ function BeforeAfterAnimated() {
             </div>
 
             {/* Labels */}
-            <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 z-10">
+            <div className="absolute bottom-4 left-4 bg-[#1a1a2e]/70 backdrop-blur-sm text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 z-10 rounded-full">
               Template
             </div>
-            <div className="absolute bottom-4 right-4 bg-[#FF6B35]/90 backdrop-blur-sm text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 z-10">
+            <div className="absolute bottom-4 right-4 bg-[#f97316]/90 backdrop-blur-sm text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 z-10 rounded-full">
               G&eacute;n&eacute;r&eacute;
             </div>
           </div>
@@ -277,24 +314,67 @@ function BeforeAfterAnimated() {
   );
 }
 
-/* ─────────────────────── DAILY GIFT ─────────────────────── */
+/* ─────────────────────── DAILY GIFT + STAT ─────────────────────── */
 
-function DailyGift() {
+function DailyGiftAndStat() {
   return (
-    <section className="py-20 px-6 bg-white border-t border-black/5">
-      <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-start gap-10 md:gap-20">
-        <div className="shrink-0">
-          <span className="text-6xl md:text-8xl font-black text-[#FF6B35] leading-none select-none">
-            1/jour
-          </span>
+    <section className="py-28 px-6 bg-white overflow-hidden">
+      <div className="max-w-[1400px] mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Daily Gift */}
+          <div className="p-12 rounded-3xl bg-[#1a1a2e] text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-[#f97316]/10 rounded-full blur-3xl" />
+            <span className="text-7xl md:text-8xl font-black text-[#f97316] leading-none font-mono block mb-8 select-none">
+              1/jour
+            </span>
+            <h3 className="text-2xl font-bold mb-4">
+              Un cadeau chaque matin
+            </h3>
+            <p className="text-white/40 leading-relaxed font-light max-w-sm">
+              Les abonn&eacute;s Pro et Agency re&ccedil;oivent automatiquement une pub g&eacute;n&eacute;r&eacute;e chaque jour, adapt&eacute;e &agrave; leur marque. Ouvrez l&apos;app, votre pub vous attend.
+            </p>
+          </div>
+
+          {/* Big Stat */}
+          <div className="p-12 rounded-3xl bg-[#faf8f5] border border-[#1a1a2e]/5 flex flex-col justify-between">
+            <div>
+              <p className="text-[11px] font-mono text-[#f97316] tracking-[0.2em] uppercase mb-4">
+                En chiffres
+              </p>
+              <span className="text-8xl md:text-9xl font-black text-[#1a1a2e] leading-none tracking-tighter font-mono block">
+                500+
+              </span>
+            </div>
+            <p className="text-[#1a1a2e]/40 text-lg leading-relaxed font-light mt-8 max-w-sm">
+              publicit&eacute;s g&eacute;n&eacute;r&eacute;es. Biblioth&egrave;que d&apos;ads gagnantes mise &agrave; jour chaque jour.
+            </p>
+          </div>
         </div>
-        <div className="max-w-lg">
-          <h3 className="text-2xl font-bold text-black mb-3">
-            Un cadeau chaque matin
-          </h3>
-          <p className="text-black/40 leading-relaxed font-light">
-            Les abonn&eacute;s Pro et Agency re&ccedil;oivent automatiquement une pub g&eacute;n&eacute;r&eacute;e chaque jour, adapt&eacute;e &agrave; leur marque. Ouvrez l&apos;app, votre pub vous attend. Pas d&apos;action requise.
-          </p>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────── TESTIMONIAL ─────────────────────── */
+
+function Testimonial() {
+  return (
+    <section className="py-28 px-6 bg-[#faf8f5]">
+      <div className="max-w-[1400px] mx-auto text-center">
+        <p className="text-[11px] font-mono text-[#f97316] tracking-[0.2em] uppercase mb-12">
+          T&eacute;moignage
+        </p>
+        <blockquote className="text-2xl md:text-4xl lg:text-5xl font-black text-[#1a1a2e] leading-tight max-w-4xl mx-auto tracking-tight">
+          &laquo;&nbsp;On faisait nos pubs sur Canva en 2h. Maintenant c&apos;est 30 secondes et le r&eacute;sultat est meilleur.&nbsp;&raquo;
+        </blockquote>
+        <div className="mt-10 flex items-center justify-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#1a1a2e]/10 flex items-center justify-center text-sm font-bold text-[#1a1a2e]/40">
+            L
+          </div>
+          <div className="text-left">
+            <p className="text-sm font-semibold text-[#1a1a2e]">Lucas M.</p>
+            <p className="text-[12px] text-[#1a1a2e]/30 font-mono">Fondateur, e-commerce mode</p>
+          </div>
         </div>
       </div>
     </section>
@@ -305,86 +385,87 @@ function DailyGift() {
 
 function Pricing() {
   return (
-    <section id="tarifs" className="py-24 px-6 bg-[#FAFAFA]">
+    <section id="tarifs" className="py-28 px-6 bg-white">
       <div className="max-w-[1400px] mx-auto">
-        <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-black/30 mb-4">
+        <p className="text-[11px] font-mono text-[#f97316] tracking-[0.2em] uppercase mb-4">
           Tarifs
         </p>
-        <h2 className="text-3xl md:text-4xl font-black text-black mb-4">
+        <h2 className="text-3xl md:text-5xl font-black text-[#1a1a2e] mb-4">
           Simple. Pas de surprise.
         </h2>
-        <p className="text-black/40 font-light mb-16 max-w-md">
+        <p className="text-[#1a1a2e]/40 font-light mb-16 max-w-md">
           Commencez gratuitement. Passez Pro quand vous &ecirc;tes convaincu.
         </p>
 
-        {/* Pricing — horizontal table-like layout */}
-        <div className="border border-black/10 divide-y divide-black/5 bg-white">
+        {/* Pricing — horizontal rows */}
+        <div className="space-y-4">
           {/* Starter */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-8 md:p-10 gap-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-8 md:p-10 gap-6 rounded-2xl border border-[#1a1a2e]/5 bg-[#faf8f5] hover:border-[#1a1a2e]/10 transition-colors">
             <div className="md:w-1/4">
-              <h3 className="text-lg font-bold text-black">Starter</h3>
-              <p className="text-sm text-black/30 mt-1">Pour tester</p>
+              <h3 className="text-lg font-bold text-[#1a1a2e]">Starter</h3>
+              <p className="text-sm text-[#1a1a2e]/30 mt-1">Pour tester</p>
             </div>
             <div className="md:w-1/4">
-              <span className="text-4xl font-black text-black font-mono">0&euro;</span>
+              <span className="text-5xl font-black text-[#1a1a2e] font-mono">0&euro;</span>
             </div>
-            <ul className="md:w-1/3 space-y-1.5 text-sm text-black/50">
-              <li className="flex items-center gap-2"><Minus className="w-3 h-3 text-black/20" /> 1 pub offerte</li>
-              <li className="flex items-center gap-2"><Minus className="w-3 h-3 text-black/20" /> Biblioth&egrave;que limit&eacute;e</li>
-              <li className="flex items-center gap-2"><Minus className="w-3 h-3 text-black/20" /> Format carr&eacute; uniquement</li>
+            <ul className="md:w-1/3 space-y-1.5 text-sm text-[#1a1a2e]/45">
+              <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[#1a1a2e]/15" /> 1 pub offerte</li>
+              <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[#1a1a2e]/15" /> Biblioth&egrave;que limit&eacute;e</li>
+              <li className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-[#1a1a2e]/15" /> Format carr&eacute; uniquement</li>
             </ul>
             <div className="md:w-auto">
-              <Link href="/signup" className="inline-block text-sm font-semibold text-black border border-black/20 px-6 py-2.5 hover:bg-black hover:text-white transition-colors">
+              <Link href="/signup" className="inline-block text-sm font-semibold text-[#1a1a2e] border border-[#1a1a2e]/15 px-6 py-2.5 rounded-full hover:bg-[#1a1a2e] hover:text-white transition-all">
                 Commencer
               </Link>
             </div>
           </div>
 
           {/* Pro — highlighted */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-8 md:p-10 gap-6 bg-black text-white relative">
-            <div className="absolute top-0 right-0 bg-[#FF6B35] text-white text-[10px] font-bold tracking-widest uppercase px-4 py-1.5">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-8 md:p-10 gap-6 rounded-2xl bg-[#1a1a2e] text-white relative overflow-hidden hover:shadow-2xl hover:shadow-[#1a1a2e]/20 transition-all">
+            <div className="absolute top-0 right-0 w-60 h-60 bg-[#f97316]/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -top-px right-8 bg-[#f97316] text-white text-[10px] font-bold tracking-widest uppercase px-4 py-1.5 rounded-b-lg">
               Populaire
             </div>
             <div className="md:w-1/4">
               <h3 className="text-lg font-bold">Pro</h3>
-              <p className="text-sm text-white/40 mt-1">Pour les e-commerces ambitieux</p>
+              <p className="text-sm text-white/35 mt-1">Pour les e-commerces ambitieux</p>
             </div>
             <div className="md:w-1/4">
-              <span className="text-4xl font-black font-mono">29&euro;</span>
-              <span className="text-white/40 text-sm">/mois</span>
+              <span className="text-5xl font-black font-mono">29&euro;</span>
+              <span className="text-white/35 text-sm">/mois</span>
             </div>
-            <ul className="md:w-1/3 space-y-1.5 text-sm text-white/60">
-              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Cr&eacute;ations illimit&eacute;es</li>
-              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Carr&eacute; + Story</li>
-              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Modification par prompt</li>
-              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> 1 pub offerte / jour</li>
-              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Biblioth&egrave;que compl&egrave;te</li>
+            <ul className="md:w-1/3 space-y-1.5 text-sm text-white/50">
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#f97316]" /> Cr&eacute;ations illimit&eacute;es</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#f97316]" /> Carr&eacute; + Story</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#f97316]" /> Modification par prompt</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#f97316]" /> 1 pub offerte / jour</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#f97316]" /> Biblioth&egrave;que compl&egrave;te</li>
             </ul>
             <div className="md:w-auto">
-              <Link href="/signup" className="inline-block text-sm font-semibold text-black bg-white px-6 py-2.5 hover:bg-white/90 transition-colors">
+              <Link href="/signup" className="inline-block text-sm font-semibold text-[#1a1a2e] bg-white px-6 py-2.5 rounded-full hover:bg-[#f97316] hover:text-white transition-all">
                 Essayer gratuitement
               </Link>
             </div>
           </div>
 
           {/* Agency */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-8 md:p-10 gap-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-8 md:p-10 gap-6 rounded-2xl border border-[#1a1a2e]/5 bg-[#faf8f5] hover:border-[#1a1a2e]/10 transition-colors">
             <div className="md:w-1/4">
-              <h3 className="text-lg font-bold text-black">Agency</h3>
-              <p className="text-sm text-black/30 mt-1">Multi-marques &amp; agences</p>
+              <h3 className="text-lg font-bold text-[#1a1a2e]">Agency</h3>
+              <p className="text-sm text-[#1a1a2e]/30 mt-1">Multi-marques &amp; agences</p>
             </div>
             <div className="md:w-1/4">
-              <span className="text-4xl font-black text-black font-mono">79&euro;</span>
-              <span className="text-black/30 text-sm">/mois</span>
+              <span className="text-5xl font-black text-[#1a1a2e] font-mono">79&euro;</span>
+              <span className="text-[#1a1a2e]/30 text-sm">/mois</span>
             </div>
-            <ul className="md:w-1/3 space-y-1.5 text-sm text-black/50">
-              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Tout le plan Pro</li>
-              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Multi-marques</li>
-              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Acc&egrave;s API</li>
-              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Support d&eacute;di&eacute;</li>
+            <ul className="md:w-1/3 space-y-1.5 text-sm text-[#1a1a2e]/45">
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#f97316]" /> Tout le plan Pro</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#f97316]" /> Multi-marques</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#f97316]" /> Acc&egrave;s API</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#f97316]" /> Support d&eacute;di&eacute;</li>
             </ul>
             <div className="md:w-auto">
-              <Link href="/signup" className="inline-block text-sm font-semibold text-black border border-black/20 px-6 py-2.5 hover:bg-black hover:text-white transition-colors">
+              <Link href="/signup" className="inline-block text-sm font-semibold text-[#1a1a2e] border border-[#1a1a2e]/15 px-6 py-2.5 rounded-full hover:bg-[#1a1a2e] hover:text-white transition-all">
                 Essayer gratuitement
               </Link>
             </div>
@@ -426,26 +507,28 @@ function FAQ() {
   ];
 
   return (
-    <section className="py-24 px-6 bg-white">
-      <div className="max-w-[1400px] mx-auto">
-        <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-black/30 mb-4">
+    <section className="py-28 px-6 bg-[#faf8f5]">
+      <div className="max-w-[900px] mx-auto">
+        <p className="text-[11px] font-mono text-[#f97316] tracking-[0.2em] uppercase mb-4">
           FAQ
         </p>
-        <h2 className="text-3xl md:text-4xl font-black text-black mb-16">
+        <h2 className="text-3xl md:text-5xl font-black text-[#1a1a2e] mb-16">
           Les questions qu&apos;on nous pose
         </h2>
 
-        {/* Two-column FAQ — not accordions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20 gap-y-12">
+        <div className="space-y-3">
           {questions.map((item) => (
-            <div key={item.q} className="border-t border-black/5 pt-6">
-              <h3 className="text-base font-bold text-black mb-3">
+            <details key={item.q} className="group rounded-2xl bg-white border border-[#1a1a2e]/5 overflow-hidden hover:border-[#f97316]/15 transition-colors">
+              <summary className="cursor-pointer flex items-center justify-between p-6 text-base font-semibold text-[#1a1a2e] list-none [&::-webkit-details-marker]:hidden">
                 {item.q}
-              </h3>
-              <p className="text-sm text-black/40 leading-relaxed font-light">
+                <span className="ml-4 text-[#1a1a2e]/20 group-open:rotate-180 transition-transform duration-300 shrink-0">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
+              </summary>
+              <div className="px-6 pb-6 text-sm text-[#1a1a2e]/40 leading-relaxed font-light">
                 {item.a}
-              </p>
-            </div>
+              </div>
+            </details>
           ))}
         </div>
       </div>
@@ -457,18 +540,20 @@ function FAQ() {
 
 function FinalCTA() {
   return (
-    <section className="py-32 px-6 bg-black">
-      <div className="max-w-[1400px] mx-auto">
-        <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[0.95] tracking-tight max-w-3xl">
+    <section className="py-32 px-6 bg-[#1a1a2e] relative overflow-hidden">
+      {/* Warm glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#f97316]/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="max-w-[1400px] mx-auto text-center relative z-10">
+        <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[0.95] tracking-tight max-w-3xl mx-auto">
           On va changer &ccedil;a.
         </h2>
-        <p className="mt-8 text-lg text-white/30 font-light max-w-md">
+        <p className="mt-8 text-lg text-white/30 font-light max-w-md mx-auto">
           Premi&egrave;re pub offerte. Sans carte bancaire. 30 secondes.
         </p>
         <div className="mt-12">
           <Link
             href="/signup"
-            className="inline-flex items-center gap-3 bg-[#FF6B35] text-white font-semibold px-8 py-4 text-base hover:bg-[#FF6B35]/90 transition-colors"
+            className="inline-flex items-center gap-3 bg-[#f97316] text-white font-semibold px-10 py-4 text-base rounded-full hover:bg-[#ea580c] transition-all hover:shadow-xl hover:shadow-[#f97316]/30 hover:-translate-y-0.5"
           >
             Cr&eacute;er ma premi&egrave;re pub
             <ArrowRight className="w-4 h-4" />
@@ -483,18 +568,18 @@ function FinalCTA() {
 
 function Footer() {
   return (
-    <footer className="border-t border-white/10 py-8 px-6 bg-black">
+    <footer className="border-t border-white/5 py-8 px-6 bg-[#1a1a2e]">
       <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-        <KultLogoIcon className="w-7 h-7 opacity-50" />
-        <div className="flex items-center gap-8 text-[12px] text-white/25">
-          <Link href="/cgu" className="hover:text-white/60 transition-colors">
+        <KultLogoIcon className="w-7 h-7 opacity-40" />
+        <div className="flex items-center gap-8 text-[12px] text-white/20">
+          <Link href="/cgu" className="hover:text-white/50 transition-colors">
             CGU
           </Link>
-          <a href="mailto:contact@kultads.com" className="hover:text-white/60 transition-colors">
+          <a href="mailto:contact@kultads.com" className="hover:text-white/50 transition-colors">
             Contact
           </a>
         </div>
-        <p className="text-[12px] text-white/20 font-mono">
+        <p className="text-[12px] text-white/15 font-mono">
           &copy; 2026 kultads
         </p>
       </div>
@@ -510,11 +595,12 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <BoldStat />
+        <Marquee />
         <HowItWorks />
-        <WhyKultads />
+        <Features />
         <BeforeAfterAnimated />
-        <DailyGift />
+        <DailyGiftAndStat />
+        <Testimonial />
         <Pricing />
         <FAQ />
         <FinalCTA />
