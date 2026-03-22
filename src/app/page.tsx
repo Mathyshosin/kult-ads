@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { KultLogoFull } from "@/components/kult-logo";
 import {
   Sparkles,
@@ -332,58 +333,34 @@ function BeforeAfter() {
           </p>
         </div>
 
-        {/* Slider container */}
+        {/* Slider container with real images */}
         <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/10 border border-gray-100 bg-white">
-          <div className="relative aspect-[4/3] sm:aspect-[16/10] ba-container">
-            {/* Before (Template) */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-cyan-400 to-indigo-500 flex flex-col items-center justify-center text-white p-8">
-              <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs font-semibold">
+          <div className="relative aspect-square ba-container">
+            {/* Before (Template — Decorté) */}
+            <div className="absolute inset-0">
+              <Image src="/before.png" alt="Template d'inspiration — ad cosmétique" fill className="object-cover" sizes="(max-width: 768px) 100vw, 800px" />
+              <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs font-bold text-white z-10">
                 Template d&apos;inspiration
-              </div>
-              <div className="w-20 h-20 rounded-3xl bg-white/15 backdrop-blur-sm flex items-center justify-center mb-5">
-                <Layers className="w-10 h-10 text-white/70" />
-              </div>
-              <p className="text-2xl font-bold mb-1">Ad Template</p>
-              <p className="text-sm text-white/60 mb-6">Marque générique</p>
-              <div className="space-y-2 w-48">
-                <div className="h-3 bg-white/25 rounded-full" />
-                <div className="h-3 bg-white/15 rounded-full w-3/4" />
-              </div>
-              <div className="mt-5 h-10 w-40 bg-white/20 rounded-xl flex items-center justify-center text-sm font-semibold">
-                Acheter maintenant
               </div>
             </div>
 
-            {/* After (Generated) — clip-path controlled by CSS */}
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 flex flex-col items-center justify-center text-white p-8 ba-after">
-              <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs font-semibold">
-                Votre publicité générée
-              </div>
-              <div className="w-20 h-20 rounded-3xl bg-white/15 backdrop-blur-sm flex items-center justify-center mb-5">
-                <Sparkles className="w-10 h-10 text-white/90" />
-              </div>
-              <p className="text-2xl font-bold mb-1">Votre Marque</p>
-              <p className="text-sm text-white/70 mb-6">Adaptée à votre identité</p>
-              <div className="space-y-2 w-48">
-                <div className="h-3 bg-white/35 rounded-full" />
-                <div className="h-3 bg-white/25 rounded-full w-3/4" />
-              </div>
-              <div className="mt-5 h-10 w-40 bg-white/30 rounded-xl flex items-center justify-center text-sm font-semibold">
-                Découvrir la collection
+            {/* After (Generated — HelloBoku) */}
+            <div className="absolute inset-0 ba-after">
+              <Image src="/after.png" alt="Publicité générée par kultads" fill className="object-cover" sizes="(max-width: 768px) 100vw, 800px" />
+              <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs font-bold text-white z-10">
+                Publicité générée par kultads
               </div>
             </div>
 
             {/* Slider divider line */}
-            <div className="absolute inset-0 pointer-events-none ba-line flex items-center">
-              <div className="w-0.5 h-full bg-white shadow-lg" />
+            <div className="absolute inset-0 pointer-events-none ba-line flex items-center z-20">
+              <div className="w-1 h-full bg-white shadow-lg" />
               <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white shadow-xl flex items-center justify-center">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-700">
                   <path d="M4 8H12M4 8L6 6M4 8L6 10M12 8L10 6M12 8L10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
             </div>
-
-            {/* Animated slider — no JS needed */}
           </div>
         </div>
       </div>
