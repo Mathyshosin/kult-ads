@@ -112,53 +112,35 @@ function Hero() {
           Pas de carte bancaire requise &middot; Première pub offerte
         </p>
 
-        {/* Before/After Mockup in Hero */}
-        <div className="mt-16 max-w-3xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/10 border border-gray-100 bg-white p-2">
-            <div className="relative aspect-[16/9] rounded-2xl overflow-hidden">
-              {/* Before side (template) */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-indigo-400 to-purple-400 flex flex-col items-center justify-center text-white">
-                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
-                  <Layers className="w-8 h-8 text-white/80" />
+        {/* Before/After Mockup in Hero — real images */}
+        <div className="mt-16 max-w-lg mx-auto animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/10 border border-gray-100">
+            <div className="relative aspect-square hero-ba-container">
+              {/* Before (Template — Decorté) */}
+              <div className="absolute inset-0">
+                <Image src="/before.png" alt="Template d'inspiration" fill className="object-cover" sizes="500px" />
+                <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-sm rounded-md px-2.5 py-1 text-[10px] font-bold text-white z-10">
+                  Avant
                 </div>
-                <p className="text-xl font-bold">Template d&apos;inspiration</p>
-                <p className="text-sm text-white/70 mt-1">Ads gagnantes du marché</p>
-                <div className="mt-6 flex gap-3">
-                  <div className="h-3 w-20 bg-white/30 rounded-full" />
-                  <div className="h-3 w-14 bg-white/20 rounded-full" />
-                </div>
-                <div className="mt-2 h-8 w-32 bg-white/25 rounded-lg" />
               </div>
 
-              {/* After side (generated) — clipped by range input via CSS */}
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 flex flex-col items-center justify-center text-white hero-after-slide">
-                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
-                  <Sparkles className="w-8 h-8 text-white/90" />
-                </div>
-                <p className="text-xl font-bold">Votre publicité générée</p>
-                <p className="text-sm text-white/70 mt-1">Adaptée à votre marque</p>
-                <div className="mt-6 flex gap-3">
-                  <div className="h-3 w-20 bg-white/40 rounded-full" />
-                  <div className="h-3 w-14 bg-white/30 rounded-full" />
-                </div>
-                <div className="mt-2 h-8 w-32 bg-white/35 rounded-lg flex items-center justify-center text-xs font-semibold text-white/90">
-                  Votre CTA ici
+              {/* After (Generated — HelloBoku) */}
+              <div className="absolute inset-0 hero-after-slide">
+                <Image src="/after.png" alt="Publicité générée par kultads" fill className="object-cover" sizes="500px" />
+                <div className="absolute top-3 right-3 bg-violet-500/80 backdrop-blur-sm rounded-md px-2.5 py-1 text-[10px] font-bold text-white z-10">
+                  Après
                 </div>
               </div>
 
               {/* Slider line */}
-              <div className="absolute inset-0 flex items-center pointer-events-none hero-slider-line">
-                <div className="w-0.5 h-full bg-white/80 shadow-lg" />
+              <div className="absolute inset-0 flex items-center pointer-events-none hero-slider-line z-20">
+                <div className="w-0.5 h-full bg-white shadow-lg" />
               </div>
-
-              {/* Animated slider — no JS needed */}
             </div>
-
-            {/* Labels */}
-            <div className="flex justify-between px-4 py-3 text-xs font-medium text-gray-400">
-              <span>Avant : Template</span>
-              <span>Après : Votre marque</span>
-            </div>
+          </div>
+          <div className="flex justify-between px-2 mt-2 text-[11px] font-medium text-gray-400">
+            <span>Template d&apos;inspiration</span>
+            <span>Votre publicité</span>
           </div>
         </div>
       </div>
@@ -318,55 +300,7 @@ function Features() {
   );
 }
 
-/* ─────────────────────── BEFORE / AFTER SECTION ─────────────────────── */
-
-function BeforeAfter() {
-  return (
-    <section className="py-24 px-6 bg-white">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            De l&apos;inspiration à la publicité parfaite
-          </h2>
-          <p className="mt-4 text-gray-500 text-lg">
-            Glissez le curseur pour voir la transformation.
-          </p>
-        </div>
-
-        {/* Slider container with real images */}
-        <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/10 border border-gray-100 bg-white">
-          <div className="relative aspect-square ba-container">
-            {/* Before (Template — Decorté) */}
-            <div className="absolute inset-0">
-              <Image src="/before.png" alt="Template d'inspiration — ad cosmétique" fill className="object-cover" sizes="(max-width: 768px) 100vw, 800px" />
-              <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs font-bold text-white z-10">
-                Template d&apos;inspiration
-              </div>
-            </div>
-
-            {/* After (Generated — HelloBoku) */}
-            <div className="absolute inset-0 ba-after">
-              <Image src="/after.png" alt="Publicité générée par kultads" fill className="object-cover" sizes="(max-width: 768px) 100vw, 800px" />
-              <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs font-bold text-white z-10">
-                Publicité générée par kultads
-              </div>
-            </div>
-
-            {/* Slider divider line */}
-            <div className="absolute inset-0 pointer-events-none ba-line flex items-center z-20">
-              <div className="w-1 h-full bg-white shadow-lg" />
-              <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white shadow-xl flex items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-700">
-                  <path d="M4 8H12M4 8L6 6M4 8L6 10M12 8L10 6M12 8L10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+/* BeforeAfter section removed — real images now in Hero */
 
 /* ─────────────────────── DAILY GIFT ─────────────────────── */
 
@@ -640,7 +574,6 @@ export default function Home() {
         <SocialProofBar />
         <HowItWorks />
         <Features />
-        <BeforeAfter />
         <DailyGift />
         <Pricing />
         <FAQ />
