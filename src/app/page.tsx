@@ -4,11 +4,15 @@ import { KultLogoFull, KultLogoIcon } from "@/components/kult-logo";
 import {
   ArrowRight,
   Check,
-  Zap,
-  MessageSquare,
-  Layers,
-  BookOpen,
+  X,
+  Search,
+  ShoppingBag,
+  Sparkles,
   ChevronDown,
+  Star,
+  Quote,
+  RectangleHorizontal,
+  Smartphone,
 } from "lucide-react";
 
 /* ─────────────────────── NAVBAR ─────────────────────── */
@@ -16,7 +20,7 @@ import {
 function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-900/5">
-      <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link href="/" aria-label="Accueil">
           <KultLogoFull />
         </Link>
@@ -44,40 +48,38 @@ function Navbar() {
 
 function Hero() {
   return (
-    <section className="pt-28 pb-16 md:pt-32 md:pb-20 px-6 bg-white">
-      <div className="max-w-5xl mx-auto">
-        {/* Copy */}
-        <div className="text-center max-w-2xl mx-auto">
-          <span className="inline-block text-xs font-medium text-violet-600 bg-violet-50 px-3 py-1 rounded-full mb-6">
-            Générateur de publicités par IA
-          </span>
-
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight tracking-tight">
-            Créez des publicités professionnelles en 30&nbsp;secondes
+    <section className="pt-28 pb-16 md:pt-36 md:pb-24 px-6 bg-white">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center max-w-3xl mx-auto">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.1] tracking-tight">
+            Transformez n&apos;importe quelle pub gagnante en{" "}
+            <span className="bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent">
+              machine à cash
+            </span>
           </h1>
 
-          <p className="mt-5 text-base md:text-lg text-gray-500 max-w-lg mx-auto leading-relaxed">
-            Collez l&apos;URL de votre site. Notre IA analyse votre marque et
-            génère des pubs inspirées des meilleures ads du marché.
+          <p className="mt-6 text-lg md:text-xl text-gray-500 max-w-xl mx-auto leading-relaxed">
+            Choisissez une pub qui cartonne, ajoutez votre produit, et
+            l&apos;IA génère votre version en 30&nbsp;secondes.
           </p>
 
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/signup"
-              className="inline-flex items-center gap-2 text-white font-semibold bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 px-7 py-3.5 text-base rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-violet-500/20"
+              className="inline-flex items-center gap-2 text-white font-semibold bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 px-8 py-4 text-base rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-violet-500/25"
             >
-              Créer ma première pub — c&apos;est gratuit
+              Générer ma première pub
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
-          <p className="mt-4 text-xs text-gray-400">
-            Sans carte bancaire · Première pub offerte
+          <p className="mt-4 text-sm text-gray-400">
+            À partir de 0€ · Sans abonnement obligatoire
           </p>
         </div>
 
-        {/* Before/After Slider — THE product demo */}
-        <div className="mt-14 md:mt-16 max-w-2xl mx-auto">
+        {/* Before/After Slider */}
+        <div className="mt-16 md:mt-20 max-w-2xl mx-auto">
           <div className="relative aspect-square overflow-hidden rounded-2xl shadow-2xl shadow-gray-900/10 border border-gray-200">
             {/* Before (Template) */}
             <div className="absolute inset-0">
@@ -117,7 +119,7 @@ function Hero() {
             </div>
           </div>
 
-          <p className="text-center text-xs text-gray-400 mt-3">
+          <p className="text-center text-xs text-gray-400 mt-4">
             Template → Votre publicité en 30s
           </p>
         </div>
@@ -126,39 +128,48 @@ function Hero() {
   );
 }
 
-/* ─────────────────────── HOW IT WORKS ─────────────────────── */
+/* ─────────────────────── 3-STEP PROCESS ─────────────────────── */
 
 function HowItWorks() {
   const steps = [
     {
       num: "1",
-      title: "Collez votre URL",
-      desc: "On récupère votre logo, vos produits et vos couleurs automatiquement.",
+      icon: Search,
+      title: "Choisissez une pub qui cartonne",
+      desc: "Parcourez notre bibliothèque d'ads gagnantes ou uploadez la vôtre comme référence.",
     },
     {
       num: "2",
-      title: "Choisissez un style",
-      desc: "Parcourez la bibliothèque d'ads gagnantes ou uploadez votre référence.",
+      icon: ShoppingBag,
+      title: "Ajoutez vos produits",
+      desc: "Collez l'URL de votre site — on récupère tout automatiquement : logo, couleurs, produits.",
     },
     {
       num: "3",
-      title: "Votre pub est prête",
-      desc: "30 secondes. Format carré ou story. Modifiable par prompt.",
+      icon: Sparkles,
+      title: "Générez votre version",
+      desc: "L'IA adapte la pub à votre marque en 30 secondes. Modifiez par prompt si besoin.",
     },
   ];
 
   return (
-    <section className="py-20 px-6 bg-gray-50">
+    <section className="py-20 md:py-28 px-6 bg-gray-50">
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-14">
-          Comment ça marche
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-4">
+          3 étapes, 30 secondes
         </h2>
+        <p className="text-gray-500 text-center mb-16 max-w-md mx-auto">
+          Pas de brief créatif. Pas de designer. Juste vous et une URL.
+        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-14">
           {steps.map((step) => (
             <div key={step.num} className="text-center">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white font-bold text-sm flex items-center justify-center mx-auto mb-4">
-                {step.num}
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center mx-auto mb-5 shadow-lg shadow-violet-500/20">
+                <step.icon className="w-6 h-6" />
+              </div>
+              <div className="inline-block text-xs font-bold text-violet-600 bg-violet-50 px-2.5 py-0.5 rounded-full mb-3">
+                Étape {step.num}
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 {step.title}
@@ -174,63 +185,221 @@ function HowItWorks() {
   );
 }
 
-/* ─────────────────────── FEATURES ─────────────────────── */
+/* ─────────────────────── FORMAT SHOWCASE ─────────────────────── */
 
-function Features() {
-  const features = [
+function FormatShowcase() {
+  return (
+    <section className="py-20 md:py-28 px-6 bg-white">
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-4">
+          Tous les formats dont vous avez besoin
+        </h2>
+        <p className="text-gray-500 text-center mb-16 max-w-md mx-auto">
+          Générez directement au bon format. Conversion en un clic.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-10 md:gap-16">
+          {/* 1:1 Square */}
+          <div className="text-center">
+            <div className="w-48 h-48 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 border-2 border-gray-200 flex items-center justify-center mx-auto mb-4 relative overflow-hidden">
+              <RectangleHorizontal className="w-12 h-12 text-gray-300" />
+              <div className="absolute top-2 right-2 bg-violet-100 text-violet-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                1:1
+              </div>
+            </div>
+            <h3 className="text-base font-semibold text-gray-900">Carré</h3>
+            <p className="text-sm text-gray-400 mt-1">Feed Instagram & Facebook</p>
+          </div>
+
+          {/* 9:16 Story */}
+          <div className="text-center">
+            <div className="w-32 h-56 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 border-2 border-gray-200 flex items-center justify-center mx-auto mb-4 relative overflow-hidden">
+              <Smartphone className="w-10 h-10 text-gray-300" />
+              <div className="absolute top-2 right-2 bg-violet-100 text-violet-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                9:16
+              </div>
+            </div>
+            <h3 className="text-base font-semibold text-gray-900">Story</h3>
+            <p className="text-sm text-gray-400 mt-1">Reels, Stories & TikTok</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────── COMPARISON ─────────────────────── */
+
+function Comparison() {
+  const chatgptItems = [
+    "Résultats génériques sans identité de marque",
+    "Pas de bibliothèque d'ads gagnantes",
+    "Prompts complexes à écrire",
+    "Aucune compréhension de votre marque",
+  ];
+
+  const kultItems = [
+    "Ads adaptées à VOTRE marque automatiquement",
+    "Bibliothèque de pubs performantes mise à jour chaque jour",
+    "1 clic, pas de prompt compliqué",
+    "Analyse automatique de votre site (logo, couleurs, produits)",
+  ];
+
+  return (
+    <section className="py-20 md:py-28 px-6 bg-gray-50">
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-4">
+          Pourquoi kultads et pas ChatGPT ?
+        </h2>
+        <p className="text-gray-500 text-center mb-16 max-w-lg mx-auto">
+          Les outils génériques ne comprennent pas votre marque. kultads, si.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* ChatGPT / Midjourney */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8">
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-base font-semibold text-gray-400 line-through">
+                ChatGPT / Midjourney
+              </span>
+            </div>
+            <ul className="space-y-4">
+              {chatgptItems.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <div className="shrink-0 w-5 h-5 rounded-full bg-red-50 flex items-center justify-center mt-0.5">
+                    <X className="w-3 h-3 text-red-500" />
+                  </div>
+                  <span className="text-sm text-gray-500">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* kultads */}
+          <div className="rounded-2xl border-2 border-violet-200 bg-violet-50/30 p-6 md:p-8 ring-1 ring-violet-100">
+            <div className="flex items-center gap-2 mb-6">
+              <KultLogoIcon className="w-6 h-6" />
+              <span className="text-base font-semibold text-gray-900">
+                kultads
+              </span>
+            </div>
+            <ul className="space-y-4">
+              {kultItems.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <div className="shrink-0 w-5 h-5 rounded-full bg-green-50 flex items-center justify-center mt-0.5">
+                    <Check className="w-3 h-3 text-green-600" />
+                  </div>
+                  <span className="text-sm text-gray-700 font-medium">
+                    {item}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────── TESTIMONIALS ─────────────────────── */
+
+function Testimonials() {
+  const testimonials = [
     {
-      icon: Zap,
-      title: "4 modes de création",
-      desc: "Auto, Bibliothèque, Copy-Ads ou Prompt libre. Chaque mode répond à un workflow différent.",
+      initials: "LM",
+      name: "Lucas M.",
+      role: "Fondateur, e-commerce skincare",
+      quote:
+        "J'ai remplacé mon designer freelance par kultads. Je sors 5 créas par semaine au lieu d'une. Mon ROAS a doublé en 3 semaines.",
+      metric: "ROAS x2",
+      metricLabel: "en 3 semaines",
+      color: "from-indigo-500 to-violet-500",
     },
     {
-      icon: MessageSquare,
-      title: "Modification par prompt",
-      desc: "Écrivez ce que vous voulez changer en français. L'IA applique en temps réel.",
+      initials: "SC",
+      name: "Sophie C.",
+      role: "Media buyer, agence digitale",
+      quote:
+        "On testait 2 créas par mois. Maintenant on en teste 10. La bibliothèque d'ads gagnantes, c'est un game-changer.",
+      metric: "5x",
+      metricLabel: "plus de créas testées",
+      color: "from-violet-500 to-purple-500",
     },
     {
-      icon: Layers,
-      title: "Carré & Story",
-      desc: "Générez en 1:1 pour le feed ou en 9:16 pour les stories. Conversion en un clic.",
-    },
-    {
-      icon: BookOpen,
-      title: "Bibliothèque d'ads",
-      desc: "Les pubs les plus performantes du marché, mises à jour chaque jour. Du testé, pas du théorique.",
+      initials: "TN",
+      name: "Thomas N.",
+      role: "Dropshipper",
+      quote:
+        "30 secondes pour une pub qui ressemble à ce que font les grosses marques. J'économise 500€ par mois en design.",
+      metric: "500€",
+      metricLabel: "économisés / mois",
+      color: "from-purple-500 to-pink-500",
     },
   ];
 
   return (
-    <section className="py-20 px-6 bg-white">
+    <section className="py-20 md:py-28 px-6 bg-white">
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-14">
-          Tout ce qu&apos;il vous faut
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-4">
+          Ils génèrent des pubs qui convertissent
         </h2>
+        <p className="text-gray-500 text-center mb-16 max-w-md mx-auto">
+          Des e-commerces et agences qui utilisent kultads au quotidien.
+        </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-10">
-          {features.map((f) => (
-            <div key={f.title} className="flex gap-4">
-              <div className="shrink-0 w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
-                <f.icon className="w-5 h-5 text-violet-600" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {testimonials.map((t) => (
+            <div
+              key={t.name}
+              className="rounded-2xl border border-gray-200 bg-white p-6 flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className={`w-10 h-10 rounded-full bg-gradient-to-br ${t.color} flex items-center justify-center text-white text-xs font-bold`}
+                >
+                  {t.initials}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {t.name}
+                  </p>
+                  <p className="text-xs text-gray-400">{t.role}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-1">
-                  {f.title}
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  {f.desc}
+
+              {/* Stars */}
+              <div className="flex gap-0.5 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
+                  />
+                ))}
+              </div>
+
+              {/* Quote */}
+              <div className="flex-1 mb-5">
+                <Quote className="w-4 h-4 text-gray-200 mb-2" />
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {t.quote}
+                </p>
+              </div>
+
+              {/* Metric */}
+              <div className="pt-4 border-t border-gray-100">
+                <p
+                  className={`text-2xl font-extrabold bg-gradient-to-r ${t.color} bg-clip-text text-transparent`}
+                >
+                  {t.metric}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {t.metricLabel}
                 </p>
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Social proof — single line */}
-        <div className="mt-14 text-center">
-          <p className="text-sm text-gray-400">
-            <span className="font-semibold text-gray-600">500+</span>{" "}
-            publicités générées par nos utilisateurs
-          </p>
         </div>
       </div>
     </section>
@@ -246,6 +415,7 @@ function PricingCard({
   subtitle,
   features,
   highlighted,
+  badge,
 }: {
   name: string;
   price: string;
@@ -253,6 +423,7 @@ function PricingCard({
   subtitle: string;
   features: string[];
   highlighted?: boolean;
+  badge?: string;
 }) {
   return (
     <div
@@ -262,9 +433,9 @@ function PricingCard({
           : "bg-white border border-gray-200"
       }`}
     >
-      {highlighted && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[11px] font-semibold bg-gradient-to-r from-indigo-500 to-violet-500 text-white px-3 py-1 rounded-full">
-          Le plus populaire
+      {badge && (
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[11px] font-semibold bg-gradient-to-r from-indigo-500 to-violet-500 text-white px-3 py-1 rounded-full whitespace-nowrap">
+          {badge}
         </span>
       )}
 
@@ -311,7 +482,7 @@ function PricingCard({
 
       <Link
         href="/signup"
-        className={`block text-center text-sm font-semibold py-2.5 rounded-xl transition-all ${
+        className={`block text-center text-sm font-semibold py-3 rounded-xl transition-all ${
           highlighted
             ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white hover:opacity-90"
             : "border border-gray-200 text-gray-700 hover:bg-gray-50"
@@ -325,12 +496,12 @@ function PricingCard({
 
 function Pricing() {
   return (
-    <section className="py-20 px-6 bg-gray-50">
+    <section className="py-20 md:py-28 px-6 bg-gray-50">
       <div className="max-w-5xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-4">
           Tarifs simples, sans surprise
         </h2>
-        <p className="text-sm text-gray-400 text-center mb-14 max-w-md mx-auto">
+        <p className="text-gray-500 text-center mb-16 max-w-md mx-auto">
           Commencez gratuitement. Passez Pro quand vous êtes convaincu.
         </p>
 
@@ -351,10 +522,11 @@ function Pricing() {
             period="/mois"
             subtitle="Pour les e-commerces ambitieux"
             highlighted
+            badge="Le plus populaire"
             features={[
               "Créations illimitées",
-              "Carré + Story",
-              "Modification par prompt",
+              "Tous les formats (carré + story)",
+              "Modification par prompt IA",
               "1 pub offerte / jour",
               "Bibliothèque complète",
             ]}
@@ -383,28 +555,32 @@ function FAQ() {
   const questions = [
     {
       q: "C'est quoi kultads, en une phrase ?",
-      a: "Vous collez l'URL de votre site, notre IA analyse votre marque et génère une publicité professionnelle en 30 secondes, inspirée des meilleures ads du marché.",
+      a: "Vous choisissez une pub qui cartonne, vous ajoutez votre produit, et l'IA génère votre version personnalisée en 30 secondes.",
+    },
+    {
+      q: "En quoi c'est différent de ChatGPT ou Midjourney ?",
+      a: "ChatGPT et Midjourney sont des outils génériques. kultads est spécialisé dans les publicités : bibliothèque d'ads gagnantes, analyse automatique de votre marque, formats optimisés pour Meta/TikTok. Zéro prompt à écrire.",
     },
     {
       q: "Quels formats sont disponibles ?",
-      a: "Carré (1:1) pour le feed Instagram/Facebook et story (9:16) pour les Reels et stories. Conversion de l'un à l'autre en un clic.",
+      a: "Carré (1:1) pour le feed Instagram/Facebook et story (9:16) pour les Reels, stories et TikTok. Conversion de l'un à l'autre en un clic.",
     },
     {
       q: "Je peux modifier une pub après génération ?",
-      a: "Oui. Écrivez ce que vous voulez changer en texte libre (« change le fond en rouge », « ajoute un badge -30% ») et l'IA applique.",
+      a: "Oui. Écrivez ce que vous voulez changer en texte libre (« change le fond en rouge », « ajoute un badge -30% ») et l'IA applique instantanément.",
     },
     {
-      q: "C'est légal ?",
-      a: "Les publicités générées sont originales et créées pour votre marque. Vous en êtes propriétaire et pouvez les utiliser librement.",
+      q: "C'est légal ? Je suis propriétaire des images ?",
+      a: "Les publicités générées sont originales et créées pour votre marque. Vous en êtes propriétaire et pouvez les utiliser librement sur toutes vos plateformes.",
     },
     {
       q: "Combien de temps pour générer une pub ?",
-      a: "30 secondes en moyenne. Collez votre URL, choisissez un style, c'est prêt.",
+      a: "30 secondes en moyenne. Choisissez un template, ajoutez votre URL, c'est prêt.",
     },
   ];
 
   return (
-    <section className="py-20 px-6 bg-white">
+    <section className="py-20 md:py-28 px-6 bg-white">
       <div className="max-w-2xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-12">
           Questions fréquentes
@@ -435,20 +611,20 @@ function FAQ() {
 
 function FinalCTA() {
   return (
-    <section className="py-20 px-6 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600">
+    <section className="py-20 md:py-28 px-6 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600">
       <div className="max-w-2xl mx-auto text-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-white">
-          Prêt à créer votre première pub ?
+        <h2 className="text-3xl md:text-4xl font-bold text-white">
+          Prêt à transformer vos pubs ?
         </h2>
-        <p className="mt-3 text-sm text-white/60">
-          Gratuit, sans carte bancaire.
+        <p className="mt-4 text-base text-white/60">
+          Première pub gratuite, sans carte bancaire.
         </p>
-        <div className="mt-8">
+        <div className="mt-10">
           <Link
             href="/signup"
-            className="inline-flex items-center gap-2 bg-white text-gray-900 font-semibold px-7 py-3.5 text-base rounded-xl hover:bg-gray-100 transition-colors shadow-lg"
+            className="inline-flex items-center gap-2 bg-white text-gray-900 font-semibold px-8 py-4 text-base rounded-xl hover:bg-gray-100 transition-colors shadow-lg"
           >
-            Créer ma première pub
+            Générer ma première pub
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -461,12 +637,18 @@ function FinalCTA() {
 
 function Footer() {
   return (
-    <footer className="py-8 px-6 bg-white border-t border-gray-100">
+    <footer className="py-10 px-6 bg-white border-t border-gray-100">
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <KultLogoIcon className="w-7 h-7 opacity-40" />
         <div className="flex items-center gap-6 text-xs text-gray-400">
           <Link href="/cgu" className="hover:text-gray-600 transition-colors">
             CGU
+          </Link>
+          <Link
+            href="/login"
+            className="hover:text-gray-600 transition-colors"
+          >
+            Connexion
           </Link>
           <a
             href="mailto:contact@kultads.com"
@@ -490,7 +672,9 @@ export default function Home() {
       <main>
         <Hero />
         <HowItWorks />
-        <Features />
+        <FormatShowcase />
+        <Comparison />
+        <Testimonials />
         <Pricing />
         <FAQ />
         <FinalCTA />
