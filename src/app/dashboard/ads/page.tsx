@@ -559,8 +559,8 @@ export default function AdsGalleryPage() {
     }
   };
 
-  // Show loading state while ads are being downloaded
-  if (!isHydrated || !adsLoaded) {
+  // Only show loading if no ads in memory yet and still loading
+  if (!isHydrated || (!adsLoaded && generatedAds.length === 0)) {
     return (
       <div className="max-w-7xl mx-auto px-5">
         <AdsLoadingState />
