@@ -38,7 +38,7 @@ export default function DashboardHeader() {
     { href: "/dashboard/ads", label: "Mes Ads", icon: Images },
   ];
 
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const [clickedIndex, setClickedIndex] = useState<number | null>(null);
   const realActiveIndex = tabs.findIndex((t) => pathname.startsWith(t.href));
   // Use clicked index immediately for pill position, fall back to real active
@@ -73,6 +73,14 @@ export default function DashboardHeader() {
 
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
+      {/* Progress bar during page transition */}
+      {isPending && (
+        <div className="absolute top-0 left-0 right-0 h-0.5 z-50 overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-blue-500 via-violet-500 to-purple-500 animate-[progress_1.5s_ease-in-out_infinite]"
+               style={{ width: "40%", animation: "progress 1.5s ease-in-out infinite" }} />
+          <style>{`@keyframes progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }`}</style>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-5">
         <div className="h-14 flex items-center justify-between">
           {/* Logo */}
