@@ -443,6 +443,7 @@ export default function AdsGalleryPage() {
   const removeGeneratedAd = useWizardStore((s) => s.removeGeneratedAd);
   const syncDeleteGeneratedAd = useWizardStore((s) => s.syncDeleteGeneratedAd);
   const isHydrated = useWizardStore((s) => s.isHydrated);
+  const adsLoaded = useWizardStore((s) => s.adsLoaded);
   const currentUser = useAuthStore((s) => s.currentUser);
   const isAdmin = currentUser?.email === "mathys.hosin@gmail.com";
 
@@ -558,8 +559,8 @@ export default function AdsGalleryPage() {
     }
   };
 
-  // Show loading state while hydrating from Supabase
-  if (!isHydrated) {
+  // Show loading state while ads are being downloaded
+  if (!isHydrated || !adsLoaded) {
     return (
       <div className="max-w-7xl mx-auto px-5">
         <AdsLoadingState />
