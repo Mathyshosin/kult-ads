@@ -1,55 +1,36 @@
 import Link from "next/link";
 import Image from "next/image";
-import { KultLogoFull } from "@/components/kult-logo";
-import {
-  Sparkles,
-  Zap,
-  Globe,
-  MousePointerClick,
-  Layers,
-  PenTool,
-  RectangleHorizontal,
-  Library,
-  Gift,
-  Check,
-  ArrowRight,
-  ChevronDown,
-  BarChart3,
-  Star,
-  RefreshCw,
-} from "lucide-react";
+import { KultLogoFull, KultLogoIcon } from "@/components/kult-logo";
+import { ArrowRight, Check, ChevronDown, Minus } from "lucide-react";
 
 /* ─────────────────────── NAVBAR ─────────────────────── */
 
 function Navbar() {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-black/5">
+      <div className="max-w-[1400px] mx-auto px-6 h-14 flex items-center justify-between">
         <Link href="/" aria-label="Accueil">
           <KultLogoFull />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <a href="#fonctionnalites" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-            Fonctionnalités
+          <a href="#comment-ca-marche" className="text-[13px] text-black/40 hover:text-black transition-colors font-medium tracking-wide uppercase">
+            Fonctionnement
           </a>
-          <a href="#comment-ca-marche" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-            Comment ça marche
-          </a>
-          <a href="#tarifs" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+          <a href="#tarifs" className="text-[13px] text-black/40 hover:text-black transition-colors font-medium tracking-wide uppercase">
             Tarifs
           </a>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Link href="/login" className="hidden sm:inline text-sm text-gray-500 hover:text-gray-900 transition-colors">
+        <div className="flex items-center gap-6">
+          <Link href="/login" className="hidden sm:inline text-[13px] text-black/50 hover:text-black transition-colors font-medium">
             Connexion
           </Link>
           <Link
             href="/signup"
-            className="text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-violet-500/25 transition-all duration-200"
+            className="text-[13px] font-semibold text-white bg-black px-5 py-2 hover:bg-black/80 transition-colors"
           >
-            Essayer gratuitement
+            Commencer
           </Link>
         </div>
       </div>
@@ -61,86 +42,54 @@ function Navbar() {
 
 function Hero() {
   return (
-    <section className="pt-28 pb-20 px-6 bg-white relative overflow-hidden">
-      {/* Subtle background dots */}
-      <div className="absolute inset-0 bg-dots opacity-40 pointer-events-none" />
-
-      <div className="max-w-5xl mx-auto text-center relative z-10">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 rounded-full px-5 py-2 mb-8 animate-fade-in">
-          <Gift className="w-4 h-4 text-violet-500" />
-          <span className="text-sm font-semibold text-violet-700">
-            Votre première publicité est offerte
-          </span>
-        </div>
-
-        {/* H1 */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-[1.1] tracking-tight animate-fade-in-up">
-          Créez des publicités qui{" "}
-          <span className="bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent">
-            convertissent
-          </span>{" "}
-          en 30 secondes
-        </h1>
-
-        {/* Subtitle */}
-        <p className="mt-6 text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-          Collez l&apos;URL de votre site, notre IA analyse votre marque et génère
-          des publicités professionnelles inspirées des meilleures ads du marché.
-        </p>
-
-        {/* CTAs */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-          <Link
-            href="/signup"
-            className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 text-white font-semibold px-8 py-4 rounded-2xl text-lg hover:shadow-xl hover:shadow-violet-500/25 transition-all duration-300 hover:scale-[1.02]"
-          >
-            Créer ma première pub gratuitement
-            <ArrowRight className="w-5 h-5" />
-          </Link>
-          <a
-            href="#comment-ca-marche"
-            className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-medium px-6 py-4 rounded-2xl border border-gray-200 hover:border-gray-300 transition-all duration-200"
-          >
-            <ChevronDown className="w-4 h-4" />
-            Voir comment ça marche
-          </a>
-        </div>
-
-        {/* Trust line */}
-        <p className="mt-5 text-sm text-gray-400 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-          Pas de carte bancaire requise &middot; Première pub offerte
-        </p>
-
-        {/* Before/After Mockup in Hero — real images */}
-        <div className="mt-16 max-w-lg mx-auto animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-          <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/10 border border-gray-100">
-            <div className="relative aspect-square hero-ba-container">
-              {/* Before (Template — Decorté) */}
-              <div className="absolute inset-0">
-                <Image src="/after.png" alt="Template d'inspiration" fill className="object-cover" sizes="500px" />
-                <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-sm rounded-md px-2.5 py-1 text-[10px] font-bold text-white z-10">
-                  Avant
-                </div>
-              </div>
-
-              {/* After (Generated — HelloBoku) */}
-              <div className="absolute inset-0 hero-after-slide">
-                <Image src="/before.png" alt="Publicité générée par kultads" fill className="object-cover" sizes="500px" />
-                <div className="absolute top-3 right-3 bg-violet-500/80 backdrop-blur-sm rounded-md px-2.5 py-1 text-[10px] font-bold text-white z-10">
-                  Après
-                </div>
-              </div>
-
-              {/* Slider line */}
-              <div className="absolute inset-0 flex items-center pointer-events-none hero-slider-line z-20">
-                <div className="w-0.5 h-full bg-white shadow-lg" />
-              </div>
-            </div>
+    <section className="pt-32 pb-8 px-6 bg-white">
+      <div className="max-w-[1400px] mx-auto">
+        {/* Headline — left-aligned, massive */}
+        <div className="max-w-4xl">
+          <h1 className="text-[clamp(2.5rem,7vw,6rem)] font-black text-black leading-[0.92] tracking-tight">
+            Vos concurrents
+            <br />
+            ont de meilleures
+            <br />
+            <span className="text-[#FF6B35]">pubs</span> que vous.
+          </h1>
+          <p className="mt-8 text-lg md:text-xl text-black/40 max-w-lg leading-relaxed font-light">
+            Collez votre URL. On analyse votre marque. 30 secondes plus tard, vous avez une pub qui claque. La premi&egrave;re est offerte.
+          </p>
+          <div className="mt-10 flex items-center gap-6">
+            <Link
+              href="/signup"
+              className="inline-flex items-center gap-3 bg-black text-white font-semibold px-8 py-4 text-base hover:bg-black/80 transition-colors"
+            >
+              Cr&eacute;er ma premi&egrave;re pub
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <span className="text-sm text-black/30 font-mono">Gratuit, sans CB</span>
           </div>
-          <div className="flex justify-between px-2 mt-2 text-[11px] font-medium text-gray-400">
-            <span>Template d&apos;inspiration</span>
-            <span>Votre publicité</span>
+        </div>
+
+        {/* Before / After — side by side, big */}
+        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {/* BEFORE — the template */}
+          <div className="relative">
+            <div className="absolute -top-3 left-4 bg-black text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1 z-10">
+              Avant
+            </div>
+            <div className="relative aspect-square border border-black/10 overflow-hidden">
+              <Image src="/after.png" alt="Template g&eacute;n&eacute;rique" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+            </div>
+            <p className="mt-2 text-[11px] text-black/30 font-mono tracking-wide">Template d&apos;inspiration</p>
+          </div>
+
+          {/* AFTER — the generated ad */}
+          <div className="relative">
+            <div className="absolute -top-3 left-4 bg-[#FF6B35] text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1 z-10">
+              Apr&egrave;s
+            </div>
+            <div className="relative aspect-square border border-black/10 overflow-hidden">
+              <Image src="/before.png" alt="Publicit&eacute; g&eacute;n&eacute;r&eacute;e par kultads" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+            </div>
+            <p className="mt-2 text-[11px] text-black/30 font-mono tracking-wide">Votre publicit&eacute; — 30 secondes</p>
           </div>
         </div>
       </div>
@@ -148,24 +97,20 @@ function Hero() {
   );
 }
 
-/* ─────────────────────── SOCIAL PROOF BAR ─────────────────────── */
+/* ─────────────────────── BOLD STAT ─────────────────────── */
 
-function SocialProofBar() {
-  const stats = [
-    { icon: Zap, label: "500+ ads générées", color: "text-amber-500" },
-    { icon: Star, label: "50+ marques", color: "text-violet-500" },
-    { icon: RefreshCw, label: "Bibliothèque mise à jour quotidiennement", color: "text-indigo-500" },
-  ];
-
+function BoldStat() {
   return (
-    <section className="py-8 px-6 bg-gray-50 border-y border-gray-100">
-      <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16">
-        {stats.map((stat) => (
-          <div key={stat.label} className="flex items-center gap-3">
-            <stat.icon className={`w-5 h-5 ${stat.color}`} />
-            <span className="text-sm font-semibold text-gray-700">{stat.label}</span>
-          </div>
-        ))}
+    <section className="py-24 px-6 bg-white border-t border-black/5">
+      <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-baseline gap-6 md:gap-16">
+        <span className="text-[clamp(4rem,12vw,10rem)] font-black text-black leading-none tracking-tighter font-mono">
+          500+
+        </span>
+        <div className="max-w-md">
+          <p className="text-black/40 text-lg leading-relaxed font-light">
+            publicit&eacute;s g&eacute;n&eacute;r&eacute;es. Biblioth&egrave;que d&apos;ads gagnantes mise &agrave; jour chaque jour. Pas du stock — du sur-mesure.
+          </p>
+        </div>
       </div>
     </section>
   );
@@ -176,57 +121,43 @@ function SocialProofBar() {
 function HowItWorks() {
   const steps = [
     {
-      number: "1",
-      icon: Globe,
-      title: "Analysez votre marque",
-      description:
-        "Collez l'URL de votre site. Notre IA récupère automatiquement votre logo, vos produits, vos couleurs et votre ton de marque.",
+      num: "01",
+      title: "Collez votre URL",
+      desc: "On r\u00e9cup\u00e8re votre logo, vos produits, vos couleurs, votre ton. Pas besoin de brief.",
     },
     {
-      number: "2",
-      icon: Library,
-      title: "Choisissez votre style",
-      description:
-        "Parcourez notre bibliothèque d'ads gagnantes pour trouver l'inspiration, ou uploadez votre propre référence.",
+      num: "02",
+      title: "Choisissez un style",
+      desc: "Parcourez la biblioth\u00e8que d\u2019ads gagnantes ou uploadez votre propre r\u00e9f\u00e9rence.",
     },
     {
-      number: "3",
-      icon: MousePointerClick,
-      title: "Générez en 1 clic",
-      description:
-        "L'IA crée une publicité professionnelle adaptée à votre marque en 30 secondes. Prête à publier.",
+      num: "03",
+      title: "G\u00e9n\u00e9rez en 1 clic",
+      desc: "30 secondes. Votre pub est pr\u00eate. Format carr\u00e9 ou story. Modifiable par prompt.",
     },
   ];
 
   return (
-    <section id="comment-ca-marche" className="py-24 px-6 bg-white">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Comment ça marche
-          </h2>
-          <p className="mt-4 text-gray-500 text-lg max-w-xl mx-auto">
-            3 étapes simples pour créer des publicités performantes.
-          </p>
-        </div>
+    <section id="comment-ca-marche" className="py-24 px-6 bg-[#FAFAFA]">
+      <div className="max-w-[1400px] mx-auto">
+        <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-black/30 mb-12">
+          Comment &ccedil;a marche
+        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-          {steps.map((step) => (
-            <div key={step.number} className="relative text-center group">
-              {/* Step number */}
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-500 text-white text-xl font-bold mb-6 shadow-lg shadow-violet-500/20 group-hover:shadow-xl group-hover:shadow-violet-500/30 transition-shadow duration-300">
-                {step.number}
+        <div className="space-y-0">
+          {steps.map((step, i) => (
+            <div key={step.num} className={`flex flex-col md:flex-row items-start gap-6 md:gap-16 py-12 ${i < steps.length - 1 ? "border-b border-black/5" : ""}`}>
+              <span className="text-6xl md:text-8xl font-black text-black/[0.04] leading-none font-mono shrink-0 select-none">
+                {step.num}
+              </span>
+              <div className="max-w-lg">
+                <h3 className="text-2xl md:text-3xl font-bold text-black mb-3">
+                  {step.title}
+                </h3>
+                <p className="text-black/40 text-base leading-relaxed font-light">
+                  {step.desc}
+                </p>
               </div>
-              {/* Icon */}
-              <div className="flex justify-center mb-4">
-                <step.icon className="w-8 h-8 text-violet-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                {step.title}
-              </h3>
-              <p className="text-gray-500 leading-relaxed">
-                {step.description}
-              </p>
             </div>
           ))}
         </div>
@@ -235,98 +166,135 @@ function HowItWorks() {
   );
 }
 
-/* ─────────────────────── FEATURES ─────────────────────── */
+/* ─────────────────────── WHY KULTADS ─────────────────────── */
 
-function Features() {
-  const features = [
-    {
-      icon: Layers,
-      title: "4 modes de création",
-      description:
-        "Auto, Bibliothèque, Copy-Ads ou Prompt personnalisé. Choisissez le mode qui correspond à votre workflow.",
-    },
-    {
-      icon: PenTool,
-      title: "Modification intelligente",
-      description:
-        "Modifiez vos publicités générées avec de simples instructions textuelles. L'IA comprend vos demandes.",
-    },
-    {
-      icon: RectangleHorizontal,
-      title: "Format Carré & Story",
-      description:
-        "Générez en carré et en story. Convertissez du carré au story en un seul clic.",
-    },
-    {
-      icon: Library,
-      title: "Bibliothèque d'ads gagnantes",
-      description:
-        "Une collection de publicités top-performers mise à jour chaque jour pour vous inspirer.",
-    },
-  ];
-
+function WhyKultads() {
   return (
-    <section id="fonctionnalites" className="py-24 px-6 bg-gray-50">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Tout ce dont vous avez besoin
-          </h2>
-          <p className="mt-4 text-gray-500 text-lg max-w-xl mx-auto">
-            Des outils puissants pour créer des ads qui performent.
-          </p>
-        </div>
+    <section className="py-24 px-6 bg-white">
+      <div className="max-w-[1400px] mx-auto">
+        <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-black/30 mb-6">
+          Pourquoi kultads
+        </p>
+        <h2 className="text-3xl md:text-5xl font-black text-black leading-tight max-w-2xl mb-20">
+          Pas juste un g&eacute;n&eacute;rateur d&apos;images.
+          <br />
+          <span className="text-black/20">Un syst&egrave;me qui comprend votre marque.</span>
+        </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="bg-white p-8 rounded-2xl border border-gray-100 hover:shadow-lg hover:shadow-violet-500/5 transition-all duration-300 group"
-            >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-50 to-violet-50 flex items-center justify-center mb-5 group-hover:from-indigo-100 group-hover:to-violet-100 transition-colors duration-300">
-                <feature.icon className="w-6 h-6 text-violet-500" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-gray-500 leading-relaxed text-sm">
-                {feature.description}
+        {/* Alternating left/right blocks */}
+        <div className="space-y-20">
+          {/* Block 1 */}
+          <div className="flex flex-col md:flex-row items-start gap-8 md:gap-20">
+            <div className="md:w-1/3 shrink-0">
+              <span className="text-[#FF6B35] text-sm font-bold font-mono">4 modes</span>
+              <h3 className="text-xl font-bold text-black mt-2 mb-3">Cr&eacute;ation flexible</h3>
+              <p className="text-black/40 leading-relaxed font-light text-[15px]">
+                Auto, Biblioth&egrave;que, Copy-Ads ou Prompt libre. Chaque mode r&eacute;pond &agrave; un workflow diff&eacute;rent. Vous choisissez le niveau de contr&ocirc;le.
               </p>
             </div>
-          ))}
+            <div className="md:w-1/3 shrink-0 md:mt-16">
+              <span className="text-[#FF6B35] text-sm font-bold font-mono">Carr&eacute; + Story</span>
+              <h3 className="text-xl font-bold text-black mt-2 mb-3">Tous les formats</h3>
+              <p className="text-black/40 leading-relaxed font-light text-[15px]">
+                G&eacute;n&eacute;rez en 1:1 pour le feed ou en 9:16 pour les stories. Convertissez de l&apos;un &agrave; l&apos;autre en un clic.
+              </p>
+            </div>
+            <div className="md:w-1/3 shrink-0">
+              <span className="text-[#FF6B35] text-sm font-bold font-mono">&ldquo;Change le fond en rouge&rdquo;</span>
+              <h3 className="text-xl font-bold text-black mt-2 mb-3">Modification par prompt</h3>
+              <p className="text-black/40 leading-relaxed font-light text-[15px]">
+                Pas de Photoshop. &Eacute;crivez ce que vous voulez changer en fran&ccedil;ais. L&apos;IA applique.
+              </p>
+            </div>
+          </div>
+
+          {/* Block 2 — library */}
+          <div className="border-t border-black/5 pt-20 flex flex-col md:flex-row items-start gap-8 md:gap-20">
+            <div className="md:w-2/5 shrink-0">
+              <span className="text-[#FF6B35] text-sm font-bold font-mono">Mise &agrave; jour quotidienne</span>
+              <h3 className="text-2xl md:text-3xl font-bold text-black mt-2 mb-4">
+                Biblioth&egrave;que d&apos;ads qui marchent vraiment
+              </h3>
+              <p className="text-black/40 leading-relaxed font-light text-[15px] max-w-sm">
+                On analyse les pubs les plus performantes du march&eacute;, chaque jour. Vous piochez dedans pour vous inspirer. Pas du th&eacute;orique, du test&eacute;.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/* BeforeAfter section removed — real images now in Hero */
+/* ─────────────────────── BEFORE/AFTER ANIMATED ─────────────────────── */
+
+function BeforeAfterAnimated() {
+  return (
+    <section className="py-24 px-6 bg-[#FAFAFA]">
+      <div className="max-w-[1400px] mx-auto">
+        <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-12">
+          <div>
+            <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-black/30 mb-4">
+              Le r&eacute;sultat
+            </p>
+            <h2 className="text-3xl md:text-4xl font-black text-black">
+              Template &rarr; Votre pub
+            </h2>
+          </div>
+          <p className="text-sm text-black/30 font-light max-w-xs">
+            L&apos;animation montre la transformation en temps r&eacute;el. M&ecirc;me layout, votre marque.
+          </p>
+        </div>
+
+        <div className="max-w-xl mx-auto">
+          <div className="relative aspect-square overflow-hidden border border-black/10">
+            {/* Before (Template) */}
+            <div className="absolute inset-0">
+              <Image src="/after.png" alt="Template d&apos;inspiration" fill className="object-cover" sizes="600px" />
+            </div>
+
+            {/* After (Generated) */}
+            <div className="absolute inset-0 hero-after-slide">
+              <Image src="/before.png" alt="Publicit&eacute; g&eacute;n&eacute;r&eacute;e" fill className="object-cover" sizes="600px" />
+            </div>
+
+            {/* Slider line */}
+            <div className="absolute inset-0 flex items-center pointer-events-none hero-slider-line z-20">
+              <div className="w-[2px] h-full bg-white/80" />
+            </div>
+
+            {/* Labels */}
+            <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 z-10">
+              Template
+            </div>
+            <div className="absolute bottom-4 right-4 bg-[#FF6B35]/90 backdrop-blur-sm text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 z-10">
+              G&eacute;n&eacute;r&eacute;
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 /* ─────────────────────── DAILY GIFT ─────────────────────── */
 
 function DailyGift() {
   return (
-    <section className="py-20 px-6 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
-      <div className="max-w-4xl mx-auto text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-400 text-white mb-6 shadow-lg shadow-amber-500/20">
-          <Gift className="w-8 h-8" />
+    <section className="py-20 px-6 bg-white border-t border-black/5">
+      <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-start gap-10 md:gap-20">
+        <div className="shrink-0">
+          <span className="text-6xl md:text-8xl font-black text-[#FF6B35] leading-none select-none">
+            1/jour
+          </span>
         </div>
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-          Un cadeau chaque jour
-        </h2>
-        <p className="mt-4 text-gray-600 text-lg max-w-xl mx-auto leading-relaxed">
-          Les abonnés Pro et Agency reçoivent automatiquement{" "}
-          <span className="font-semibold text-amber-700">1 publicité offerte chaque jour</span>,
-          générée par notre IA à partir de votre marque. Ouvrez l&apos;app, votre pub vous attend.
-        </p>
-        <div className="mt-8">
-          <Link
-            href="#tarifs"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-400 to-orange-400 text-white font-semibold px-7 py-3.5 rounded-xl hover:shadow-lg hover:shadow-amber-500/25 transition-all duration-200"
-          >
-            Découvrir les offres
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+        <div className="max-w-lg">
+          <h3 className="text-2xl font-bold text-black mb-3">
+            Un cadeau chaque matin
+          </h3>
+          <p className="text-black/40 leading-relaxed font-light">
+            Les abonn&eacute;s Pro et Agency re&ccedil;oivent automatiquement une pub g&eacute;n&eacute;r&eacute;e chaque jour, adapt&eacute;e &agrave; leur marque. Ouvrez l&apos;app, votre pub vous attend. Pas d&apos;action requise.
+          </p>
         </div>
       </div>
     </section>
@@ -336,109 +304,91 @@ function DailyGift() {
 /* ─────────────────────── PRICING ─────────────────────── */
 
 function Pricing() {
-  const plans = [
-    {
-      name: "Starter",
-      price: "0€",
-      period: "",
-      description: "Pour tester kultads",
-      features: [
-        "1 pub offerte",
-        "Accès bibliothèque limité",
-        "Format carré uniquement",
-      ],
-      cta: "Commencer gratuitement",
-      highlighted: false,
-    },
-    {
-      name: "Pro",
-      price: "29€",
-      period: "/mois",
-      description: "Pour les e-commerces ambitieux",
-      badge: "Le plus populaire",
-      features: [
-        "Créations illimitées",
-        "Tous les formats (carré + story)",
-        "Modification IA",
-        "Cadeau quotidien (1 pub/jour)",
-        "Bibliothèque complète",
-      ],
-      cta: "Essayer gratuitement",
-      highlighted: true,
-    },
-    {
-      name: "Agency",
-      price: "79€",
-      period: "/mois",
-      description: "Pour les agences et multi-marques",
-      features: [
-        "Tout le plan Pro",
-        "Multi-marques",
-        "Accès API",
-        "Support dédié",
-      ],
-      cta: "Essayer gratuitement",
-      highlighted: false,
-    },
-  ];
-
   return (
-    <section id="tarifs" className="py-24 px-6 bg-white">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Des tarifs simples et transparents
-          </h2>
-          <p className="mt-4 text-gray-500 text-lg">
-            Commencez gratuitement, évoluez quand vous voulez.
-          </p>
-        </div>
+    <section id="tarifs" className="py-24 px-6 bg-[#FAFAFA]">
+      <div className="max-w-[1400px] mx-auto">
+        <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-black/30 mb-4">
+          Tarifs
+        </p>
+        <h2 className="text-3xl md:text-4xl font-black text-black mb-4">
+          Simple. Pas de surprise.
+        </h2>
+        <p className="text-black/40 font-light mb-16 max-w-md">
+          Commencez gratuitement. Passez Pro quand vous &ecirc;tes convaincu.
+        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-start">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`rounded-2xl p-8 border transition-shadow duration-300 ${
-                plan.highlighted
-                  ? "border-violet-200 bg-gradient-to-b from-violet-50/80 to-white shadow-xl shadow-violet-500/10 ring-2 ring-violet-200 md:scale-105"
-                  : "border-gray-100 bg-white hover:shadow-lg"
-              }`}
-            >
-              {plan.highlighted && plan.badge && (
-                <span className="inline-block bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-full mb-4">
-                  {plan.badge}
-                </span>
-              )}
-              <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-              <p className="text-sm text-gray-400 mt-1">{plan.description}</p>
-              <div className="mt-6 mb-8">
-                <span className="text-4xl font-extrabold text-gray-900">
-                  {plan.price}
-                </span>
-                {plan.period && (
-                  <span className="text-gray-400 ml-1">{plan.period}</span>
-                )}
-              </div>
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2.5 text-sm">
-                    <Check className="w-4 h-4 text-violet-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/signup"
-                className={`block w-full text-center py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  plan.highlighted
-                    ? "bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 text-white hover:shadow-lg hover:shadow-violet-500/25"
-                    : "bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100"
-                }`}
-              >
-                {plan.cta}
+        {/* Pricing — horizontal table-like layout */}
+        <div className="border border-black/10 divide-y divide-black/5 bg-white">
+          {/* Starter */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-8 md:p-10 gap-6">
+            <div className="md:w-1/4">
+              <h3 className="text-lg font-bold text-black">Starter</h3>
+              <p className="text-sm text-black/30 mt-1">Pour tester</p>
+            </div>
+            <div className="md:w-1/4">
+              <span className="text-4xl font-black text-black font-mono">0&euro;</span>
+            </div>
+            <ul className="md:w-1/3 space-y-1.5 text-sm text-black/50">
+              <li className="flex items-center gap-2"><Minus className="w-3 h-3 text-black/20" /> 1 pub offerte</li>
+              <li className="flex items-center gap-2"><Minus className="w-3 h-3 text-black/20" /> Biblioth&egrave;que limit&eacute;e</li>
+              <li className="flex items-center gap-2"><Minus className="w-3 h-3 text-black/20" /> Format carr&eacute; uniquement</li>
+            </ul>
+            <div className="md:w-auto">
+              <Link href="/signup" className="inline-block text-sm font-semibold text-black border border-black/20 px-6 py-2.5 hover:bg-black hover:text-white transition-colors">
+                Commencer
               </Link>
             </div>
-          ))}
+          </div>
+
+          {/* Pro — highlighted */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-8 md:p-10 gap-6 bg-black text-white relative">
+            <div className="absolute top-0 right-0 bg-[#FF6B35] text-white text-[10px] font-bold tracking-widest uppercase px-4 py-1.5">
+              Populaire
+            </div>
+            <div className="md:w-1/4">
+              <h3 className="text-lg font-bold">Pro</h3>
+              <p className="text-sm text-white/40 mt-1">Pour les e-commerces ambitieux</p>
+            </div>
+            <div className="md:w-1/4">
+              <span className="text-4xl font-black font-mono">29&euro;</span>
+              <span className="text-white/40 text-sm">/mois</span>
+            </div>
+            <ul className="md:w-1/3 space-y-1.5 text-sm text-white/60">
+              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Cr&eacute;ations illimit&eacute;es</li>
+              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Carr&eacute; + Story</li>
+              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Modification par prompt</li>
+              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> 1 pub offerte / jour</li>
+              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Biblioth&egrave;que compl&egrave;te</li>
+            </ul>
+            <div className="md:w-auto">
+              <Link href="/signup" className="inline-block text-sm font-semibold text-black bg-white px-6 py-2.5 hover:bg-white/90 transition-colors">
+                Essayer gratuitement
+              </Link>
+            </div>
+          </div>
+
+          {/* Agency */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-8 md:p-10 gap-6">
+            <div className="md:w-1/4">
+              <h3 className="text-lg font-bold text-black">Agency</h3>
+              <p className="text-sm text-black/30 mt-1">Multi-marques &amp; agences</p>
+            </div>
+            <div className="md:w-1/4">
+              <span className="text-4xl font-black text-black font-mono">79&euro;</span>
+              <span className="text-black/30 text-sm">/mois</span>
+            </div>
+            <ul className="md:w-1/3 space-y-1.5 text-sm text-black/50">
+              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Tout le plan Pro</li>
+              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Multi-marques</li>
+              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Acc&egrave;s API</li>
+              <li className="flex items-center gap-2"><Check className="w-3 h-3 text-[#FF6B35]" /> Support d&eacute;di&eacute;</li>
+            </ul>
+            <div className="md:w-auto">
+              <Link href="/signup" className="inline-block text-sm font-semibold text-black border border-black/20 px-6 py-2.5 hover:bg-black hover:text-white transition-colors">
+                Essayer gratuitement
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -450,54 +400,52 @@ function Pricing() {
 function FAQ() {
   const questions = [
     {
-      q: "Comment fonctionne kultads ?",
-      a: "Collez l'URL de votre boutique en ligne, notre IA analyse votre marque (logo, couleurs, produits, ton) puis génère des publicités professionnelles inspirées des meilleures ads du marché. Le tout en 30 secondes.",
+      q: "C\u2019est quoi kultads, en une phrase ?",
+      a: "Vous collez l\u2019URL de votre site, notre IA analyse votre marque et g\u00e9n\u00e8re une publicit\u00e9 professionnelle en 30 secondes, inspir\u00e9e des meilleures ads du march\u00e9.",
     },
     {
       q: "Quels formats sont disponibles ?",
-      a: "Vous pouvez générer des publicités en format carré (1:1, idéal pour le feed Instagram et Facebook) et en format story (9:16, pour les stories et Reels). La conversion carré → story se fait en un clic.",
+      a: "Carr\u00e9 (1:1) pour le feed Instagram/Facebook et story (9:16) pour les Reels et stories. Conversion de l\u2019un \u00e0 l\u2019autre en un clic.",
     },
     {
-      q: "Combien de temps faut-il pour générer une pub ?",
-      a: "En moyenne, 30 secondes. Collez votre URL, choisissez votre style, et votre publicité est prête.",
+      q: "Je peux modifier une pub apr\u00e8s g\u00e9n\u00e9ration ?",
+      a: "Oui. \u00c9crivez ce que vous voulez changer en texte libre (\u00ab change le fond en rouge \u00bb, \u00ab ajoute un badge -30% \u00bb) et l\u2019IA applique.",
     },
     {
-      q: "Est-ce que c'est légal d'utiliser ces publicités ?",
-      a: "Oui. Les publicités générées sont originales et créées spécifiquement pour votre marque. Vous en êtes le propriétaire et pouvez les utiliser librement sur vos canaux marketing.",
+      q: "C\u2019est l\u00e9gal ?",
+      a: "Les publicit\u00e9s g\u00e9n\u00e9r\u00e9es sont originales et cr\u00e9\u00e9es pour votre marque. Vous en \u00eates propri\u00e9taire et pouvez les utiliser librement.",
     },
     {
-      q: "Puis-je modifier une pub après génération ?",
-      a: "Absolument. Notre fonction de modification intelligente vous permet de donner des instructions en texte libre (par exemple \"change le fond en rouge\" ou \"ajoute un badge -30%\") et l'IA applique les changements.",
+      q: "C\u2019est quoi le cadeau quotidien ?",
+      a: "Les abonn\u00e9s Pro et Agency re\u00e7oivent chaque jour une pub g\u00e9n\u00e9r\u00e9e automatiquement, adapt\u00e9e \u00e0 leur marque. Sans rien faire.",
     },
     {
-      q: "Qu'est-ce que le cadeau quotidien ?",
-      a: "Les abonnés Pro et Agency reçoivent chaque jour une publicité générée automatiquement par notre IA, adaptée à leur marque. C'est un bonus offert sans action de votre part.",
+      q: "Combien de temps pour g\u00e9n\u00e9rer une pub ?",
+      a: "30 secondes en moyenne. Collez votre URL, choisissez un style, c\u2019est pr\u00eat.",
     },
   ];
 
   return (
-    <section className="py-24 px-6 bg-gray-50">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Questions fréquentes
-          </h2>
-        </div>
+    <section className="py-24 px-6 bg-white">
+      <div className="max-w-[1400px] mx-auto">
+        <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-black/30 mb-4">
+          FAQ
+        </p>
+        <h2 className="text-3xl md:text-4xl font-black text-black mb-16">
+          Les questions qu&apos;on nous pose
+        </h2>
 
-        <div className="space-y-3">
+        {/* Two-column FAQ — not accordions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20 gap-y-12">
           {questions.map((item) => (
-            <details
-              key={item.q}
-              className="group bg-white rounded-2xl border border-gray-100 overflow-hidden"
-            >
-              <summary className="flex items-center justify-between px-6 py-5 cursor-pointer text-gray-900 font-medium text-sm md:text-base list-none [&::-webkit-details-marker]:hidden">
+            <div key={item.q} className="border-t border-black/5 pt-6">
+              <h3 className="text-base font-bold text-black mb-3">
                 {item.q}
-                <ChevronDown className="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform duration-200 flex-shrink-0 ml-4" />
-              </summary>
-              <div className="px-6 pb-5 text-gray-500 text-sm leading-relaxed">
+              </h3>
+              <p className="text-sm text-black/40 leading-relaxed font-light">
                 {item.a}
-              </div>
-            </details>
+              </p>
+            </div>
           ))}
         </div>
       </div>
@@ -509,28 +457,22 @@ function FAQ() {
 
 function FinalCTA() {
   return (
-    <section className="py-24 px-6">
-      <div className="max-w-4xl mx-auto text-center bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 rounded-3xl p-12 md:p-20 relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-
-        <div className="relative z-10">
-          <h2 className="text-3xl md:text-5xl font-extrabold text-white leading-tight">
-            Prêt à créer votre première publicité ?
-          </h2>
-          <p className="mt-5 text-lg text-white/70 max-w-xl mx-auto">
-            Votre première pub est offerte. Sans carte bancaire.
-          </p>
-          <div className="mt-10">
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-2 bg-white text-violet-600 font-bold px-8 py-4 rounded-2xl text-lg hover:shadow-xl hover:shadow-black/10 transition-all duration-200 hover:scale-[1.02]"
-            >
-              Créer ma première pub
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-          </div>
+    <section className="py-32 px-6 bg-black">
+      <div className="max-w-[1400px] mx-auto">
+        <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[0.95] tracking-tight max-w-3xl">
+          On va changer &ccedil;a.
+        </h2>
+        <p className="mt-8 text-lg text-white/30 font-light max-w-md">
+          Premi&egrave;re pub offerte. Sans carte bancaire. 30 secondes.
+        </p>
+        <div className="mt-12">
+          <Link
+            href="/signup"
+            className="inline-flex items-center gap-3 bg-[#FF6B35] text-white font-semibold px-8 py-4 text-base hover:bg-[#FF6B35]/90 transition-colors"
+          >
+            Cr&eacute;er ma premi&egrave;re pub
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
     </section>
@@ -541,22 +483,19 @@ function FinalCTA() {
 
 function Footer() {
   return (
-    <footer className="border-t border-gray-100 py-12 px-6 bg-white">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-        <KultLogoFull />
-        <div className="flex items-center gap-8 text-sm text-gray-400">
-          <Link href="/cgu" className="hover:text-gray-700 transition-colors">
+    <footer className="border-t border-white/10 py-8 px-6 bg-black">
+      <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <KultLogoIcon className="w-7 h-7 opacity-50" />
+        <div className="flex items-center gap-8 text-[12px] text-white/25">
+          <Link href="/cgu" className="hover:text-white/60 transition-colors">
             CGU
           </Link>
-          <a href="mailto:contact@kultads.com" className="hover:text-gray-700 transition-colors">
+          <a href="mailto:contact@kultads.com" className="hover:text-white/60 transition-colors">
             Contact
           </a>
-          <a href="#fonctionnalites" className="hover:text-gray-700 transition-colors">
-            Fonctionnalités
-          </a>
         </div>
-        <p className="text-sm text-gray-400">
-          &copy; 2026 Kultads
+        <p className="text-[12px] text-white/20 font-mono">
+          &copy; 2026 kultads
         </p>
       </div>
     </footer>
@@ -571,9 +510,10 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <SocialProofBar />
+        <BoldStat />
         <HowItWorks />
-        <Features />
+        <WhyKultads />
+        <BeforeAfterAnimated />
         <DailyGift />
         <Pricing />
         <FAQ />
