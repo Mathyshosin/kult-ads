@@ -341,6 +341,22 @@ html {
   left: 0%;
   animation: hero-line 8s ease-in-out infinite;
 }
+@keyframes hero-label-before-fade {
+  0%, 10% { opacity: 1; }
+  30%, 70% { opacity: 0; }
+  85%, 100% { opacity: 1; }
+}
+@keyframes hero-label-after-fade {
+  0%, 20% { opacity: 0; }
+  40%, 65% { opacity: 1; }
+  80%, 100% { opacity: 0; }
+}
+.hero-label-before {
+  animation: hero-label-before-fade 8s ease-in-out infinite;
+}
+.hero-label-after {
+  animation: hero-label-after-fade 8s ease-in-out infinite;
+}
 
 /* ── Marquee ticker ── */
 @keyframes marquee-scroll {

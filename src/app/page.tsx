@@ -119,17 +119,19 @@ function Hero() {
               {/* Before (Template — Decorté) */}
               <div className="absolute inset-0">
                 <Image src="/after.png" alt="Template d'inspiration" fill className="object-cover" sizes="500px" />
-                <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-sm rounded-md px-2.5 py-1 text-[10px] font-bold text-white z-10">
-                  Avant
-                </div>
               </div>
 
               {/* After (Generated — HelloBoku) */}
-              <div className="absolute inset-0 hero-after-slide">
+              <div className="absolute inset-0 hero-after-slide overflow-hidden">
                 <Image src="/before.png" alt="Publicité générée par kultads" fill className="object-cover" sizes="500px" />
-                <div className="absolute top-3 right-3 bg-violet-500/80 backdrop-blur-sm rounded-md px-2.5 py-1 text-[10px] font-bold text-white z-10">
-                  Après
-                </div>
+              </div>
+
+              {/* Labels — separate from layers for proper visibility */}
+              <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm rounded-md px-2.5 py-1 text-[10px] font-bold text-white z-30 hero-label-before">
+                Avant
+              </div>
+              <div className="absolute top-3 right-3 bg-violet-500/90 backdrop-blur-sm rounded-md px-2.5 py-1 text-[10px] font-bold text-white z-30 hero-label-after">
+                Après
               </div>
 
               {/* Slider line */}
