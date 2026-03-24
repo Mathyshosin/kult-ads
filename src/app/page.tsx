@@ -308,36 +308,71 @@ function HowItWorks() {
 function Features() {
   const features = [
     {
-      icon: Layers,
       title: "4 modes de création",
       description:
         "Auto, Bibliothèque, Copy-Ads ou Prompt personnalisé. Choisissez le mode qui correspond à votre workflow.",
+      svg: (
+        <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
+          <rect x="2" y="3" width="9" height="9" rx="2" fill="#818CF8" opacity="0.3" />
+          <rect x="5" y="6" width="9" height="9" rx="2" fill="#818CF8" opacity="0.5" />
+          <rect x="8" y="9" width="9" height="9" rx="2" fill="#818CF8" opacity="0.7" />
+          <rect x="11" y="12" width="9" height="9" rx="2" fill="#6366F1" />
+          <path d="M15 15l2 2m-1-3a2 2 0 11-4 0 2 2 0 014 0z" stroke="white" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      ),
     },
     {
-      icon: PenTool,
       title: "Modification intelligente",
       description:
         "Modifiez vos publicités générées avec de simples instructions textuelles. L'IA comprend vos demandes.",
+      svg: (
+        <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
+          <rect x="3" y="3" width="18" height="18" rx="3" fill="#FDA4AF" opacity="0.3" />
+          <path d="M7 13l3-8 3 8" stroke="#E11D48" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M8 11h4" stroke="#E11D48" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M16 8v8" stroke="#E11D48" strokeWidth="1.5" strokeLinecap="round" />
+          <circle cx="19" cy="5" r="3" fill="#F43F5E" />
+          <path d="M18 5h2M19 4v2" stroke="white" strokeWidth="1" strokeLinecap="round" />
+        </svg>
+      ),
     },
     {
-      icon: RectangleHorizontal,
       title: "Format Carré & Story",
       description:
         "Générez en carré et en story. Convertissez du carré au story en un seul clic.",
+      svg: (
+        <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
+          <rect x="2" y="5" width="11" height="11" rx="2.5" fill="#93C5FD" opacity="0.4" />
+          <rect x="2" y="5" width="11" height="11" rx="2.5" stroke="#3B82F6" strokeWidth="1.2" />
+          <rect x="15" y="2" width="7" height="18" rx="2" fill="#60A5FA" opacity="0.4" />
+          <rect x="15" y="2" width="7" height="18" rx="2" stroke="#3B82F6" strokeWidth="1.2" />
+          <path d="M12 11l4-2" stroke="#3B82F6" strokeWidth="1.2" strokeLinecap="round" strokeDasharray="2 2" />
+        </svg>
+      ),
     },
     {
-      icon: Library,
       title: "Bibliothèque d'ads gagnantes",
       description:
         "Une collection de publicités top-performers mise à jour chaque jour pour vous inspirer.",
+      svg: (
+        <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
+          <rect x="2" y="4" width="6" height="8" rx="1.5" fill="#FBBF24" opacity="0.5" />
+          <rect x="9" y="4" width="6" height="8" rx="1.5" fill="#F59E0B" opacity="0.7" />
+          <rect x="16" y="4" width="6" height="8" rx="1.5" fill="#D97706" />
+          <rect x="2" y="14" width="6" height="8" rx="1.5" fill="#F59E0B" opacity="0.6" />
+          <rect x="9" y="14" width="6" height="8" rx="1.5" fill="#D97706" opacity="0.8" />
+          <rect x="16" y="14" width="6" height="8" rx="1.5" fill="#FBBF24" opacity="0.4" />
+          <path d="M12 9l1.5-3 1.5 3-3 .5 2 2-.5 3-2.5-1.5L8.5 14.5 8 11.5l2-2z" fill="#F59E0B" stroke="#D97706" strokeWidth="0.5" />
+        </svg>
+      ),
     },
   ];
 
   const colors = [
-    { bg: "from-indigo-500 to-violet-500", light: "from-indigo-50 to-violet-50", text: "text-indigo-500" },
-    { bg: "from-rose-500 to-pink-500", light: "from-rose-50 to-pink-50", text: "text-rose-500" },
-    { bg: "from-blue-500 to-cyan-500", light: "from-blue-50 to-cyan-50", text: "text-blue-500" },
-    { bg: "from-amber-500 to-orange-500", light: "from-amber-50 to-orange-50", text: "text-amber-500" },
+    { bg: "from-indigo-500 to-violet-500", light: "from-indigo-50 to-violet-50" },
+    { bg: "from-rose-500 to-pink-500", light: "from-rose-50 to-pink-50" },
+    { bg: "from-blue-500 to-cyan-500", light: "from-blue-50 to-cyan-50" },
+    { bg: "from-amber-500 to-orange-500", light: "from-amber-50 to-orange-50" },
   ];
 
   return (
@@ -369,7 +404,7 @@ function Features() {
 
                 <div className="flex items-start gap-4">
                   <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${color.light} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
-                    <feature.icon className={`w-5 h-5 ${color.text}`} />
+                    {feature.svg}
                   </div>
                   <div>
                     <h3 className="text-base font-semibold text-gray-900 mb-1.5">
