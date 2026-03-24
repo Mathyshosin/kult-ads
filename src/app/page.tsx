@@ -287,7 +287,7 @@ function HowItWorks() {
     {
       number: "1",
       title: "Analysez votre marque",
-      description: "Collez l&apos;URL de votre site. Notre IA analyse tout automatiquement.",
+      description: "Collez l'URL de votre site. Notre IA analyse tout automatiquement.",
       demo: <StepUrlAnimation />,
     },
     {
