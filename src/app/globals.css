@@ -321,25 +321,25 @@ html {
 
 /* Hero version — full round trip: avant → après → avant */
 @keyframes hero-slide {
-  0%, 10% { clip-path: inset(0 95% 0 0); }
-  30%, 40% { clip-path: inset(0 50% 0 0); }
-  60%, 70% { clip-path: inset(0 5% 0 0); }
-  90%, 100% { clip-path: inset(0 95% 0 0); }
+  0%, 15% { clip-path: inset(0 100% 0 0); }
+  35%, 65% { clip-path: inset(0 0 0 0); }
+  85%, 100% { clip-path: inset(0 100% 0 0); }
 }
 @keyframes hero-line {
-  0%, 10% { left: 5%; }
-  30%, 40% { left: 50%; }
-  60%, 70% { left: 95%; }
-  90%, 100% { left: 5%; }
+  0%, 15% { left: 0%; opacity: 0; }
+  20% { opacity: 1; }
+  35%, 65% { left: 100%; opacity: 0; }
+  80% { opacity: 0; }
+  85%, 100% { left: 0%; opacity: 0; }
 }
 
 .hero-after-slide {
-  clip-path: inset(0 95% 0 0);
-  animation: hero-slide 10s ease-in-out infinite;
+  clip-path: inset(0 100% 0 0);
+  animation: hero-slide 8s ease-in-out infinite;
 }
 .hero-slider-line {
-  left: 5%;
-  animation: hero-line 10s ease-in-out infinite;
+  left: 0%;
+  animation: hero-line 8s ease-in-out infinite;
 }
 
 /* ── Marquee ticker ── */
