@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { KultLogoFull, KultLogoIcon } from "@/components/kult-logo";
 import LiveTemplateCarousel from "@/components/live-template-carousel";
+import LiveCounter from "@/components/live-counter";
 import {
   Sparkles,
   Zap,
@@ -89,6 +90,11 @@ function Hero() {
           Collez l&apos;URL de votre site, notre IA analyse votre marque et génère
           des publicités professionnelles inspirées des meilleures ads du marché.
         </p>
+
+        {/* Live counter */}
+        <div className="mt-6 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+          <LiveCounter />
+        </div>
 
         {/* CTAs */}
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
