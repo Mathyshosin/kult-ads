@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { KultLogoFull } from "@/components/kult-logo";
+import { KultLogoFull, KultLogoIcon } from "@/components/kult-logo";
 import LiveTemplateCarousel from "@/components/live-template-carousel";
 import {
   Sparkles,
@@ -424,7 +424,110 @@ function Features() {
   );
 }
 
-/* BeforeAfter section removed — real images now in Hero */
+/* ─────────────────────── COMPARISON ─────────────────────── */
+
+function Comparison() {
+  return (
+    <section className="py-24 px-6 bg-gray-900">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl md:text-4xl font-bold text-white">
+            Pourquoi <span className="bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">kultads</span> ?
+          </h2>
+          <p className="mt-4 text-gray-400 text-lg max-w-2xl mx-auto">
+            Utiliser ChatGPT pour vos ads, c{"'"}est comme demander un logo à votre comptable. Techniquement possible. Pratiquement un désastre.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+          {/* Gemini / ChatGPT */}
+          <div className="bg-gray-800/50 border border-gray-700/50 rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gray-700 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <span className="text-white font-semibold">ChatGPT / Gemini</span>
+            </div>
+            <div className="space-y-4">
+              {[
+                "Aucune connaissance marketing",
+                "Prompts complexes à écrire",
+                "Impossible d'intégrer vos produits",
+              ].map((item) => (
+                <div key={item} className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-red-400 text-xs font-bold">✕</span>
+                  </div>
+                  <span className="text-gray-400 text-sm">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* kultads — highlighted center */}
+          <div className="relative bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl p-6 shadow-2xl shadow-violet-500/20 md:-mt-4 md:mb-[-16px]">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-400 text-[10px] font-bold uppercase tracking-wider text-gray-900 px-4 py-1 rounded-full shadow-lg">
+              Outil spécialisé e-com
+            </div>
+            <div className="flex items-center gap-3 mb-6 mt-2">
+              <KultLogoIcon className="w-10 h-10" />
+              <span className="text-white font-bold text-lg">kultads</span>
+            </div>
+            <div className="space-y-4">
+              {[
+                "Entraîné sur 1 000+ ads gagnantes",
+                "Intégration produit en 1 clic",
+                "Clone les structures qui convertissent",
+                "Modification par simple texte",
+              ].map((item) => (
+                <div key={item} className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-white/90 text-sm font-medium">{item}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6">
+              <Link
+                href="/signup"
+                className="block w-full text-center bg-white text-violet-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition-colors text-sm"
+              >
+                Essayer gratuitement
+              </Link>
+            </div>
+          </div>
+
+          {/* Agence pub */}
+          <div className="bg-gray-800/50 border border-gray-700/50 rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gray-700 flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-gray-400" />
+              </div>
+              <span className="text-white font-semibold">Agence Pub</span>
+            </div>
+            <div className="space-y-4">
+              {[
+                "2 000€+/mois minimum",
+                "2 semaines de délai",
+                "Résultats pas garantis",
+              ].map((item, i) => (
+                <div key={item} className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: i === 0 ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)" }}>
+                    <span className={`text-xs font-bold ${i === 0 ? "text-green-400" : "text-red-400"}`}>{i === 0 ? "✓" : "✕"}</span>
+                  </div>
+                  <span className="text-gray-400 text-sm">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 /* ─────────────────────── DAILY GIFT ─────────────────────── */
 
@@ -698,6 +801,7 @@ export default function Home() {
         <SocialProofBar />
         <HowItWorks />
         <Features />
+        <Comparison />
         <DailyGift />
         <Pricing />
         <FAQ />
