@@ -118,12 +118,12 @@ function Hero() {
             <div className="relative aspect-square hero-ba-container">
               {/* Before (Template — Decorté) */}
               <div className="absolute inset-0">
-                <Image src="/after.png" alt="Template d'inspiration" fill className="object-cover" sizes="500px" />
+                <Image src="/before.png" alt="Template d'inspiration" fill className="object-cover" sizes="500px" />
               </div>
 
               {/* After (Generated — HelloBoku) */}
               <div className="absolute inset-0 hero-after-slide overflow-hidden">
-                <Image src="/before.png" alt="Publicité générée par kultads" fill className="object-cover" sizes="500px" />
+                <Image src="/after.png" alt="Publicité générée par kultads" fill className="object-cover" sizes="500px" />
               </div>
 
               {/* Labels — separate from layers for proper visibility */}
