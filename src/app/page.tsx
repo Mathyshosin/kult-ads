@@ -534,6 +534,93 @@ function Comparison() {
   );
 }
 
+/* ─────────────────────── WHY US ─────────────────────── */
+
+function WhyUs() {
+  return (
+    <section className="py-24 px-6 bg-gray-900 relative overflow-hidden">
+      <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40v40H0z' fill='none' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E\")" }} />
+
+      <div className="max-w-5xl mx-auto relative">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-full px-4 py-1.5 text-xs font-medium text-violet-400 mb-5">
+            <Star className="w-3.5 h-3.5" />
+            Notre ADN
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-5">
+            Pas juste un outil.<br />
+            <span className="bg-gradient-to-r from-violet-400 via-indigo-400 to-blue-400 bg-clip-text text-transparent">
+              Une expertise.
+            </span>
+          </h2>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
+            {"Derrière kultads, il y a une agence spécialisée dans les publicités statiques pour le e-commerce. On ne fait pas de l'IA pour le fun — on fait de l'IA qui vend."}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-7 hover:bg-white/[0.08] transition-all duration-500">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center mb-5">
+              <RefreshCw className="w-5 h-5 text-violet-400" />
+            </div>
+            <h3 className="text-white font-semibold text-lg mb-2">{"Entraînée chaque jour"}</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              {"Notre IA apprend en continu. Chaque jour, nous alimentons sa base avec de nouvelles ads qui performent réellement sur Meta, TikTok et Google. Pas des templates Canva."}
+            </p>
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-7 hover:bg-white/[0.08] transition-all duration-500">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center mb-5">
+              <BarChart3 className="w-5 h-5 text-amber-400" />
+            </div>
+            <h3 className="text-white font-semibold text-lg mb-2">{"Des ads qui convertissent, pas qui décorent"}</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              {"Chaque template de notre bibliothèque est une publicité qui a généré du chiffre d'affaires. On sélectionne uniquement les ads avec un ROAS prouvé."}
+            </p>
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-7 hover:bg-white/[0.08] transition-all duration-500">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 flex items-center justify-center mb-5">
+              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+                <path d="M9 12l2 2 4-4" stroke="#34D399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9" stroke="#34D399" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M15 3l3 3-3 3" stroke="#34D399" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <h3 className="text-white font-semibold text-lg mb-2">{"Le regard d'une agence, la vitesse de l'IA"}</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              {"Notre équipe valide et catégorise chaque ad de la bibliothèque. L'IA génère en 30 secondes ce qu'un designer ferait en 2 jours — avec le même niveau d'exigence."}
+            </p>
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-7 hover:bg-white/[0.08] transition-all duration-500">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center mb-5">
+              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="#60A5FA" strokeWidth="1.5"/>
+                <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="#60A5FA" strokeWidth="1.5"/>
+                <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="#60A5FA" strokeWidth="1.5"/>
+                <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="#60A5FA" strokeWidth="1.5" fill="#60A5FA" fillOpacity="0.2"/>
+                <path d="M16 18h2M17 17v2" stroke="#60A5FA" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <h3 className="text-white font-semibold text-lg mb-2">{"+1 000 ads et ça ne s'arrête pas"}</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              {"Notre bibliothèque grandit chaque jour. Plus elle grandit, plus l'IA est précise. Plus elle est précise, plus vos ads performent. Cercle vertueux."}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-12 text-center">
+          <p className="text-gray-500 text-sm italic max-w-lg mx-auto">
+            {"\u00AB On a créé l'outil qu'on aurait rêvé d'avoir quand on faisait 200 ads par mois pour nos clients. \u00BB"}
+          </p>
+          <p className="text-violet-400 text-xs font-medium mt-2">{"— L'équipe kultads"}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ─────────────────────── DAILY GIFT ─────────────────────── */
 
 function DailyGift() {
@@ -807,6 +894,7 @@ export default function Home() {
         <HowItWorks />
         <Features />
         <Comparison />
+        <WhyUs />
         <DailyGift />
         <Pricing />
         <FAQ />
