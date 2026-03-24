@@ -252,25 +252,14 @@ function StepTemplateAnimation() {
 function StepGenerateAnimation() {
   return (
     <div className="bg-gray-50 rounded-xl p-4 mb-6 overflow-hidden">
-      <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden">
-        {/* Before placeholder */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-8 h-8 rounded-lg bg-gray-400/50 mx-auto mb-1" />
-            <div className="w-12 h-1.5 rounded bg-gray-400/50 mx-auto mb-1" />
-            <div className="w-8 h-1 rounded bg-gray-400/30 mx-auto" />
-          </div>
+      <div className="relative w-full aspect-square rounded-lg overflow-hidden">
+        {/* Before — real template */}
+        <div className="absolute inset-0">
+          <Image src="/before.png" alt="Template original" fill className="object-cover" sizes="300px" />
         </div>
-        {/* After — generated ad preview */}
+        {/* After — real generated ad */}
         <div className="absolute inset-0 step-generate-reveal">
-          <div className="w-full h-full bg-gradient-to-br from-violet-500 via-indigo-500 to-blue-500 flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-8 h-8 rounded-lg bg-white/30 mx-auto mb-1" />
-              <div className="w-14 h-1.5 rounded bg-white/80 mx-auto mb-1" />
-              <div className="w-10 h-1 rounded bg-white/50 mx-auto mb-1.5" />
-              <div className="w-10 h-4 rounded-full bg-white/90 mx-auto" />
-            </div>
-          </div>
+          <Image src="/after.png" alt="Ad générée" fill className="object-cover" sizes="300px" />
         </div>
       </div>
       {/* Timer */}
