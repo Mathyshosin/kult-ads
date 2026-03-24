@@ -428,97 +428,102 @@ function Features() {
 
 function Comparison() {
   return (
-    <section className="py-24 px-6 bg-gray-900">
+    <section className="py-24 px-6 bg-white">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold text-white">
-            Pourquoi <span className="bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">kultads</span> ?
+          <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 rounded-full px-4 py-1.5 text-xs font-medium text-violet-600 mb-4">
+            <Zap className="w-3.5 h-3.5" />
+            Comparatif
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            Pourquoi choisir <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">kultads</span> ?
           </h2>
-          <p className="mt-4 text-gray-400 text-lg max-w-2xl mx-auto">
-            Utiliser ChatGPT pour vos ads, c{"'"}est comme demander un logo à votre comptable. Techniquement possible. Pratiquement un désastre.
+          <p className="mt-4 text-gray-500 text-lg max-w-2xl mx-auto">
+            Les outils génériques ne comprennent pas le e-commerce. Les concurrents ne vont pas assez loin.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
-          {/* Gemini / ChatGPT */}
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-2xl p-6">
+          {/* ChatGPT / Midjourney */}
+          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gray-700 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gray-200 flex items-center justify-center">
                 <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none">
                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <span className="text-white font-semibold">ChatGPT / Gemini</span>
+              <span className="text-gray-900 font-semibold text-sm">ChatGPT / Midjourney</span>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {[
                 "Aucune connaissance marketing",
-                "Prompts complexes à écrire",
-                "Impossible d'intégrer vos produits",
+                "Prompts complexes à rédiger",
+                "N'intègre pas vos produits",
               ].map((item) => (
-                <div key={item} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-red-400 text-xs font-bold">✕</span>
+                <div key={item} className="flex items-start gap-2.5">
+                  <div className="w-4.5 h-4.5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-red-500 text-[10px] font-bold">✕</span>
                   </div>
-                  <span className="text-gray-400 text-sm">{item}</span>
+                  <span className="text-gray-500 text-[13px]">{item}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* kultads — highlighted center */}
-          <div className="relative bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl p-6 shadow-2xl shadow-violet-500/20 md:-mt-4 md:mb-[-16px]">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-400 text-[10px] font-bold uppercase tracking-wider text-gray-900 px-4 py-1 rounded-full shadow-lg">
-              Outil spécialisé e-com
+          <div className="relative bg-gradient-to-br from-violet-600 via-indigo-600 to-violet-700 rounded-2xl p-6 shadow-2xl shadow-violet-500/25 md:-mt-4 md:mb-[-16px]">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-400 text-[10px] font-bold uppercase tracking-wider text-gray-900 px-4 py-1 rounded-full shadow-lg whitespace-nowrap">
+              Outil n°1 pour le e-commerce
             </div>
             <div className="flex items-center gap-3 mb-6 mt-2">
               <KultLogoIcon className="w-10 h-10" />
               <span className="text-white font-bold text-lg">kultads</span>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {[
-                "Entraîné sur 1 000+ ads gagnantes",
-                "Intégration produit en 1 clic",
-                "Clone les structures qui convertissent",
-                "Modification par simple texte",
+                "Bibliothèque de 1 000+ ads gagnantes",
+                "Intégration produit automatique",
+                "Clone les ads qui convertissent",
+                "Retouche par simple instruction",
+                "Format carré + story en 1 clic",
               ].map((item) => (
-                <div key={item} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div key={item} className="flex items-start gap-2.5">
+                  <div className="w-4.5 h-4.5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Check className="w-3 h-3 text-white" />
                   </div>
-                  <span className="text-white/90 text-sm font-medium">{item}</span>
+                  <span className="text-white/90 text-[13px] font-medium">{item}</span>
                 </div>
               ))}
             </div>
             <div className="mt-6">
               <Link
                 href="/signup"
-                className="block w-full text-center bg-white text-violet-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition-colors text-sm"
+                className="block w-full text-center bg-white text-violet-700 font-semibold py-3 rounded-xl hover:bg-violet-50 transition-colors text-sm"
               >
-                Essayer gratuitement
+                Commencer gratuitement
               </Link>
             </div>
           </div>
 
-          {/* Agence pub */}
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-2xl p-6">
+          {/* Concurrents (AdCreative, Pencil, etc.) */}
+          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gray-700 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gray-200 flex items-center justify-center">
                 <BarChart3 className="w-5 h-5 text-gray-400" />
               </div>
-              <span className="text-white font-semibold">Agence Pub</span>
+              <span className="text-gray-900 font-semibold text-sm">AdCreative, Pencil...</span>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {[
-                "2 000€+/mois minimum",
-                "2 semaines de délai",
-                "Résultats pas garantis",
-              ].map((item, i) => (
-                <div key={item} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: i === 0 ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)" }}>
-                    <span className={`text-xs font-bold ${i === 0 ? "text-green-400" : "text-red-400"}`}>{i === 0 ? "✓" : "✕"}</span>
+                { text: "Templates génériques, pas de vraies ads", bad: true },
+                { text: "Pas de copy-ads depuis une référence", bad: true },
+                { text: "Abonnements à 49-149$/mois", bad: true },
+              ].map((item) => (
+                <div key={item.text} className="flex items-start gap-2.5">
+                  <div className={`w-4.5 h-4.5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${item.bad ? "bg-red-100" : "bg-green-100"}`}>
+                    <span className={`text-[10px] font-bold ${item.bad ? "text-red-500" : "text-green-500"}`}>{item.bad ? "✕" : "✓"}</span>
                   </div>
-                  <span className="text-gray-400 text-sm">{item}</span>
+                  <span className="text-gray-500 text-[13px]">{item.text}</span>
                 </div>
               ))}
             </div>
