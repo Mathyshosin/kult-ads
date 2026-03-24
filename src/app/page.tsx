@@ -333,10 +333,21 @@ function Features() {
     },
   ];
 
+  const colors = [
+    { bg: "from-indigo-500 to-violet-500", light: "from-indigo-50 to-violet-50", text: "text-indigo-500" },
+    { bg: "from-rose-500 to-pink-500", light: "from-rose-50 to-pink-50", text: "text-rose-500" },
+    { bg: "from-blue-500 to-cyan-500", light: "from-blue-50 to-cyan-50", text: "text-blue-500" },
+    { bg: "from-amber-500 to-orange-500", light: "from-amber-50 to-orange-50", text: "text-amber-500" },
+  ];
+
   return (
     <section id="fonctionnalites" className="py-24 px-6 bg-gray-50">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-1.5 text-xs font-medium text-gray-600 mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-violet-500" />
+            Fonctionnalités
+          </div>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
             Tout ce dont vous avez besoin
           </h2>
@@ -345,23 +356,33 @@ function Features() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="bg-white p-8 rounded-2xl border border-gray-100 hover:shadow-lg hover:shadow-violet-500/5 transition-all duration-300 group"
-            >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-50 to-violet-50 flex items-center justify-center mb-5 group-hover:from-indigo-100 group-hover:to-violet-100 transition-colors duration-300">
-                <feature.icon className="w-6 h-6 text-violet-500" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {features.map((feature, i) => {
+            const color = colors[i % colors.length];
+            return (
+              <div
+                key={feature.title}
+                className="relative bg-white p-7 rounded-2xl border border-gray-100 hover:border-gray-200 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500 group overflow-hidden"
+              >
+                {/* Gradient accent line at top */}
+                <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${color.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+
+                <div className="flex items-start gap-4">
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${color.light} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                    <feature.icon className={`w-5 h-5 ${color.text}`} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-1.5">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-500 leading-relaxed text-[13px]">
+                      {feature.description}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-gray-500 leading-relaxed text-sm">
-                {feature.description}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
