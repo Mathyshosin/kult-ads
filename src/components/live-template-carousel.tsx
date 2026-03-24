@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { Check } from "lucide-react";
 
 export default function LiveTemplateCarousel() {
@@ -9,7 +8,7 @@ export default function LiveTemplateCarousel() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch("/api/templates")
+    fetch("/api/templates/preview")
       .then((r) => r.json())
       .then((data) => {
         const tpls = (data.templates || []).slice(0, 8);
@@ -41,13 +40,11 @@ export default function LiveTemplateCarousel() {
                 i === 3 ? "ring-2 ring-violet-500 ring-offset-2 scale-105" : "opacity-60"
               } transition-all`}
             >
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={t.previewUrl}
                 alt="Template"
-                fill
-                className="object-cover"
-                sizes="64px"
-                unoptimized
+                className="absolute inset-0 w-full h-full object-cover"
               />
             </div>
           ))
