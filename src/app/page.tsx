@@ -311,60 +311,25 @@ function Features() {
       title: "4 modes de création",
       description:
         "Auto, Bibliothèque, Copy-Ads ou Prompt personnalisé. Choisissez le mode qui correspond à votre workflow.",
-      svg: (
-        <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
-          <rect x="2" y="3" width="9" height="9" rx="2" fill="#818CF8" opacity="0.3" />
-          <rect x="5" y="6" width="9" height="9" rx="2" fill="#818CF8" opacity="0.5" />
-          <rect x="8" y="9" width="9" height="9" rx="2" fill="#818CF8" opacity="0.7" />
-          <rect x="11" y="12" width="9" height="9" rx="2" fill="#6366F1" />
-          <path d="M15 15l2 2m-1-3a2 2 0 11-4 0 2 2 0 014 0z" stroke="white" strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      ),
+      icon: Layers,
     },
     {
       title: "Modification intelligente",
       description:
-        "Modifiez vos publicités générées avec de simples instructions textuelles. L'IA comprend vos demandes.",
-      svg: (
-        <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
-          <rect x="3" y="3" width="18" height="18" rx="3" fill="#FDA4AF" opacity="0.3" />
-          <path d="M7 13l3-8 3 8" stroke="#E11D48" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M8 11h4" stroke="#E11D48" strokeWidth="1.2" strokeLinecap="round" />
-          <path d="M16 8v8" stroke="#E11D48" strokeWidth="1.5" strokeLinecap="round" />
-          <circle cx="19" cy="5" r="3" fill="#F43F5E" />
-          <path d="M18 5h2M19 4v2" stroke="white" strokeWidth="1" strokeLinecap="round" />
-        </svg>
-      ),
+        "Modifiez vos publicités générées avec de simples instructions textuelles.",
+      icon: PenTool,
     },
     {
       title: "Format Carré & Story",
       description:
         "Générez en carré et en story. Convertissez du carré au story en un seul clic.",
-      svg: (
-        <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
-          <rect x="2" y="5" width="11" height="11" rx="2.5" fill="#93C5FD" opacity="0.4" />
-          <rect x="2" y="5" width="11" height="11" rx="2.5" stroke="#3B82F6" strokeWidth="1.2" />
-          <rect x="15" y="2" width="7" height="18" rx="2" fill="#60A5FA" opacity="0.4" />
-          <rect x="15" y="2" width="7" height="18" rx="2" stroke="#3B82F6" strokeWidth="1.2" />
-          <path d="M12 11l4-2" stroke="#3B82F6" strokeWidth="1.2" strokeLinecap="round" strokeDasharray="2 2" />
-        </svg>
-      ),
+      icon: RectangleHorizontal,
     },
     {
-      title: "Bibliothèque d'ads gagnantes",
+      title: "Bibliothèque mise à jour quotidiennement",
       description:
-        "Une collection de publicités top-performers mise à jour chaque jour pour vous inspirer.",
-      svg: (
-        <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
-          <rect x="2" y="4" width="6" height="8" rx="1.5" fill="#FBBF24" opacity="0.5" />
-          <rect x="9" y="4" width="6" height="8" rx="1.5" fill="#F59E0B" opacity="0.7" />
-          <rect x="16" y="4" width="6" height="8" rx="1.5" fill="#D97706" />
-          <rect x="2" y="14" width="6" height="8" rx="1.5" fill="#F59E0B" opacity="0.6" />
-          <rect x="9" y="14" width="6" height="8" rx="1.5" fill="#D97706" opacity="0.8" />
-          <rect x="16" y="14" width="6" height="8" rx="1.5" fill="#FBBF24" opacity="0.4" />
-          <path d="M12 9l1.5-3 1.5 3-3 .5 2 2-.5 3-2.5-1.5L8.5 14.5 8 11.5l2-2z" fill="#F59E0B" stroke="#D97706" strokeWidth="0.5" />
-        </svg>
-      ),
+        "Une collection de publicités performantes alimentée chaque jour pour vous inspirer.",
+      icon: Library,
     },
   ];
 
@@ -404,7 +369,7 @@ function Features() {
 
                 <div className="flex items-start gap-4">
                   <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${color.light} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
-                    {feature.svg}
+                    <feature.icon className="w-5 h-5 text-gray-700" />
                   </div>
                   <div>
                     <h3 className="text-base font-semibold text-gray-900 mb-1.5">
@@ -538,74 +503,62 @@ function Comparison() {
 
 function WhyUs() {
   return (
-    <section className="py-24 px-6 bg-gray-900 relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40v40H0z' fill='none' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E\")" }} />
-
+    <section className="py-24 px-6 bg-gradient-to-br from-indigo-50 via-violet-50 to-purple-50 relative overflow-hidden">
       <div className="max-w-5xl mx-auto relative">
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-full px-4 py-1.5 text-xs font-medium text-violet-400 mb-5">
+          <div className="inline-flex items-center gap-2 bg-white border border-violet-200 rounded-full px-4 py-1.5 text-xs font-medium text-violet-600 mb-5 shadow-sm">
             <Star className="w-3.5 h-3.5" />
             Notre ADN
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-5">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-5">
             Pas juste un outil.<br />
-            <span className="bg-gradient-to-r from-violet-400 via-indigo-400 to-blue-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">
               Une expertise.
             </span>
           </h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
-            {"Derrière kultads, il y a une agence spécialisée dans les publicités statiques pour le e-commerce. On ne fait pas de l'IA pour le fun — on fait de l'IA qui vend."}
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
+            {"Derrière kultads, une agence spécialisée dans les publicités statiques pour le e-commerce. Notre IA ne génère pas au hasard, elle reproduit ce qui vend."}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-7 hover:bg-white/[0.08] transition-all duration-500">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center mb-5">
-              <RefreshCw className="w-5 h-5 text-violet-400" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="bg-white/80 backdrop-blur-sm border border-white rounded-2xl p-7 hover:shadow-lg hover:shadow-violet-100 transition-all duration-500">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center mb-4">
+              <RefreshCw className="w-5 h-5 text-violet-600" />
             </div>
-            <h3 className="text-white font-semibold text-lg mb-2">{"Entraînée chaque jour"}</h3>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              {"Notre IA apprend en continu. Chaque jour, nous alimentons sa base avec de nouvelles ads qui performent réellement sur Meta, TikTok et Google. Pas des templates Canva."}
+            <h3 className="text-gray-900 font-semibold text-base mb-2">{"Entraînée chaque jour"}</h3>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              {"Chaque jour, nous alimentons la base avec de nouvelles ads qui performent sur Meta, TikTok et Google. Pas des templates Canva."}
             </p>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-7 hover:bg-white/[0.08] transition-all duration-500">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center mb-5">
-              <BarChart3 className="w-5 h-5 text-amber-400" />
+          <div className="bg-white/80 backdrop-blur-sm border border-white rounded-2xl p-7 hover:shadow-lg hover:shadow-violet-100 transition-all duration-500">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mb-4">
+              <BarChart3 className="w-5 h-5 text-amber-600" />
             </div>
-            <h3 className="text-white font-semibold text-lg mb-2">{"Des ads qui convertissent, pas qui décorent"}</h3>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              {"Chaque template de notre bibliothèque est une publicité qui a généré du chiffre d'affaires. On sélectionne uniquement les ads avec un ROAS prouvé."}
+            <h3 className="text-gray-900 font-semibold text-base mb-2">{"Uniquement des ads qui convertissent"}</h3>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              {"Chaque template est une publicité qui a généré du chiffre. On sélectionne uniquement les ads avec un ROAS prouvé."}
             </p>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-7 hover:bg-white/[0.08] transition-all duration-500">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 flex items-center justify-center mb-5">
-              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-                <path d="M9 12l2 2 4-4" stroke="#34D399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9" stroke="#34D399" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M15 3l3 3-3 3" stroke="#34D399" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+          <div className="bg-white/80 backdrop-blur-sm border border-white rounded-2xl p-7 hover:shadow-lg hover:shadow-violet-100 transition-all duration-500">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-100 to-green-100 flex items-center justify-center mb-4">
+              <Zap className="w-5 h-5 text-emerald-600" />
             </div>
-            <h3 className="text-white font-semibold text-lg mb-2">{"Le regard d'une agence, la vitesse de l'IA"}</h3>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              {"Notre équipe valide et catégorise chaque ad de la bibliothèque. L'IA génère en 30 secondes ce qu'un designer ferait en 2 jours — avec le même niveau d'exigence."}
+            <h3 className="text-gray-900 font-semibold text-base mb-2">{"30 secondes au lieu de 2 jours"}</h3>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              {"Notre équipe valide chaque ad de la bibliothèque. Vous obtenez la qualité d'une agence à la vitesse de l'IA."}
             </p>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-7 hover:bg-white/[0.08] transition-all duration-500">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center mb-5">
-              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-                <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="#60A5FA" strokeWidth="1.5"/>
-                <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="#60A5FA" strokeWidth="1.5"/>
-                <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="#60A5FA" strokeWidth="1.5"/>
-                <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="#60A5FA" strokeWidth="1.5" fill="#60A5FA" fillOpacity="0.2"/>
-                <path d="M16 18h2M17 17v2" stroke="#60A5FA" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+          <div className="bg-white/80 backdrop-blur-sm border border-white rounded-2xl p-7 hover:shadow-lg hover:shadow-violet-100 transition-all duration-500">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center mb-4">
+              <Layers className="w-5 h-5 text-blue-600" />
             </div>
-            <h3 className="text-white font-semibold text-lg mb-2">{"+1 000 ads et ça ne s'arrête pas"}</h3>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              {"Notre bibliothèque grandit chaque jour. Plus elle grandit, plus l'IA est précise. Plus elle est précise, plus vos ads performent. Cercle vertueux."}
+            <h3 className="text-gray-900 font-semibold text-base mb-2">{"+1 000 ads, un cercle vertueux"}</h3>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              {"Plus la bibliothèque grandit, plus l'IA est précise. Plus elle est précise, plus vos ads performent."}
             </p>
           </div>
         </div>
@@ -614,7 +567,7 @@ function WhyUs() {
           <p className="text-gray-500 text-sm italic max-w-lg mx-auto">
             {"\u00AB On a créé l'outil qu'on aurait rêvé d'avoir quand on faisait 200 ads par mois pour nos clients. \u00BB"}
           </p>
-          <p className="text-violet-400 text-xs font-medium mt-2">{"— L'équipe kultads"}</p>
+          <p className="text-violet-600 text-xs font-semibold mt-2">{"L'équipe kultads"}</p>
         </div>
       </div>
     </section>
@@ -894,9 +847,9 @@ export default function Home() {
         <HowItWorks />
         <Features />
         <Comparison />
-        <WhyUs />
         <DailyGift />
         <Pricing />
+        <WhyUs />
         <FAQ />
         <FinalCTA />
       </main>
