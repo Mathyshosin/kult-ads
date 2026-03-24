@@ -61,7 +61,7 @@ function Navbar() {
 
 /* ─────────────────────── HERO ─────────────────────── */
 
-function Hero() {
+function Hero({ adsCount }: { adsCount: number }) {
   return (
     <section className="pt-28 pb-20 px-6 bg-white relative overflow-hidden">
       {/* Subtle background dots */}
@@ -93,7 +93,7 @@ function Hero() {
 
         {/* Live counter */}
         <div className="mt-6 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
-          <LiveCounter />
+          <LiveCounter initialCount={adsCount} />
         </div>
 
         {/* CTAs */}
@@ -843,12 +843,29 @@ function Footer() {
 
 /* ─────────────────────── PAGE ─────────────────────── */
 
-export default function Home() {
+async function getAdsCount(): Promise<number> {
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    const { count } = await supabase
+      .from("generated_ads")
+      .select("*", { count: "exact", head: true });
+    return count || 0;
+  } catch {
+    return 0;
+  }
+}
+
+export default async function Home() {
+  const adsCount = await getAdsCount();
   return (
     <>
       <Navbar />
       <main>
-        <Hero />
+        <Hero adsCount={adsCount} />
         <SocialProofBar />
         <HowItWorks />
         <Features />
