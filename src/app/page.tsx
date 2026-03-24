@@ -175,28 +175,132 @@ function SocialProofBar() {
 
 /* ─────────────────────── HOW IT WORKS ─────────────────────── */
 
+function StepUrlAnimation() {
+  return (
+    <div className="bg-gray-900 rounded-xl p-4 mb-6 overflow-hidden">
+      {/* Browser bar */}
+      <div className="flex items-center gap-1.5 mb-3">
+        <div className="w-2 h-2 rounded-full bg-red-400" />
+        <div className="w-2 h-2 rounded-full bg-yellow-400" />
+        <div className="w-2 h-2 rounded-full bg-green-400" />
+      </div>
+      {/* URL bar with typing */}
+      <div className="bg-gray-800 rounded-lg px-3 py-2 flex items-center gap-2 mb-3">
+        <Globe className="w-3 h-3 text-gray-500 flex-shrink-0" />
+        <div className="text-[11px] text-violet-400 font-mono step-url-typing">
+          www.votre-boutique.com
+        </div>
+      </div>
+      {/* Scan results appearing */}
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2 step-scan-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+          <span className="text-[10px] text-gray-400">Logo</span>
+          <div className="ml-auto w-5 h-5 rounded bg-violet-500/30 step-scan-pulse" />
+        </div>
+        <div className="flex items-center gap-2 step-scan-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+          <span className="text-[10px] text-gray-400">3 produits</span>
+          <div className="ml-auto flex gap-0.5">
+            <div className="w-4 h-4 rounded bg-blue-500/30" />
+            <div className="w-4 h-4 rounded bg-pink-500/30" />
+            <div className="w-4 h-4 rounded bg-amber-500/30" />
+          </div>
+        </div>
+        <div className="flex items-center gap-2 step-scan-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+          <span className="text-[10px] text-gray-400">Couleurs</span>
+          <div className="ml-auto flex gap-0.5">
+            <div className="w-3 h-3 rounded-full bg-indigo-500" />
+            <div className="w-3 h-3 rounded-full bg-white" />
+            <div className="w-3 h-3 rounded-full bg-gray-700" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StepTemplateAnimation() {
+  const colors = [
+    "from-blue-400 to-cyan-300",
+    "from-pink-400 to-rose-300",
+    "from-amber-400 to-yellow-300",
+    "from-green-400 to-emerald-300",
+    "from-violet-400 to-purple-300",
+    "from-red-400 to-orange-300",
+  ];
+  return (
+    <div className="bg-gray-50 rounded-xl p-4 mb-6 overflow-hidden">
+      {/* Scrolling template cards */}
+      <div className="flex gap-2 step-templates-scroll">
+        {[...colors, ...colors].map((c, i) => (
+          <div key={i} className={`flex-shrink-0 w-16 h-20 rounded-lg bg-gradient-to-br ${c} ${i === 3 ? "ring-2 ring-violet-500 ring-offset-2 scale-105" : "opacity-60"} transition-all`} />
+        ))}
+      </div>
+      {/* Selection indicator */}
+      <div className="flex items-center justify-center gap-1.5 mt-3">
+        <div className="w-4 h-4 rounded-full bg-violet-500 flex items-center justify-center step-check-pop">
+          <Check className="w-2.5 h-2.5 text-white" />
+        </div>
+        <span className="text-[10px] font-medium text-violet-600">Template choisi</span>
+      </div>
+    </div>
+  );
+}
+
+function StepGenerateAnimation() {
+  return (
+    <div className="bg-gray-50 rounded-xl p-4 mb-6 overflow-hidden">
+      <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden">
+        {/* Before placeholder */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 rounded-lg bg-gray-400/50 mx-auto mb-1" />
+            <div className="w-12 h-1.5 rounded bg-gray-400/50 mx-auto mb-1" />
+            <div className="w-8 h-1 rounded bg-gray-400/30 mx-auto" />
+          </div>
+        </div>
+        {/* After — generated ad preview */}
+        <div className="absolute inset-0 step-generate-reveal">
+          <div className="w-full h-full bg-gradient-to-br from-violet-500 via-indigo-500 to-blue-500 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-8 h-8 rounded-lg bg-white/30 mx-auto mb-1" />
+              <div className="w-14 h-1.5 rounded bg-white/80 mx-auto mb-1" />
+              <div className="w-10 h-1 rounded bg-white/50 mx-auto mb-1.5" />
+              <div className="w-10 h-4 rounded-full bg-white/90 mx-auto" />
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Timer */}
+      <div className="flex items-center justify-center gap-1.5 mt-3">
+        <Zap className="w-3 h-3 text-violet-500 step-zap-pulse" />
+        <span className="text-[10px] font-medium text-gray-500">~30 secondes</span>
+      </div>
+    </div>
+  );
+}
+
 function HowItWorks() {
   const steps = [
     {
       number: "1",
-      icon: Globe,
       title: "Analysez votre marque",
-      description:
-        "Collez l'URL de votre site. Notre IA récupère automatiquement votre logo, vos produits, vos couleurs et votre ton de marque.",
+      description: "Collez l&apos;URL de votre site. Notre IA analyse tout automatiquement.",
+      demo: <StepUrlAnimation />,
     },
     {
       number: "2",
-      icon: Library,
       title: "Choisissez votre style",
-      description:
-        "Parcourez notre bibliothèque d'ads gagnantes pour trouver l'inspiration, ou uploadez votre propre référence.",
+      description: "Parcourez notre bibliothèque ou uploadez votre propre référence.",
+      demo: <StepTemplateAnimation />,
     },
     {
       number: "3",
-      icon: MousePointerClick,
       title: "Générez en 1 clic",
-      description:
-        "L'IA crée une publicité professionnelle adaptée à votre marque en 30 secondes. Prête à publier.",
+      description: "Votre publicité pro est prête en 30 secondes.",
+      demo: <StepGenerateAnimation />,
     },
   ];
 
@@ -215,18 +319,14 @@ function HowItWorks() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
           {steps.map((step) => (
             <div key={step.number} className="relative text-center group">
-              {/* Step number */}
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-500 text-white text-xl font-bold mb-6 shadow-lg shadow-violet-500/20 group-hover:shadow-xl group-hover:shadow-violet-500/30 transition-shadow duration-300">
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-500 text-white text-sm font-bold mb-5 shadow-lg shadow-violet-500/20">
                 {step.number}
               </div>
-              {/* Icon */}
-              <div className="flex justify-center mb-4">
-                <step.icon className="w-8 h-8 text-violet-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+              {step.demo}
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 {step.title}
               </h3>
-              <p className="text-gray-500 leading-relaxed">
+              <p className="text-sm text-gray-500 leading-relaxed">
                 {step.description}
               </p>
             </div>

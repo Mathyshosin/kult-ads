@@ -358,6 +358,56 @@ html {
   animation: hero-label-after-fade 8s ease-in-out infinite;
 }
 
+/* ── Step animations ── */
+@keyframes url-typing {
+  0%, 10% { width: 0; }
+  50%, 100% { width: 100%; }
+}
+.step-url-typing {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 1px solid #a78bfa;
+  animation: url-typing 4s ease-out infinite, blink-cursor 0.6s step-end infinite;
+}
+@keyframes blink-cursor {
+  50% { border-color: transparent; }
+}
+@keyframes scan-appear {
+  0%, 40% { opacity: 0; transform: translateY(4px); }
+  60%, 100% { opacity: 1; transform: translateY(0); }
+}
+.step-scan-1 { animation: scan-appear 4s ease-out infinite; }
+.step-scan-2 { animation: scan-appear 4s 0.3s ease-out infinite; }
+.step-scan-3 { animation: scan-appear 4s 0.6s ease-out infinite; }
+.step-scan-pulse { animation: pulse-glow 2s ease-in-out infinite; }
+
+@keyframes templates-scroll {
+  0%, 15% { transform: translateX(0); }
+  40%, 60% { transform: translateX(-72px); }
+  85%, 100% { transform: translateX(0); }
+}
+.step-templates-scroll { animation: templates-scroll 5s ease-in-out infinite; }
+
+@keyframes check-pop {
+  0%, 45% { transform: scale(0); }
+  55% { transform: scale(1.3); }
+  65%, 100% { transform: scale(1); }
+}
+.step-check-pop { animation: check-pop 5s ease-out infinite; }
+
+@keyframes generate-reveal {
+  0%, 30% { clip-path: inset(0 0 100% 0); }
+  60%, 85% { clip-path: inset(0 0 0 0); }
+  95%, 100% { clip-path: inset(0 0 100% 0); }
+}
+.step-generate-reveal { animation: generate-reveal 5s ease-in-out infinite; }
+
+@keyframes zap-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+.step-zap-pulse { animation: zap-pulse 1s ease-in-out infinite; }
+
 /* ── Marquee ticker ── */
 @keyframes marquee-scroll {
   0% { transform: translateX(0); }
