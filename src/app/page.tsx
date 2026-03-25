@@ -47,17 +47,16 @@ function Hero({ adsCount }: { adsCount: number }) {
 
         {/* H1 */}
         <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-[1.1] tracking-tight animate-fade-in-up">
-          Créez des publicités qui{" "}
+          Doublez vos ventes avec des pubs{" "}
           <span className="bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent">
-            convertissent
-          </span>{" "}
-          en 30 secondes
+            prêtes en 30s
+          </span>
         </h1>
 
         {/* Subtitle */}
         <p className="mt-6 text-base sm:text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-          Collez l&apos;URL de votre site, notre IA analyse votre marque et génère
-          des publicités professionnelles inspirées des meilleures ads du marché.
+          Fini les heures sur Canva et les freelances à 500€/mois.
+          Collez votre URL, choisissez un style, lancez vos campagnes.
         </p>
 
         {/* Live counter */}
@@ -71,8 +70,7 @@ function Hero({ adsCount }: { adsCount: number }) {
             href="/signup"
             className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 text-white font-semibold px-8 py-4 rounded-2xl text-base sm:text-lg hover:shadow-xl hover:shadow-violet-500/25 transition-all duration-300 hover:scale-[1.02] w-full sm:w-auto"
           >
-            <span className="sm:hidden">Créer ma pub gratuitement</span>
-            <span className="hidden sm:inline">Créer ma première pub gratuitement</span>
+            <span>Essayer gratuitement</span>
             <ArrowRight className="w-5 h-5" />
           </Link>
           <a
@@ -86,7 +84,7 @@ function Hero({ adsCount }: { adsCount: number }) {
 
         {/* Trust line */}
         <p className="mt-5 text-sm text-gray-400 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-          Pas de carte bancaire requise &middot; Première pub offerte
+          Sans carte bancaire &middot; 1 pub offerte &middot; Résultat en 30 secondes
         </p>
 
         {/* Before/After Mockup in Hero — real images */}
@@ -228,20 +226,20 @@ function HowItWorks() {
   const steps = [
     {
       number: "1",
-      title: "Analysez votre marque",
-      description: "Collez l'URL de votre site. Notre IA analyse tout automatiquement.",
+      title: "Collez votre URL",
+      description: "Notre IA scanne votre site, vos produits, vos couleurs. Zéro configuration.",
       demo: <StepUrlAnimation />,
     },
     {
       number: "2",
-      title: "Choisissez votre style",
-      description: "Parcourez notre bibliothèque ou uploadez votre propre référence.",
+      title: "Choisissez une ad qui cartonne",
+      description: "Parcourez des centaines d'ads performantes ou uploadez la vôtre.",
       demo: <StepTemplateAnimation />,
     },
     {
       number: "3",
-      title: "Générez en 1 clic",
-      description: "Votre publicité pro est prête en 30 secondes.",
+      title: "Lancez vos campagnes",
+      description: "Votre pub est prête. Téléchargez-la et lancez-la sur Meta, Google, TikTok.",
       demo: <StepGenerateAnimation />,
     },
   ];
@@ -251,10 +249,10 @@ function HowItWorks() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Comment ça marche
+            3 étapes. 30 secondes. C&apos;est tout.
           </h2>
           <p className="mt-4 text-gray-500 text-lg max-w-xl mx-auto">
-            3 étapes simples pour créer des publicités performantes.
+            Pas besoin d&apos;être designer. Pas besoin de brief créatif.
           </p>
         </div>
 
@@ -286,25 +284,25 @@ function Features() {
     {
       title: "4 modes de création",
       description:
-        "Auto, Bibliothèque, Copy-Ads ou Prompt personnalisé. Choisissez le mode qui correspond à votre workflow.",
+        "Laissez l'IA choisir, copiez une ad qui cartonne, parcourez la bibliothèque ou décrivez exactement ce que vous voulez.",
       icon: Layers,
     },
     {
-      title: "Modification intelligente",
+      title: "Retouchez en une phrase",
       description:
-        "Modifiez vos publicités générées avec de simples instructions textuelles.",
+        "\"Retire le texte en bas\" — l'IA comprend et modifie. Pas besoin de Photoshop.",
       icon: PenTool,
     },
     {
-      title: "Format Carré & Story",
+      title: "Carré, Story, Feed — tout y est",
       description:
-        "Générez en carré et en story. Convertissez du carré au story en un seul clic.",
+        "Générez dans tous les formats. Convertissez du carré au story en un clic. Prêt pour Meta, TikTok, Google.",
       icon: RectangleHorizontal,
     },
     {
-      title: "Bibliothèque mise à jour quotidiennement",
+      title: "Des centaines d'ads qui marchent",
       description:
-        "Une collection de publicités performantes alimentée chaque jour pour vous inspirer.",
+        "Notre équipe alimente la bibliothèque chaque jour avec des ads qui génèrent vraiment du CA.",
       icon: Library,
     },
   ];
@@ -325,10 +323,10 @@ function Features() {
             Fonctionnalités
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Tout ce dont vous avez besoin
+            Tout est inclus. Zéro compétence requise.
           </h2>
           <p className="mt-4 text-gray-500 text-lg max-w-xl mx-auto">
-            Des outils puissants pour créer des ads qui performent.
+            Vous gérez votre boutique. On s&apos;occupe de vos pubs.
           </p>
         </div>
 
@@ -377,10 +375,10 @@ function Comparison() {
             Comparatif
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Pourquoi choisir <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">kultads</span> ?
+            Vous avez déjà essayé. Ça n&apos;a pas marché.
           </h2>
           <p className="mt-4 text-gray-500 text-lg max-w-2xl mx-auto">
-            Les outils génériques ne comprennent pas le e-commerce. Les concurrents ne vont pas assez loin.
+            ChatGPT ne sait pas vendre. Les agences coûtent une fortune. On a créé la 3ème option.
           </p>
         </div>
 
@@ -493,7 +491,7 @@ function WhyUs() {
             </span>
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
-            {"Derrière kultads, une agence spécialisée dans les publicités statiques pour le e-commerce. Notre IA ne génère pas au hasard, elle reproduit ce qui vend."}
+            {"Derrière kultads, une agence qui a créé des milliers de publicités e-commerce. Notre IA ne génère pas au hasard — elle reproduit ce qui fait vraiment vendre."}
           </p>
         </div>
 
@@ -589,7 +587,7 @@ function Pricing() {
       name: "Starter",
       price: "0€",
       period: "",
-      description: "Pour tester kultads",
+      description: "Testez sans risque",
       features: [
         "1 pub offerte",
         "Accès bibliothèque limité",
@@ -602,13 +600,13 @@ function Pricing() {
       name: "Pro",
       price: "29€",
       period: "/mois",
-      description: "Pour les e-commerces ambitieux",
+      description: "Le choix des e-commerçants qui scalent",
       badge: "Le plus populaire",
       features: [
-        "Créations illimitées",
+        "500 créations / mois",
         "Tous les formats (carré + story)",
-        "Modification IA",
-        "Cadeau quotidien (1 pub/jour)",
+        "Retouche IA illimitée",
+        "1 pub offerte chaque jour",
         "Bibliothèque complète",
       ],
       cta: "Essayer gratuitement",
@@ -618,7 +616,7 @@ function Pricing() {
       name: "Agency",
       price: "79€",
       period: "/mois",
-      description: "Pour les agences et multi-marques",
+      description: "Gérez plusieurs marques sans effort",
       features: [
         "Tout le plan Pro",
         "Multi-marques",
@@ -635,10 +633,10 @@ function Pricing() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Des tarifs simples et transparents
+            Moins cher qu&apos;un freelance. Plus rapide qu&apos;une agence.
           </h2>
           <p className="mt-4 text-gray-500 text-lg">
-            Commencez gratuitement, évoluez quand vous voulez.
+            Testez gratuitement. Pas de carte bancaire. Pas d&apos;engagement.
           </p>
         </div>
 
@@ -860,17 +858,18 @@ function FinalCTA() {
 
         <div className="relative z-10">
           <h2 className="text-3xl md:text-5xl font-extrabold text-white leading-tight">
-            Prêt à créer votre première publicité ?
+            Vos concurrents lancent déjà leurs pubs.<br className="hidden md:block" />
+            Et vous ?
           </h2>
           <p className="mt-5 text-lg text-white/70 max-w-xl mx-auto">
-            Votre première pub est offerte. Sans carte bancaire.
+            30 secondes pour créer votre première pub. Gratuitement. Sans carte bancaire.
           </p>
           <div className="mt-10">
             <Link
               href="/signup"
               className="inline-flex items-center gap-2 bg-white text-violet-600 font-bold px-8 py-4 rounded-2xl text-lg hover:shadow-xl hover:shadow-black/10 transition-all duration-200 hover:scale-[1.02]"
             >
-              Créer ma première pub
+              Essayer maintenant
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
