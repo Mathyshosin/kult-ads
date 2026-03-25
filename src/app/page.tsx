@@ -94,12 +94,12 @@ function Hero({ adsCount }: { adsCount: number }) {
             <div className="relative aspect-square hero-ba-container">
               {/* Before (Template — Decorté) */}
               <div className="absolute inset-0">
-                <Image src="/before.png" alt="Template d'inspiration" fill className="object-cover" sizes="500px" />
+                <Image src="/template-before.png" alt="Template d'inspiration" fill className="object-cover" sizes="500px" />
               </div>
 
               {/* After (Generated — HelloBoku) */}
               <div className="absolute inset-0 hero-after-slide overflow-hidden">
-                <Image src="/after.png" alt="Publicité générée par kultads" fill className="object-cover" sizes="500px" />
+                <Image src="/template-after.png" alt="Publicité générée par kultads" fill className="object-cover" sizes="500px" />
               </div>
 
               {/* Labels — separate from layers for proper visibility */}
@@ -207,11 +207,11 @@ function StepGenerateAnimation() {
       <div className="relative w-full aspect-square rounded-lg overflow-hidden">
         {/* Before — real template */}
         <div className="absolute inset-0">
-          <Image src="/before.png" alt="Template original" fill className="object-cover" sizes="300px" />
+          <Image src="/template-before.png" alt="Template original" fill className="object-cover" sizes="300px" />
         </div>
         {/* After — real generated ad */}
         <div className="absolute inset-0 step-generate-reveal">
-          <Image src="/after.png" alt="Ad générée" fill className="object-cover" sizes="300px" />
+          <Image src="/template-after.png" alt="Ad générée" fill className="object-cover" sizes="300px" />
         </div>
       </div>
       {/* Timer */}
