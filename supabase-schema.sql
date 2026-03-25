@@ -82,6 +82,21 @@ CREATE TABLE uploaded_images (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Table: user_subscriptions
+CREATE TABLE user_subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'starter', 'pro', 'agency')),
+  credits_remaining INT NOT NULL DEFAULT 0,
+  credits_monthly INT NOT NULL DEFAULT 0,
+  stripe_customer_id TEXT,
+  stripe_subscription_id TEXT,
+  current_period_end TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(user_id)
+);
+
 -- ═══════════════════════════════════════════
 -- RLS Policies
 -- ═══════════════════════════════════════════
@@ -90,6 +105,7 @@ ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE offers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE generated_ads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE uploaded_images ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_subscriptions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users own brand_analyses"
   ON brand_analyses FOR ALL
@@ -113,6 +129,11 @@ CREATE POLICY "Users own generated_ads"
 
 CREATE POLICY "Users own uploaded_images"
   ON uploaded_images FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users own subscriptions"
+  ON user_subscriptions FOR ALL
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 

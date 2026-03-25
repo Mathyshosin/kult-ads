@@ -13,8 +13,18 @@ export default function DashboardHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const [showProfile, setShowProfile] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
   const isAdmin = currentUser?.email === "mathys.hosin@gmail.com";
   const profileRef = useRef<HTMLDivElement>(null);
+
+  // Fetch credits
+  useEffect(() => {
+    if (!currentUser) return;
+    fetch("/api/user/subscription")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setCredits(data.creditsRemaining); })
+      .catch(() => {});
+  }, [currentUser]);
 
   const handleLogout = async () => {
     setShowProfile(false);
@@ -124,6 +134,15 @@ export default function DashboardHeader() {
               );
             })}
           </div>
+
+          {/* Credits badge */}
+          {credits !== null && !isAdmin && (
+            <div className="hidden sm:flex items-center gap-1.5 bg-violet-50 border border-violet-100 rounded-lg px-3 py-1.5">
+              <Zap className="w-3.5 h-3.5 text-violet-500" />
+              <span className="text-xs font-bold text-violet-700">{credits}</span>
+              <span className="text-[10px] text-violet-400">crédits</span>
+            </div>
+          )}
 
           {/* User profile dropdown */}
           <div className="relative" ref={profileRef}>

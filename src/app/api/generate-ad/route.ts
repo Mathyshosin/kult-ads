@@ -28,6 +28,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
+    // Credit check
+    const { getOrCreateSubscription, deductCredit } = await import("@/lib/supabase/subscriptions");
+    const subscription = await getOrCreateSubscription(user.id, user.email || undefined);
+    if (subscription.credits_remaining <= 0) {
+      return NextResponse.json(
+        { error: "Plus de crédits disponibles. Passez à un plan supérieur pour continuer.", code: "NO_CREDITS" },
+        { status: 402 }
+      );
+    }
+
     const {
       brandAnalysis,
       product,
@@ -371,6 +381,9 @@ export async function POST(request: Request) {
         console.error("[generate-ad] Pending template save failed:", err);
       }
     }
+
+    // Deduct credit after successful generation
+    await deductCredit(user.id);
 
     return NextResponse.json({
       id: `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,

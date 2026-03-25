@@ -205,7 +205,7 @@ export default function GeneratePage() {
         body: genBody,
       });
 
-      if (!res.ok) {
+      if (!res.ok && res.status !== 402) {
         await new Promise((r) => setTimeout(r, 2000));
         res = await fetch("/api/generate-ad", {
           method: "POST",
@@ -216,6 +216,15 @@ export default function GeneratePage() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
+        if (errData?.code === "NO_CREDITS") {
+          failGeneration(placeholderId, "Plus de crédits disponibles.");
+          addToast({
+            type: "error",
+            message: "Plus de crédits ! Passez au plan supérieur.",
+            action: { label: "Voir les offres", href: "/#tarifs" },
+          });
+          return;
+        }
         failGeneration(placeholderId, errData?.error || "La génération a échoué.");
         addToast({ type: "error", message: "Échec de la génération" });
         return;
