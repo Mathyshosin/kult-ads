@@ -249,10 +249,10 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite, isAd
   }, [ad.id, onToggleFavorite]);
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-0 sm:p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
       <div
-        className={`relative w-full animate-scale-in ${isStory ? "max-w-[320px]" : "max-w-md"}`}
+        className={`relative w-full animate-scale-in px-4 sm:px-0 ${isStory ? "max-w-[320px]" : "max-w-md"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
@@ -595,13 +595,13 @@ export default function AdsGalleryPage() {
         </div>
 
         {/* Filter pills */}
-        <div className="flex items-center gap-1 bg-gray-100/80 rounded-xl p-1">
+        <div className="flex items-center gap-1 bg-gray-100/80 rounded-xl p-1 overflow-x-auto flex-nowrap">
           <Filter className="w-3.5 h-3.5 text-gray-400 ml-2 mr-1" />
           {(["all", "square", "story", "favorites"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 ${
                 filter === f ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
               }`}
             >

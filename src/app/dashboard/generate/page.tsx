@@ -314,7 +314,7 @@ export default function GeneratePage() {
 
     return (
       <div className="-mt-8 flex items-center justify-center min-h-[calc(100vh-3.5rem)] py-12">
-        <div className="max-w-3xl w-full px-6 animate-fade-in-up">
+        <div className="max-w-3xl w-full px-4 sm:px-6 animate-fade-in-up">
           <div className="text-center mb-10">
             <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-blue-50 to-violet-50 flex items-center justify-center mb-4">
               <Zap className="w-7 h-7 text-blue-500" />

@@ -46,7 +46,7 @@ function Hero({ adsCount }: { adsCount: number }) {
         </div>
 
         {/* H1 */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-[1.1] tracking-tight animate-fade-in-up">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-[1.1] tracking-tight animate-fade-in-up">
           Créez des publicités qui{" "}
           <span className="bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent">
             convertissent
@@ -55,7 +55,7 @@ function Hero({ adsCount }: { adsCount: number }) {
         </h1>
 
         {/* Subtitle */}
-        <p className="mt-6 text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+        <p className="mt-6 text-base sm:text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
           Collez l&apos;URL de votre site, notre IA analyse votre marque et génère
           des publicités professionnelles inspirées des meilleures ads du marché.
         </p>
@@ -69,14 +69,15 @@ function Hero({ adsCount }: { adsCount: number }) {
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
           <Link
             href="/signup"
-            className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 text-white font-semibold px-8 py-4 rounded-2xl text-lg hover:shadow-xl hover:shadow-violet-500/25 transition-all duration-300 hover:scale-[1.02]"
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 text-white font-semibold px-8 py-4 rounded-2xl text-base sm:text-lg hover:shadow-xl hover:shadow-violet-500/25 transition-all duration-300 hover:scale-[1.02] w-full sm:w-auto"
           >
-            Créer ma première pub gratuitement
+            <span className="sm:hidden">Créer ma pub gratuitement</span>
+            <span className="hidden sm:inline">Créer ma première pub gratuitement</span>
             <ArrowRight className="w-5 h-5" />
           </Link>
           <a
             href="#comment-ca-marche"
-            className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-medium px-6 py-4 rounded-2xl border border-gray-200 hover:border-gray-300 transition-all duration-200"
+            className="flex items-center justify-center gap-2 text-gray-500 hover:text-gray-900 font-medium px-6 py-4 rounded-2xl border border-gray-200 hover:border-gray-300 transition-all duration-200 w-full sm:w-auto"
           >
             <ChevronDown className="w-4 h-4" />
             Voir comment ça marche
@@ -89,7 +90,7 @@ function Hero({ adsCount }: { adsCount: number }) {
         </p>
 
         {/* Before/After Mockup in Hero — real images */}
-        <div className="mt-16 max-w-lg mx-auto animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
+        <div className="mt-16 max-w-sm sm:max-w-lg mx-auto animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
           <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/10 border border-gray-100">
             <div className="relative aspect-square hero-ba-container">
               {/* Before (Template — Decorté) */}
