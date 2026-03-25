@@ -30,7 +30,7 @@ export default function LandingNavbar() {
       }`}>
         <div className={`flex items-center justify-between transition-all duration-500 ease-out ${
           scrolled
-            ? "bg-white/80 backdrop-blur-2xl shadow-lg shadow-black/[0.04] border border-white/60 rounded-2xl px-5 h-14"
+            ? "bg-white/80 backdrop-blur-2xl shadow-lg shadow-black/[0.04] rounded-2xl px-5 h-14"
             : "bg-transparent px-0 h-16"
         }`}>
           {/* Logo */}
