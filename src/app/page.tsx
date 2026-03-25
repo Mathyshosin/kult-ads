@@ -4,6 +4,7 @@ import { KultLogoFull, KultLogoIcon } from "@/components/kult-logo";
 import LiveTemplateCarousel from "@/components/live-template-carousel";
 import LiveCounter from "@/components/live-counter";
 import LandingNavbar from "@/components/landing-navbar";
+import AnimatedCounter30 from "@/components/animated-counter-30";
 import {
   Sparkles,
   Zap,
@@ -49,7 +50,7 @@ function Hero({ adsCount }: { adsCount: number }) {
         <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-[1.1] tracking-tight animate-fade-in-up">
           Doublez vos ventes avec des pubs{" "}
           <span className="bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent">
-            prêtes en 30s
+            prêtes en <AnimatedCounter30 />
           </span>
         </h1>
 
