@@ -3,6 +3,7 @@ import Image from "next/image";
 import { KultLogoFull, KultLogoIcon } from "@/components/kult-logo";
 import LiveTemplateCarousel from "@/components/live-template-carousel";
 import LiveCounter from "@/components/live-counter";
+import LandingNavbar from "@/components/landing-navbar";
 import {
   Sparkles,
   Zap,
@@ -24,39 +25,7 @@ import {
 /* ─────────────────────── NAVBAR ─────────────────────── */
 
 function Navbar() {
-  return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/" aria-label="Accueil">
-          <KultLogoFull />
-        </Link>
-
-        <div className="hidden md:flex items-center gap-8">
-          <a href="#fonctionnalites" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-            Fonctionnalités
-          </a>
-          <a href="#comment-ca-marche" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-            Comment ça marche
-          </a>
-          <a href="#tarifs" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-            Tarifs
-          </a>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <Link href="/login" className="hidden sm:inline text-sm text-gray-500 hover:text-gray-900 transition-colors">
-            Connexion
-          </Link>
-          <Link
-            href="/signup"
-            className="text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-violet-500/25 transition-all duration-200"
-          >
-            Essayer gratuitement
-          </Link>
-        </div>
-      </div>
-    </nav>
-  );
+  return <LandingNavbar />;
 }
 
 /* ─────────────────────── HERO ─────────────────────── */
