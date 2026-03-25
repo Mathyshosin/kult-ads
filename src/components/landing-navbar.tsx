@@ -21,90 +21,108 @@ export default function LandingNavbar() {
   ];
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled
-        ? "bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-100/80"
-        : "bg-transparent"
-    }`}>
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="h-16 flex items-center justify-between">
-          <Link href="/" aria-label="Accueil" className="relative z-10">
-            <KultLogoFull />
+    <nav className="fixed top-0 left-0 right-0 z-50">
+      {/* Floating bar container */}
+      <div className={`mx-auto transition-all duration-500 ease-out ${
+        scrolled
+          ? "max-w-3xl mt-3 px-2"
+          : "max-w-7xl mt-0 px-6"
+      }`}>
+        <div className={`flex items-center justify-between transition-all duration-500 ease-out ${
+          scrolled
+            ? "bg-white/80 backdrop-blur-2xl shadow-lg shadow-black/[0.04] border border-white/60 rounded-2xl px-5 h-14"
+            : "bg-transparent px-0 h-16"
+        }`}>
+          {/* Logo */}
+          <Link href="/" aria-label="Accueil" className="relative z-10 flex-shrink-0">
+            <KultLogoFull iconSize={scrolled ? "w-7 h-7" : "w-9 h-9"} textSize={scrolled ? "text-[15px]" : "text-[17px]"} />
           </Link>
 
-          {/* Center links */}
-          <div className="hidden md:flex items-center">
-            <div className={`flex items-center gap-1 rounded-full px-2 py-1 transition-all duration-300 ${
-              scrolled ? "bg-gray-50/80" : "bg-white/10 backdrop-blur-sm"
-            }`}>
+          {/* Center links — desktop */}
+          <div className="hidden md:flex items-center absolute left-1/2 -translate-x-1/2">
+            <div className="flex items-center gap-0.5">
               {links.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
-                  className={`text-[13px] font-medium px-4 py-1.5 rounded-full transition-all duration-200 ${
-                    scrolled
-                      ? "text-gray-600 hover:text-gray-900 hover:bg-white"
-                      : "text-gray-500 hover:text-gray-900 hover:bg-white/60"
-                  }`}
+                  className="group relative text-[13px] font-medium px-4 py-1.5 rounded-lg text-gray-500 hover:text-gray-900 transition-all duration-200"
                 >
-                  {link.label}
+                  <span className="relative z-10">{link.label}</span>
+                  <span className="absolute inset-0 rounded-lg bg-gray-100/0 group-hover:bg-gray-100/80 transition-all duration-200 scale-90 group-hover:scale-100" />
                 </a>
               ))}
             </div>
           </div>
 
           {/* Right side */}
-          <div className="flex items-center gap-3 relative z-10">
+          <div className="flex items-center gap-2 relative z-10 flex-shrink-0">
             <Link
               href="/login"
-              className="hidden sm:inline-flex text-[13px] font-medium text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg transition-colors"
+              className="hidden sm:inline-flex text-[13px] font-medium text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded-lg transition-colors"
             >
-              Se connecter
+              Connexion
             </Link>
             <Link
               href="/signup"
-              className="text-[13px] font-semibold text-white bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 px-5 py-2 rounded-full hover:shadow-lg hover:shadow-violet-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+              className="relative text-[13px] font-semibold text-white px-5 py-2 rounded-xl overflow-hidden group transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]"
             >
-              Commencer
+              <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500" />
+              <span className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+              <span className="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 via-violet-500/20 to-purple-500/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <span className="relative">Commencer</span>
             </Link>
 
+            {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="md:hidden relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100/80 transition-colors"
               aria-label="Menu"
             >
-              <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {mobileOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
+              <div className="w-4 h-3 flex flex-col justify-between">
+                <span className={`block h-[1.5px] bg-gray-700 rounded-full transition-all duration-300 origin-center ${
+                  mobileOpen ? "rotate-45 translate-y-[5.25px]" : ""
+                }`} />
+                <span className={`block h-[1.5px] bg-gray-700 rounded-full transition-all duration-200 ${
+                  mobileOpen ? "opacity-0 scale-x-0" : ""
+                }`} />
+                <span className={`block h-[1.5px] bg-gray-700 rounded-full transition-all duration-300 origin-center ${
+                  mobileOpen ? "-rotate-45 -translate-y-[5.25px]" : ""
+                }`} />
+              </div>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu */}
-      <div className={`md:hidden overflow-hidden transition-all duration-300 ${
-        mobileOpen ? "max-h-64 border-b border-gray-100" : "max-h-0"
+      {/* Mobile menu dropdown */}
+      <div className={`md:hidden transition-all duration-300 ease-out ${
+        mobileOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
       }`}>
-        <div className="bg-white/95 backdrop-blur-xl px-6 py-4 space-y-1">
+        <div className="mx-4 mt-2 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-xl shadow-black/[0.08] border border-white/60 p-3 space-y-0.5">
           {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
               onClick={() => setMobileOpen(false)}
-              className="block text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-3 py-2.5 rounded-lg transition-colors"
+              className="block text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50/80 px-4 py-3 rounded-xl transition-colors"
             >
               {link.label}
             </a>
           ))}
+          <div className="border-t border-gray-100 my-2" />
           <Link
             href="/login"
-            className="block text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-3 py-2.5 rounded-lg transition-colors sm:hidden"
+            onClick={() => setMobileOpen(false)}
+            className="block text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50/80 px-4 py-3 rounded-xl transition-colors"
           >
             Se connecter
+          </Link>
+          <Link
+            href="/signup"
+            onClick={() => setMobileOpen(false)}
+            className="block text-sm font-semibold text-center text-white bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 px-4 py-3 rounded-xl"
+          >
+            Commencer gratuitement
           </Link>
         </div>
       </div>
