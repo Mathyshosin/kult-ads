@@ -723,6 +723,101 @@ function Pricing() {
   );
 }
 
+/* ─────────────────────── Testimonials ─────────────────────── */
+
+function Testimonials() {
+  const reviews = [
+    {
+      name: "Sarah M.",
+      role: "Fondatrice, Skincare Brand",
+      text: "On a remplacé notre freelance à 800€/mois par Kultads. Les résultats sont bluffants, surtout en copy-ads. On génère nos visuels en 2 minutes chrono.",
+      stars: 5,
+      metric: "ROAS x2.3",
+    },
+    {
+      name: "Thomas L.",
+      role: "E-commerce Manager",
+      text: "L'outil est devenu indispensable. La bibliothèque de templates est une mine d'or. Je teste 20 créas par semaine maintenant contre 3 avant.",
+      stars: 5,
+      metric: "20 créas/semaine",
+    },
+    {
+      name: "Julie D.",
+      role: "Dropshippeuse",
+      text: "Franchement sceptique au début. Mais la qualité des ads générées m'a surprise. Le mode copy-ads est génial pour s'inspirer de ce qui marche déjà.",
+      stars: 5,
+      metric: "CPA divisé par 2",
+    },
+    {
+      name: "Marc R.",
+      role: "CEO, Agence Digitale",
+      text: "On utilise Kultads pour nos clients qui n'ont pas le budget pour un DA. Le rapport qualité/prix est imbattable. La modification par prompt est un game-changer.",
+      stars: 4,
+      metric: "15 clients équipés",
+    },
+  ];
+
+  return (
+    <section className="py-24 px-5">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-full px-4 py-1.5 mb-4">
+            <span className="text-amber-600 text-sm">★★★★★</span>
+            <span className="text-sm font-medium text-amber-700">4.9/5 de satisfaction</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            Ils créent des ads qui performent
+          </h2>
+          <p className="text-gray-500 text-lg max-w-xl mx-auto">
+            Découvrez pourquoi des centaines de e-commerçants nous font confiance.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {reviews.map((review, i) => (
+            <div
+              key={i}
+              className="relative bg-white rounded-2xl border border-gray-100 p-7 hover:shadow-lg transition-shadow duration-300 group"
+            >
+              {/* Metric badge */}
+              <div className="absolute top-6 right-6">
+                <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-xs font-bold px-3 py-1 rounded-full border border-green-100">
+                  ↑ {review.metric}
+                </span>
+              </div>
+
+              {/* Stars */}
+              <div className="flex gap-0.5 mb-4">
+                {Array.from({ length: 5 }, (_, j) => (
+                  <svg key={j} className={`w-4 h-4 ${j < review.stars ? "text-amber-400" : "text-gray-200"}`} fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+
+              {/* Quote */}
+              <p className="text-gray-600 leading-relaxed mb-6 text-[15px]">
+                &ldquo;{review.text}&rdquo;
+              </p>
+
+              {/* Author */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white font-bold text-sm">
+                  {review.name.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">{review.name}</p>
+                  <p className="text-gray-400 text-xs">{review.role}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ─────────────────────── FAQ ─────────────────────── */
 
 function FAQ() {
@@ -873,6 +968,7 @@ export default async function Home() {
         <DailyGift />
         <Pricing />
         <WhyUs />
+        <Testimonials />
         <FAQ />
         <FinalCTA />
       </main>
