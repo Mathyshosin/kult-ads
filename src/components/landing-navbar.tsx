@@ -39,13 +39,15 @@ export default function LandingNavbar() {
           </Link>
 
           {/* Center links — desktop */}
-          <div className="hidden md:flex items-center absolute left-1/2 -translate-x-1/2">
+          <div className="hidden md:flex items-center flex-1 justify-center min-w-0">
             <div className="flex items-center gap-0.5">
               {links.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
-                  className="group relative text-[13px] font-medium px-4 py-1.5 rounded-lg text-gray-500 hover:text-gray-900 transition-all duration-200"
+                  className={`group relative font-medium rounded-lg text-gray-500 hover:text-gray-900 transition-all duration-200 whitespace-nowrap ${
+                    scrolled ? "text-[12px] px-3 py-1.5" : "text-[13px] px-4 py-1.5"
+                  }`}
                 >
                   <span className="relative z-10">{link.label}</span>
                   <span className="absolute inset-0 rounded-lg bg-gray-100/0 group-hover:bg-gray-100/80 transition-all duration-200 scale-90 group-hover:scale-100" />
@@ -58,7 +60,9 @@ export default function LandingNavbar() {
           <div className="flex items-center gap-2 relative z-10 flex-shrink-0">
             <Link
               href="/login"
-              className="hidden sm:inline-flex text-[13px] font-medium text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded-lg transition-colors"
+              className={`hidden text-[13px] font-medium text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded-lg transition-all ${
+                scrolled ? "lg:inline-flex" : "sm:inline-flex"
+              }`}
             >
               Connexion
             </Link>
