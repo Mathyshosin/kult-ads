@@ -1,4 +1,4 @@
-// Kultads logo — stacked ad layers with lightning bolt
+// Kultads logo — infinity symbol (∞) = infinite ad generation
 export function KultLogoIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
@@ -8,15 +8,17 @@ export function KultLogoIcon({ className }: { className?: string }) {
           <stop offset="50%" stopColor="#8B5CF6" />
           <stop offset="100%" stopColor="#A855F7" />
         </linearGradient>
-        <linearGradient id="kg2" x1="12" y1="8" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0.7" />
-        </linearGradient>
       </defs>
       <rect width="36" height="36" rx="10" fill="url(#kg1)" />
-      <rect x="8" y="10" width="13" height="17" rx="3" fill="url(#kg2)" opacity="0.35" />
-      <rect x="14" y="7" width="13" height="17" rx="3" fill="url(#kg2)" opacity="0.65" />
-      <path d="M22 12l-3 5.5h4l-3 5.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Infinity symbol ∞ — thick, rounded, slightly tilted for dynamism */}
+      <path
+        d="M11.5 18c0-2.5 2-4.5 4.5-4.5 1.8 0 3.2 1 4 2.5l0.5 0.9 0.5-0.9c0.8-1.5 2.2-2.5 4-2.5 2.5 0 4.5 2 4.5 4.5s-2 4.5-4.5 4.5c-1.8 0-3.2-1-4-2.5l-0.5-0.9-0.5 0.9c-0.8 1.5-2.2 2.5-4 2.5-2.5 0-4.5-2-4.5-4.5z"
+        stroke="white"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
     </svg>
   );
 }
