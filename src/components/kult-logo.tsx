@@ -1,31 +1,42 @@
-// Kultads logo — elegant infinity ribbon
+// Kultads logo — modern infinity with 3D depth effect
 export function KultLogoIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
       <defs>
-        <linearGradient id="kg-bg" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#6366F1" />
-          <stop offset="100%" stopColor="#9333EA" />
+        <linearGradient id="kl-bg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#7C3AED" />
+          <stop offset="100%" stopColor="#4F46E5" />
         </linearGradient>
-        <linearGradient id="kg-inf" x1="8" y1="14" x2="28" y2="22" gradientUnits="userSpaceOnUse">
+        <linearGradient id="kl-left" x1="8" y1="14" x2="20" y2="26" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="100%" stopColor="#E0D4FF" />
+          <stop offset="100%" stopColor="#C4B5FD" />
+        </linearGradient>
+        <linearGradient id="kl-right" x1="20" y1="14" x2="32" y2="26" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#E9E3FF" />
+          <stop offset="100%" stopColor="#ffffff" />
         </linearGradient>
       </defs>
-      <rect width="36" height="36" rx="9" fill="url(#kg-bg)" />
-      {/* Elegant thick infinity — two perfect loops */}
-      <g transform="translate(18, 18)">
-        <path
-          d="M-5.5 0C-5.5-3 -3.5-5 -1-5C1.2-5 2.8-3.5 3.5-2L4.5 0L3.5 2C2.8 3.5 1.2 5 -1 5C-3.5 5 -5.5 3 -5.5 0Z"
-          fill="url(#kg-inf)"
-          opacity="0.95"
-        />
-        <path
-          d="M5.5 0C5.5 3 3.5 5 1 5C-1.2 5 -2.8 3.5 -3.5 2L-4.5 0L-3.5-2C-2.8-3.5 -1.2-5 1-5C3.5-5 5.5-3 5.5 0Z"
-          fill="white"
-          opacity="0.7"
-        />
-      </g>
+      {/* Smooth rounded square */}
+      <rect width="40" height="40" rx="11" fill="url(#kl-bg)" />
+
+      {/* Back loop (right side) — drawn first, goes behind */}
+      <path
+        d="M20 17.5C21.5 15 23.5 13.5 26 13.5C29 13.5 31.5 16 31.5 20C31.5 24 29 26.5 26 26.5C23.5 26.5 21.5 25 20 22.5"
+        stroke="url(#kl-right)"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+      />
+
+      {/* Front loop (left side) — drawn on top with crossing effect */}
+      <path
+        d="M20 22.5C18.5 25 16.5 26.5 14 26.5C11 26.5 8.5 24 8.5 20C8.5 16 11 13.5 14 13.5C16.5 13.5 18.5 15 20 17.5"
+        stroke="white"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+      />
+
+      {/* Center crossing — white line on top for depth */}
+      <line x1="18.5" y1="22" x2="21.5" y2="18" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
     </svg>
   );
 }
