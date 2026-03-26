@@ -586,47 +586,60 @@ function Pricing() {
   const plans = [
     {
       name: "Starter",
-      price: "0€",
+      price: "5€",
       period: "",
-      description: "Testez sans risque",
+      description: "Pour tester la puissance de l'outil",
       features: [
-        "1 pub offerte",
-        "Accès bibliothèque limité",
-        "Format carré uniquement",
+        "5 crédits de génération",
+        "Tous les formats (carré + story)",
+        "Accès à la bibliothèque complète",
+        "Retouche IA incluse",
+        "Paiement unique, pas d'abonnement",
       ],
-      cta: "Commencer gratuitement",
+      cta: "Commencer pour 5€",
       highlighted: false,
+      planId: "starter",
     },
     {
       name: "Pro",
       price: "29€",
       period: "/mois",
-      description: "Le choix des e-commerçants qui scalent",
+      description: "Pour les e-commerçants qui veulent scaler",
       badge: "Le plus populaire",
       features: [
-        "500 créations / mois",
+        "500 crédits / mois",
         "Tous les formats (carré + story)",
         "Retouche IA illimitée",
         "1 pub offerte chaque jour",
         "Bibliothèque complète",
+        "Copy-ads illimité",
       ],
-      cta: "Essayer gratuitement",
+      cta: "Choisir le Pro",
       highlighted: true,
+      planId: "pro",
     },
     {
       name: "Agency",
       price: "79€",
       period: "/mois",
-      description: "Gérez plusieurs marques sans effort",
+      description: "Pour les agences et les gros volumes",
       features: [
-        "Tout le plan Pro",
+        "2 000 crédits / mois",
+        "Tout le plan Pro inclus",
         "Multi-marques",
-        "Accès API",
-        "Support dédié",
+        "Support prioritaire",
+        "Accès API (bientôt)",
       ],
-      cta: "Essayer gratuitement",
+      cta: "Choisir Agency",
       highlighted: false,
+      planId: "agency",
     },
+  ];
+
+  const packs = [
+    { name: "Boost", credits: 50, price: "4,90€", packId: "boost" },
+    { name: "Growth", credits: 130, price: "9,90€", packId: "growth" },
+    { name: "Scale", credits: 300, price: "19,90€", packId: "scale" },
   ];
 
   return (
@@ -637,7 +650,7 @@ function Pricing() {
             Moins cher qu&apos;un freelance. Plus rapide qu&apos;une agence.
           </h2>
           <p className="mt-4 text-gray-500 text-lg">
-            Testez gratuitement. Pas de carte bancaire. Pas d&apos;engagement.
+            Commencez dès 5€. Sans engagement. Sans carte bancaire pour tester.
           </p>
         </div>
 
@@ -675,7 +688,7 @@ function Pricing() {
                 ))}
               </ul>
               <Link
-                href="/signup"
+                href={`/signup?plan=${plan.planId}`}
                 className={`block w-full text-center py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                   plan.highlighted
                     ? "bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 text-white hover:shadow-lg hover:shadow-violet-500/25"
@@ -686,6 +699,23 @@ function Pricing() {
               </Link>
             </div>
           ))}
+        </div>
+
+        {/* Credit packs */}
+        <div className="mt-16 max-w-3xl mx-auto">
+          <h3 className="text-center text-lg font-semibold text-gray-900 mb-2">Besoin de plus de crédits ?</h3>
+          <p className="text-center text-sm text-gray-400 mb-8">Achetez des packs de crédits supplémentaires à tout moment.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {packs.map((pack) => (
+              <div key={pack.name} className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 hover:shadow-md transition-shadow">
+                <div>
+                  <p className="font-bold text-gray-900">{pack.name}</p>
+                  <p className="text-xs text-gray-400">{pack.credits} crédits</p>
+                </div>
+                <span className="text-lg font-extrabold text-violet-600">{pack.price}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
