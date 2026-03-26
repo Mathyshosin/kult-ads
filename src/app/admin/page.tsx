@@ -601,6 +601,224 @@ function AnalyticsTab() {
 }
 
 // ══════════════════════════════════════════
+// Changelog Tab
+// ══════════════════════════════════════════
+
+const ICON_OPTIONS = [
+  { value: "Sparkles", label: "Sparkles" },
+  { value: "Rocket", label: "Rocket" },
+  { value: "ImageIcon", label: "Image" },
+  { value: "CreditCard", label: "Paiement" },
+  { value: "Wand2", label: "IA" },
+  { value: "Shield", label: "Sécurité" },
+  { value: "Palette", label: "Design" },
+  { value: "Zap", label: "Performance" },
+];
+
+const COLOR_OPTIONS = [
+  { value: "from-violet-500 to-purple-500", label: "Violet" },
+  { value: "from-blue-500 to-indigo-500", label: "Bleu" },
+  { value: "from-green-500 to-emerald-500", label: "Vert" },
+  { value: "from-orange-500 to-red-500", label: "Orange" },
+  { value: "from-pink-500 to-rose-500", label: "Rose" },
+  { value: "from-cyan-500 to-blue-500", label: "Cyan" },
+  { value: "from-amber-500 to-yellow-500", label: "Jaune" },
+];
+
+type ChangelogEntry = {
+  id: string;
+  created_at: string;
+  version: string;
+  icon: string;
+  color: string;
+  title: string;
+  description: string;
+  items: string[];
+};
+
+function ChangelogTab() {
+  const [entries, setEntries] = useState<ChangelogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Form state
+  const [title, setTitle] = useState("");
+  const [version, setVersion] = useState("");
+  const [description, setDescription] = useState("");
+  const [itemsText, setItemsText] = useState("");
+  const [icon, setIcon] = useState("Sparkles");
+  const [color, setColor] = useState("from-violet-500 to-purple-500");
+
+  useEffect(() => {
+    fetch("/api/changelog")
+      .then((r) => r.json())
+      .then((data) => { setEntries(data.entries || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const handleAdd = async () => {
+    if (!title.trim() || !version.trim()) return;
+    setSaving(true);
+
+    const items = itemsText.split("\n").map((s) => s.trim()).filter(Boolean);
+
+    try {
+      const res = await fetch("/api/changelog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, version, description, items, icon, color }),
+      });
+      const data = await res.json();
+      if (data.entry) {
+        setEntries((prev) => [data.entry, ...prev]);
+        setTitle("");
+        setVersion("");
+        setDescription("");
+        setItemsText("");
+      }
+    } catch { /* ignore */ }
+    setSaving(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Supprimer cette entrée ?")) return;
+    try {
+      await fetch("/api/changelog", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      setEntries((prev) => prev.filter((e) => e.id !== id));
+    } catch { /* ignore */ }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Add form */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+        <h2 className="text-lg font-bold text-gray-800 mb-4">Nouvelle entrée changelog</h2>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="text-xs font-semibold text-gray-500 mb-1 block">Titre</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ex: +30 nouvelles ads beauté"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-300"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-500 mb-1 block">Version</label>
+            <input
+              type="text"
+              value={version}
+              onChange={(e) => setVersion(e.target.value)}
+              placeholder="Ex: v2.5"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-300"
+            />
+          </div>
+        </div>
+        <div className="mb-4">
+          <label className="text-xs font-semibold text-gray-500 mb-1 block">Description</label>
+          <input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Ex: Nouvelles ads ajoutées dans la bibliothèque"
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-300"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="text-xs font-semibold text-gray-500 mb-1 block">Détails (un par ligne)</label>
+          <textarea
+            value={itemsText}
+            onChange={(e) => setItemsText(e.target.value)}
+            placeholder={"+15 ads cosmétique\n+10 ads food\nAmélioration de la qualité"}
+            rows={4}
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-300 resize-none"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="text-xs font-semibold text-gray-500 mb-1 block">Icône</label>
+            <select
+              value={icon}
+              onChange={(e) => setIcon(e.target.value)}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-300"
+            >
+              {ICON_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-500 mb-1 block">Couleur</label>
+            <select
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-300"
+            >
+              {COLOR_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <button
+          onClick={handleAdd}
+          disabled={saving || !title.trim() || !version.trim()}
+          className="bg-violet-600 text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors"
+        >
+          {saving ? "Publication..." : "Publier"}
+        </button>
+      </div>
+
+      {/* Existing entries */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+        <h2 className="text-lg font-bold text-gray-800 mb-4">
+          Entrées publiées ({entries.length})
+        </h2>
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+          </div>
+        ) : entries.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-8">Aucune entrée. Ajoutez la première !</p>
+        ) : (
+          <div className="space-y-3">
+            {entries.map((entry) => (
+              <div key={entry.id} className="flex items-start gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${entry.color} flex items-center justify-center flex-shrink-0`}>
+                  <span className="text-white text-xs font-bold">{entry.version}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-800">{entry.title}</p>
+                  <p className="text-xs text-gray-500">{entry.description}</p>
+                  {entry.items && entry.items.length > 0 && (
+                    <ul className="mt-1 space-y-0.5">
+                      {entry.items.map((item, j) => (
+                        <li key={j} className="text-xs text-gray-500">• {item}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleDelete(entry.id)}
+                  className="text-red-400 hover:text-red-600 text-xs font-medium"
+                >
+                  Supprimer
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
 // Main Admin Page
 // ══════════════════════════════════════════
 
@@ -608,7 +826,7 @@ export default function AdminPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const isLoading = useAuthStore((s) => s.isLoading);
   const initialize = useAuthStore((s) => s.initialize);
-  const [activeTab, setActiveTab] = useState<"moderation" | "prompts" | "analytics">("moderation");
+  const [activeTab, setActiveTab] = useState<"moderation" | "prompts" | "analytics" | "changelog">("moderation");
   const initRef = useRef(false);
 
   useEffect(() => {
@@ -679,6 +897,16 @@ export default function AdminPage() {
             >
               Analytics
             </button>
+            <button
+              onClick={() => setActiveTab("changelog")}
+              className={`text-xs font-medium px-4 py-1.5 rounded-lg transition-colors ${
+                activeTab === "changelog"
+                  ? "bg-gray-900 text-white"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Changelog
+            </button>
           </div>
         </div>
 
@@ -686,6 +914,7 @@ export default function AdminPage() {
         {activeTab === "moderation" && <ModerationTab />}
         {activeTab === "prompts" && <PromptsTab />}
         {activeTab === "analytics" && <AnalyticsTab />}
+        {activeTab === "changelog" && <ChangelogTab />}
       </div>
     </div>
   );

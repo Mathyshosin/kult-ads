@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { KultLogoFull } from "@/components/kult-logo";
+import { createClient } from "@/lib/supabase/server";
 import {
   Check,
   ArrowLeft,
@@ -11,133 +12,126 @@ import {
   Sparkles,
   Palette,
   Zap,
+  type LucideIcon,
 } from "lucide-react";
 
-const updates = [
+const ICON_MAP: Record<string, LucideIcon> = {
+  CreditCard,
+  Wand2,
+  ImageIcon,
+  Rocket,
+  Shield,
+  Sparkles,
+  Palette,
+  Zap,
+};
+
+// Fallback entries if DB is empty
+const fallbackEntries = [
   {
-    date: "26 Mars 2026",
-    version: "v2.4.1",
-    icon: ImageIcon,
-    color: "from-pink-500 to-rose-500",
-    title: "Bibliothèque enrichie",
-    description: "Nouvelles ads ajoutées chaque jour dans la bibliothèque.",
-    tag: "bibliotheque",
-    items: [
-      "+15 nouvelles ads cosmétique & beauté",
-      "+10 nouvelles ads food & boisson",
-      "+8 nouvelles ads tech & gadgets",
-      "Amélioration du matching template ↔ produit",
-    ],
-  },
-  {
-    date: "26 Mars 2026",
+    id: "f1",
+    created_at: "2026-03-26",
     version: "v2.4",
-    icon: CreditCard,
+    icon: "CreditCard",
     color: "from-green-500 to-emerald-500",
     title: "Paiement & Crédits",
-    description: "Monétisation complète avec Stripe et système de crédits intelligent.",
-    tag: "feature",
+    description: "Monétisation complète avec Stripe.",
     items: [
-      "Intégration Stripe complète (Starter, Pro, Agency)",
-      "Packs de crédits supplémentaires (Boost, Growth, Scale)",
-      "Page Mon abonnement dans le dashboard",
-      "Redirection automatique des nouveaux users vers les offres",
-      "Crédits illimités pour les administrateurs",
+      "Intégration Stripe (Starter, Pro, Agency)",
+      "Packs de crédits supplémentaires",
+      "Page Mon abonnement",
     ],
   },
   {
-    date: "25 Mars 2026",
-    version: "v2.3.1",
-    icon: Palette,
-    color: "from-pink-500 to-rose-500",
-    title: "Nouveau logo & Branding",
-    description: "Nouvelle identité visuelle avec le logo infini.",
-    items: [
-      "Nouveau logo Kultads (symbole infini)",
-      "Mise à jour du branding sur toute la plateforme",
-      "Badges sur les offres (Meilleur pour débuter, BEST ROI)",
-    ],
-  },
-  {
-    date: "25 Mars 2026",
+    id: "f2",
+    created_at: "2026-03-25",
     version: "v2.3",
-    icon: Wand2,
+    icon: "Wand2",
     color: "from-violet-500 to-purple-500",
-    title: "Modification intelligente & CTA",
-    description: "Retouchez vos publicités et personnalisez chaque détail.",
+    title: "Modification intelligente",
+    description: "Retouchez vos ads avec de simples instructions.",
     items: [
-      "Retouche IA : modifiez vos ads avec de simples instructions textuelles",
-      "Conversion carré vers story en un clic",
-      "CTA personnalisable avec texte libre (optionnel)",
-      "Offre éditable inline avant génération (titre, prix, réduction)",
-      "L'original est conservé lors d'une modification",
+      "Retouche IA par instructions textuelles",
+      "Conversion carré → story en un clic",
+      "CTA personnalisable",
     ],
   },
   {
-    date: "24 Mars 2026",
+    id: "f3",
+    created_at: "2026-03-24",
     version: "v2.2",
-    icon: ImageIcon,
+    icon: "ImageIcon",
     color: "from-blue-500 to-indigo-500",
     title: "Bibliothèque & Copy-Ads",
-    description: "4 modes de création pour s'adapter à tous les workflows.",
+    description: "4 modes de création pour tous les workflows.",
     items: [
-      "Mode Auto : l'IA choisit le meilleur template automatiquement",
-      "Mode Bibliothèque : parcourez et copiez des ads performantes",
-      "Mode Copy-Ads : uploadez une ad que vous aimez et reproduisez-la",
-      "Mode Prompt : décrivez exactement ce que vous voulez",
-      "Page admin pour modérer les templates soumis par les utilisateurs",
+      "Mode Auto, Bibliothèque, Copy-Ads, Prompt",
+      "Parcourez des ads performantes",
+      "Uploadez vos propres références",
     ],
   },
   {
-    date: "23 Mars 2026",
+    id: "f4",
+    created_at: "2026-03-23",
     version: "v2.1",
-    icon: Rocket,
+    icon: "Rocket",
     color: "from-orange-500 to-red-500",
-    title: "Performance & Expérience",
-    description: "Un dashboard plus rapide et une meilleure expérience utilisateur.",
+    title: "Performance & UX",
+    description: "Dashboard plus rapide et meilleure expérience.",
     items: [
-      "Chargement 3x plus rapide (téléchargement parallèle des images)",
-      "Hydratation en 2 phases (page Créer instantanée)",
-      "Système de favoris persistant en base de données",
-      "Animation de chargement avec fun facts marketing",
-      "Navigation fluide avec sliding pill animée",
-      "Skeletons de chargement pour toutes les pages",
+      "Chargement 3x plus rapide",
+      "Favoris persistants",
+      "Navigation fluide avec animations",
     ],
   },
   {
-    date: "22 Mars 2026",
-    version: "v2.0.1",
-    icon: Sparkles,
-    color: "from-amber-500 to-yellow-500",
-    title: "Qualité des ads",
-    description: "Amélioration significative de la qualité de génération.",
-    items: [
-      "Suppression du CTA par défaut (optionnel maintenant)",
-      "Suppression des codes couleur hex dans les images",
-      "Meilleur respect du template de référence",
-      "Correction du mimeType JPEG/PNG automatique",
-      "Ajout du contexte produit complet dans le prompt",
-    ],
-  },
-  {
-    date: "21 Mars 2026",
+    id: "f5",
+    created_at: "2026-03-21",
     version: "v2.0",
-    icon: Shield,
+    icon: "Shield",
     color: "from-cyan-500 to-blue-500",
     title: "Lancement de Kultads",
-    description: "Première version publique de la plateforme.",
+    description: "Première version publique.",
     items: [
-      "Génération de publicités par IA (Google Gemini)",
-      "Analyse automatique de votre site e-commerce",
-      "Détection des produits, offres et identité de marque",
-      "Export HD en format carré (1080x1080) et story (1080x1920)",
-      "Dashboard complet avec galerie d'ads",
-      "Authentification Supabase (email/mot de passe)",
+      "Génération d'ads par IA (Gemini)",
+      "Analyse automatique de votre site",
+      "Export HD carré et story",
     ],
   },
 ];
 
-export default function ChangelogPage() {
+type ChangelogEntry = {
+  id: string;
+  created_at: string;
+  version: string;
+  icon: string;
+  color: string;
+  title: string;
+  description: string;
+  items: string[];
+};
+
+export const dynamic = "force-dynamic";
+
+export default async function ChangelogPage() {
+  let entries: ChangelogEntry[] = [];
+
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("changelog")
+      .select("*")
+      .order("created_at", { ascending: false });
+    entries = (data as ChangelogEntry[]) || [];
+  } catch {
+    entries = [];
+  }
+
+  // Use fallback if DB is empty
+  if (entries.length === 0) {
+    entries = fallbackEntries;
+  }
+
   return (
     <>
       {/* Navbar */}
@@ -176,32 +170,39 @@ export default function ChangelogPage() {
           <div className="absolute left-6 top-0 bottom-0 w-px bg-gradient-to-b from-violet-200 via-gray-200 to-transparent" />
 
           <div className="space-y-12">
-            {updates.map((update, i) => (
-              <div key={i} className="relative flex gap-6">
-                {/* Icon */}
-                <div className={`relative z-10 w-12 h-12 rounded-xl bg-gradient-to-br ${update.color} flex items-center justify-center flex-shrink-0 shadow-lg`}>
-                  <update.icon className="w-5 h-5 text-white" />
-                </div>
+            {entries.map((entry) => {
+              const IconComp = ICON_MAP[entry.icon] || Sparkles;
+              const date = new Date(entry.created_at);
+              const dateStr = date.toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              });
 
-                {/* Content card */}
-                <div className="flex-1 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{update.date}</span>
-                    <span className="text-xs font-bold bg-violet-100 text-violet-600 px-2.5 py-0.5 rounded-full">{update.version}</span>
+              return (
+                <div key={entry.id} className="relative flex gap-6">
+                  <div className={`relative z-10 w-12 h-12 rounded-xl bg-gradient-to-br ${entry.color} flex items-center justify-center flex-shrink-0 shadow-lg`}>
+                    <IconComp className="w-5 h-5 text-white" />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">{update.title}</h2>
-                  <p className="text-sm text-gray-500 mb-4">{update.description}</p>
-                  <ul className="space-y-2">
-                    {update.items.map((item, j) => (
-                      <li key={j} className="flex items-start gap-2.5 text-sm text-gray-700">
-                        <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="flex-1 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{dateStr}</span>
+                      <span className="text-xs font-bold bg-violet-100 text-violet-600 px-2.5 py-0.5 rounded-full">{entry.version}</span>
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-1">{entry.title}</h2>
+                    <p className="text-sm text-gray-500 mb-4">{entry.description}</p>
+                    <ul className="space-y-2">
+                      {(entry.items || []).map((item: string, j: number) => (
+                        <li key={j} className="flex items-start gap-2.5 text-sm text-gray-700">
+                          <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

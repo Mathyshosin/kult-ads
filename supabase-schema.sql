@@ -152,6 +152,23 @@ CREATE TRIGGER brand_analyses_updated_at
   BEFORE UPDATE ON brand_analyses
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+-- Table: changelog
+CREATE TABLE changelog (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  version TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  items JSONB DEFAULT '[]'::jsonb,
+  icon TEXT DEFAULT 'Sparkles',
+  color TEXT DEFAULT 'from-violet-500 to-purple-500',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Changelog is public read, admin write (handled in API)
+ALTER TABLE changelog ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read changelog" ON changelog FOR SELECT USING (true);
+CREATE POLICY "Admin write changelog" ON changelog FOR ALL USING (true) WITH CHECK (true);
+
 -- ═══════════════════════════════════════════
 -- Storage Buckets (create via Supabase dashboard or CLI)
 -- ═══════════════════════════════════════════
