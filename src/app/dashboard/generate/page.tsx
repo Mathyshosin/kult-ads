@@ -221,7 +221,7 @@ export default function GeneratePage() {
           addToast({
             type: "error",
             message: "Plus de crédits ! Passez au plan supérieur.",
-            action: { label: "Voir les offres", href: "/#tarifs" },
+            action: { label: "Voir les offres", href: "/dashboard/subscription" },
           });
           return;
         }
