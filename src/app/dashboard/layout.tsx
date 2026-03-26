@@ -7,6 +7,7 @@ import AuthGuard from "@/components/auth-guard";
 import { useWizardStore } from "@/lib/store";
 import { useAuthStore } from "@/lib/auth-store";
 import { ToastContainer } from "@/components/toast";
+import GiftPopup from "@/components/gift-popup";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -50,6 +51,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         <div className="py-8">{children}</div>
       )}
       <ToastContainer />
+      <GiftPopup />
     </div>
   );
 }

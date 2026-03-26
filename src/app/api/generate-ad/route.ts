@@ -28,15 +28,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    // Credit check
-    const { getOrCreateSubscription, deductCredit } = await import("@/lib/supabase/subscriptions");
-    const subscription = await getOrCreateSubscription(user.id, user.email || undefined);
-    if (subscription.credits_remaining <= 0) {
-      return NextResponse.json(
-        { error: "Plus de crédits disponibles. Passez à un plan supérieur pour continuer.", code: "NO_CREDITS" },
-        { status: 402 }
-      );
-    }
+    const body = await request.json();
 
     const {
       brandAnalysis,
@@ -56,7 +48,20 @@ export async function POST(request: Request) {
       previousAdMimeType: rawPreviousAdMimeType,
       previousAdId,
       ctaText: rawCtaText,
-    } = await request.json();
+      skipCreditCheck,
+    } = body;
+
+    // Credit check (skip for gift generations)
+    if (!skipCreditCheck) {
+      const { getOrCreateSubscription } = await import("@/lib/supabase/subscriptions");
+      const subscription = await getOrCreateSubscription(user.id, user.email || undefined);
+      if (subscription.credits_remaining <= 0) {
+        return NextResponse.json(
+          { error: "Plus de crédits disponibles. Passez à un plan supérieur pour continuer.", code: "NO_CREDITS" },
+          { status: 402 }
+        );
+      }
+    }
 
     const ctaText = rawCtaText?.trim() || null;
 
@@ -382,8 +387,11 @@ export async function POST(request: Request) {
       }
     }
 
-    // Deduct credit after successful generation
-    await deductCredit(user.id);
+    // Deduct credit after successful generation (skip for gifts)
+    if (!skipCreditCheck) {
+      const { deductCredit } = await import("@/lib/supabase/subscriptions");
+      await deductCredit(user.id);
+    }
 
     return NextResponse.json({
       id: `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
