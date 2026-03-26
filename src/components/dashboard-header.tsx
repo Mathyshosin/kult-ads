@@ -136,10 +136,10 @@ export default function DashboardHeader() {
           </div>
 
           {/* Credits badge */}
-          {credits !== null && !isAdmin && (
+          {currentUser && (
             <div className="hidden sm:flex items-center gap-1.5 bg-violet-50 border border-violet-100 rounded-lg px-3 py-1.5">
               <Zap className="w-3.5 h-3.5 text-violet-500" />
-              <span className="text-xs font-bold text-violet-700">{credits}</span>
+              <span className="text-xs font-bold text-violet-700">{isAdmin ? "∞" : (credits ?? "...")}</span>
               <span className="text-[10px] text-violet-400">crédits</span>
             </div>
           )}
