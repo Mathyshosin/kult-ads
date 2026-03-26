@@ -25,6 +25,8 @@ const plans = [
     bgLight: "bg-blue-50",
     borderColor: "border-blue-200",
     popular: false,
+    badge: "Meilleur pour débuter",
+    badgeColor: "bg-blue-100 text-blue-700",
   },
   {
     id: "pro",
@@ -47,6 +49,8 @@ const plans = [
     bgLight: "bg-violet-50",
     borderColor: "border-violet-200",
     popular: true,
+    badge: "",
+    badgeColor: "",
   },
   {
     id: "agency",
@@ -67,6 +71,8 @@ const plans = [
     bgLight: "bg-amber-50",
     borderColor: "border-amber-200",
     popular: false,
+    badge: "BEST ROI",
+    badgeColor: "bg-amber-100 text-amber-700",
   },
 ];
 
@@ -182,20 +188,22 @@ export default function SubscriptionPage() {
                     : "border-gray-200 hover:border-gray-300"
               }`}
             >
-              {plan.popular && !isCurrent && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="bg-gradient-to-r from-violet-500 to-purple-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md">
-                    Le plus populaire
-                  </span>
-                </div>
-              )}
-              {isCurrent && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="bg-green-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md">
+              {/* Badge above card */}
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                {isCurrent ? (
+                  <span className="bg-green-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md whitespace-nowrap">
                     Plan actuel
                   </span>
-                </div>
-              )}
+                ) : plan.popular ? (
+                  <span className="bg-gradient-to-r from-violet-500 to-purple-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md whitespace-nowrap">
+                    Le plus populaire
+                  </span>
+                ) : plan.badge ? (
+                  <span className={`${plan.badgeColor} text-xs font-bold px-4 py-1 rounded-full shadow-sm whitespace-nowrap`}>
+                    {plan.badge}
+                  </span>
+                ) : null}
+              </div>
 
               <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${plan.color} flex items-center justify-center mb-4`}>
                 <plan.icon className="w-6 h-6 text-white" />
