@@ -1,17 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Sparkles, Mail, Lock, ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useAuthStore } from "@/lib/auth-store";
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const planId = searchParams.get("plan");
   const login = useAuthStore((s) => s.login);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,6 +22,20 @@ export default function LoginPage() {
     setLoading(true);
     const result = await login(email, password);
     if (result.success) {
+      if (planId && planId !== "starter") {
+        try {
+          const res = await fetch("/api/stripe/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ planId }),
+          });
+          const data = await res.json();
+          if (data.url) {
+            window.location.href = data.url;
+            return;
+          }
+        } catch { /* fallback to dashboard */ }
+      }
       router.push("/dashboard");
     } else {
       setError(result.error || "Erreur de connexion.");
@@ -76,7 +92,7 @@ export default function LoginPage() {
           <p className="mt-2 text-muted">
             Pas encore de compte ?{" "}
             <Link
-              href="/signup"
+              href={planId ? `/signup?plan=${planId}` : "/signup"}
               className="text-primary hover:text-primary-dark font-medium"
             >
               Créer un compte
@@ -197,5 +213,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

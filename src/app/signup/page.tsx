@@ -1,18 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Sparkles, Mail, Lock, User, ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useAuthStore } from "@/lib/auth-store";
 
-export default function SignupPage() {
+function SignupForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const planId = searchParams.get("plan");
   const signup = useAuthStore((s) => s.signup);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,6 +23,21 @@ export default function SignupPage() {
     setLoading(true);
     const result = await signup(name, email, password);
     if (result.success) {
+      if (planId && planId !== "starter") {
+        // Redirect to Stripe checkout
+        try {
+          const res = await fetch("/api/stripe/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ planId }),
+          });
+          const data = await res.json();
+          if (data.url) {
+            window.location.href = data.url;
+            return;
+          }
+        } catch { /* fallback to dashboard */ }
+      }
       router.push("/dashboard");
     } else {
       setError(result.error || "Erreur lors de la création du compte.");
@@ -79,7 +96,7 @@ export default function SignupPage() {
           <p className="mt-2 text-muted">
             Déjà un compte ?{" "}
             <Link
-              href="/login"
+              href={planId ? `/login?plan=${planId}` : "/login"}
               className="text-primary hover:text-primary-dark font-medium"
             >
               Se connecter
@@ -213,5 +230,13 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   );
 }
