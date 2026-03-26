@@ -1,25 +1,31 @@
-// Kultads logo — stylized infinity ∞ with inner spark
+// Kultads logo — elegant infinity ribbon
 export function KultLogoIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
       <defs>
-        <linearGradient id="kg1" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+        <linearGradient id="kg-bg" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#6366F1" />
-          <stop offset="50%" stopColor="#8B5CF6" />
-          <stop offset="100%" stopColor="#A855F7" />
+          <stop offset="100%" stopColor="#9333EA" />
+        </linearGradient>
+        <linearGradient id="kg-inf" x1="8" y1="14" x2="28" y2="22" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#E0D4FF" />
         </linearGradient>
       </defs>
-      <rect width="36" height="36" rx="10" fill="url(#kg1)" />
-      {/* Clean centered infinity ∞ */}
-      <path
-        d="M13 18c0-1.65 1.35-3 3-3 1.2 0 2.1.7 2.5 1.5L18 18l.5 1.5c.4.8 1.3 1.5 2.5 1.5 1.65 0 3-1.35 3-3s-1.35-3-3-3c-1.2 0-2.1.7-2.5 1.5L18 18l-.5-1.5C17.1 15.7 16.2 15 15 15c-1.65 0-3 1.35-3 3s1.35 3 3 3c1.2 0 2.1-.7 2.5-1.5"
-        stroke="white"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {/* Small spark dot at center crossing */}
-      <circle cx="18" cy="18" r="1.2" fill="white" opacity="0.9" />
+      <rect width="36" height="36" rx="9" fill="url(#kg-bg)" />
+      {/* Elegant thick infinity — two perfect loops */}
+      <g transform="translate(18, 18)">
+        <path
+          d="M-5.5 0C-5.5-3 -3.5-5 -1-5C1.2-5 2.8-3.5 3.5-2L4.5 0L3.5 2C2.8 3.5 1.2 5 -1 5C-3.5 5 -5.5 3 -5.5 0Z"
+          fill="url(#kg-inf)"
+          opacity="0.95"
+        />
+        <path
+          d="M5.5 0C5.5 3 3.5 5 1 5C-1.2 5 -2.8 3.5 -3.5 2L-4.5 0L-3.5-2C-2.8-3.5 -1.2-5 1-5C3.5-5 5.5-3 5.5 0Z"
+          fill="white"
+          opacity="0.7"
+        />
+      </g>
     </svg>
   );
 }
