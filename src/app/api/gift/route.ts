@@ -90,27 +90,27 @@ export async function POST() {
     const productImage = images.find((img) => img.productId === product.id) || images[0];
 
     // Select a random template
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://kult-ads.vercel.app";
-    const templateRes = await fetch(`${origin}/api/templates/select`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ format, count: 1 }),
-    });
-
     let templateId: string | undefined;
-    if (templateRes.ok) {
-      const { templateIds } = await templateRes.json();
-      templateId = templateIds?.[0];
-    }
+    try {
+      const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://kult-ads.vercel.app";
+      const templateRes = await fetch(`${origin}/api/templates/select`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ format, count: 1 }),
+      });
+      if (templateRes.ok) {
+        const { templateIds } = await templateRes.json();
+        templateId = templateIds?.[0];
+      }
+    } catch { /* continue without template */ }
 
-    // Generate the ad via internal API
-    const genRes = await fetch(`${origin}/api/generate-ad`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        cookie: `sb-access-token=${user.id}`,
+    // Return generation payload — client will call /api/generate-ad with proper auth cookies
+    return NextResponse.json({
+      gift: {
+        id: gift.id,
+        status: "ready_to_generate",
       },
-      body: JSON.stringify({
+      generatePayload: {
         brandAnalysis,
         product,
         offer,
@@ -120,33 +120,8 @@ export async function POST() {
         brandLogoMimeType: logo?.mimeType,
         format,
         templateId,
-        isGift: true,
         skipCreditCheck: true,
-      }),
-    });
-
-    if (!genRes.ok) {
-      const err = await genRes.text();
-      console.error("[gift] Generation failed:", err);
-      return NextResponse.json({ error: "Génération échouée" }, { status: 500 });
-    }
-
-    const adData = await genRes.json();
-
-    // Mark gift as completed
-    await supabase
-      .from("daily_gifts")
-      .update({
-        status: "completed",
-        generated_ad_id: adData.id,
-      })
-      .eq("id", gift.id);
-
-    return NextResponse.json({
-      gift: {
-        id: gift.id,
-        status: "completed",
-        ad: adData,
+        isGift: true,
       },
     });
   } catch (err) {
@@ -155,20 +130,31 @@ export async function POST() {
   }
 }
 
-// PATCH — mark gift as seen
-export async function PATCH() {
+// PATCH — mark gift as completed or seen
+export async function PATCH(request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
     const today = new Date().toISOString().split("T")[0];
+    const body = await request.json().catch(() => ({}));
 
-    await supabase
-      .from("daily_gifts")
-      .update({ seen: true })
-      .eq("user_id", user.id)
-      .eq("gift_date", today);
+    if (body.action === "complete" && body.adId) {
+      // Mark as completed with ad ID
+      await supabase
+        .from("daily_gifts")
+        .update({ status: "completed", generated_ad_id: body.adId })
+        .eq("user_id", user.id)
+        .eq("gift_date", today);
+    } else {
+      // Mark as seen
+      await supabase
+        .from("daily_gifts")
+        .update({ seen: true })
+        .eq("user_id", user.id)
+        .eq("gift_date", today);
+    }
 
     return NextResponse.json({ success: true });
   } catch {

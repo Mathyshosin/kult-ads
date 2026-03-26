@@ -31,20 +31,50 @@ export default function GiftPopup() {
       .catch(() => setState("hidden"));
   }, []);
 
-  const handleDiscover = useCallback(() => {
+  const [giftId, setGiftId] = useState<string | null>(null);
+
+  const handleDiscover = useCallback(async () => {
     if (state === "intro") {
-      // Start generating
       setState("generating");
-      fetch("/api/gift", { method: "POST" })
-        .then((r) => r.json())
-        .then((genData) => {
-          if (genData.gift?.ad?.imageBase64) {
-            setAdImage(genData.gift.ad.imageBase64);
-            setAdMime(genData.gift.ad.mimeType || "image/png");
-          }
+      try {
+        // Step 1: Get generation payload from gift API
+        const res = await fetch("/api/gift", { method: "POST" });
+        const data = await res.json();
+
+        if (!data.generatePayload) {
           setState("ready");
-        })
-        .catch(() => setState("ready"));
+          return;
+        }
+
+        setGiftId(data.gift?.id || null);
+
+        // Step 2: Call generate-ad with proper browser auth cookies
+        const genRes = await fetch("/api/generate-ad", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data.generatePayload),
+        });
+
+        if (genRes.ok) {
+          const adData = await genRes.json();
+          if (adData.imageBase64) {
+            setAdImage(adData.imageBase64);
+            setAdMime(adData.mimeType || "image/png");
+          }
+
+          // Step 3: Mark gift as completed
+          await fetch("/api/gift", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "complete", adId: adData.id }),
+          });
+        }
+
+        setState("ready");
+      } catch (err) {
+        console.error("[gift] Generation failed:", err);
+        setState("ready");
+      }
     } else if (state === "ready") {
       setState("revealed");
     }
