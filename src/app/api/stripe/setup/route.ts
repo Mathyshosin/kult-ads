@@ -13,54 +13,72 @@ export async function POST(req: NextRequest) {
 
   const stripe = getStripe();
 
-  // Create the product
-  const product = await stripe.products.create({
-    name: "Kultads",
-    description: "Générateur de publicités par IA",
+  // Create separate products for each plan
+  const starterProduct = await stripe.products.create({
+    name: "Kultads Starter",
+    description: "5 publicités pour découvrir Kultads",
   });
-
-  // Create prices for each plan
   const starterPrice = await stripe.prices.create({
-    product: product.id,
-    unit_amount: 500, // 5€
+    product: starterProduct.id,
+    unit_amount: 500,
     currency: "eur",
     metadata: { plan: "starter" },
   });
 
+  const proProduct = await stripe.products.create({
+    name: "Kultads Pro",
+    description: "500 crédits/mois — Pour les e-commerces ambitieux",
+  });
   const proPrice = await stripe.prices.create({
-    product: product.id,
-    unit_amount: 2900, // 29€
+    product: proProduct.id,
+    unit_amount: 2900,
     currency: "eur",
     recurring: { interval: "month" },
     metadata: { plan: "pro" },
   });
 
+  const agencyProduct = await stripe.products.create({
+    name: "Kultads Agency",
+    description: "2000 crédits/mois — Volume illimité pour les agences",
+  });
   const agencyPrice = await stripe.prices.create({
-    product: product.id,
-    unit_amount: 7900, // 79€
+    product: agencyProduct.id,
+    unit_amount: 7900,
     currency: "eur",
     recurring: { interval: "month" },
     metadata: { plan: "agency" },
   });
 
-  // Credit packs
+  // Credit packs — separate products too
+  const boostProduct = await stripe.products.create({
+    name: "Kultads Boost — 50 crédits",
+    description: "Recharge de 50 crédits supplémentaires",
+  });
   const boostPrice = await stripe.prices.create({
-    product: product.id,
-    unit_amount: 490, // 4.90€
+    product: boostProduct.id,
+    unit_amount: 490,
     currency: "eur",
     metadata: { pack: "boost", credits: "50" },
   });
 
+  const growthProduct = await stripe.products.create({
+    name: "Kultads Growth — 130 crédits",
+    description: "Recharge de 130 crédits supplémentaires",
+  });
   const growthPrice = await stripe.prices.create({
-    product: product.id,
-    unit_amount: 990, // 9.90€
+    product: growthProduct.id,
+    unit_amount: 990,
     currency: "eur",
     metadata: { pack: "growth", credits: "130" },
   });
 
+  const scaleProduct = await stripe.products.create({
+    name: "Kultads Scale — 300 crédits",
+    description: "Recharge de 300 crédits supplémentaires",
+  });
   const scalePrice = await stripe.prices.create({
-    product: product.id,
-    unit_amount: 1990, // 19.90€
+    product: scaleProduct.id,
+    unit_amount: 1990,
     currency: "eur",
     metadata: { pack: "scale", credits: "300" },
   });
