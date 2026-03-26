@@ -1036,6 +1036,9 @@ function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         <KultLogoFull />
         <div className="flex items-center gap-8 text-sm text-gray-400">
+          <Link href="/changelog" className="hover:text-gray-700 transition-colors">
+            Changelog
+          </Link>
           <Link href="/cgu" className="hover:text-gray-700 transition-colors">
             CGU
           </Link>
@@ -1088,7 +1091,6 @@ export default async function Home() {
         <WhyUs />
         <Testimonials />
         <FAQ />
-        <Changelog />
         <FinalCTA />
       </main>
       <Footer />
