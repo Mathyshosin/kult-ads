@@ -589,6 +589,7 @@ function Pricing() {
       price: "5€",
       period: "",
       description: "Pour tester la puissance de l'outil",
+      badge: "Meilleur pour débuter",
       features: [
         "5 crédits de génération",
         "Tous les formats (carré + story)",
@@ -623,6 +624,7 @@ function Pricing() {
       price: "79€",
       period: "/mois",
       description: "Pour les agences et les gros volumes",
+      badge: "BEST ROI",
       features: [
         "2 000 crédits / mois",
         "Tout le plan Pro inclus",
@@ -664,8 +666,14 @@ function Pricing() {
                   : "border-gray-100 bg-white hover:shadow-lg"
               }`}
             >
-              {plan.highlighted && plan.badge && (
-                <span className="inline-block bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-full mb-4">
+              {plan.badge && (
+                <span className={`inline-block text-xs font-bold px-3.5 py-1.5 rounded-full mb-4 ${
+                  plan.highlighted
+                    ? "bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 text-white"
+                    : plan.name === "Agency"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-blue-100 text-blue-700"
+                }`}>
                   {plan.badge}
                 </span>
               )}
