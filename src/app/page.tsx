@@ -875,126 +875,6 @@ function FAQ() {
   );
 }
 
-/* ─────────────────────── CHANGELOG ─────────────────────── */
-
-function Changelog() {
-  const updates = [
-    {
-      date: "Mars 2026",
-      version: "v2.4",
-      icon: CreditCard,
-      color: "from-green-500 to-emerald-500",
-      title: "Paiement & Crédits",
-      items: [
-        "Système d'abonnement Stripe (Starter, Pro, Agency)",
-        "Packs de crédits supplémentaires",
-        "Page Mon abonnement dans le dashboard",
-      ],
-    },
-    {
-      date: "Mars 2026",
-      version: "v2.3",
-      icon: Wand2,
-      color: "from-violet-500 to-purple-500",
-      title: "Modification intelligente",
-      items: [
-        "Retouchez vos ads avec de simples instructions textuelles",
-        "Conversion carré vers story en un clic",
-        "CTA personnalisable (texte libre)",
-      ],
-    },
-    {
-      date: "Mars 2026",
-      version: "v2.2",
-      icon: ImageIcon,
-      color: "from-blue-500 to-indigo-500",
-      title: "Bibliothèque & Copy-Ads",
-      items: [
-        "4 modes de création : Auto, Bibliothèque, Copy-Ads, Prompt",
-        "Parcourez et copiez des ads performantes",
-        "Uploadez vos propres références à reproduire",
-      ],
-    },
-    {
-      date: "Mars 2026",
-      version: "v2.1",
-      icon: Rocket,
-      color: "from-orange-500 to-red-500",
-      title: "Performance & UX",
-      items: [
-        "Chargement 3x plus rapide des images",
-        "Système de favoris persistant",
-        "Offre éditable avant génération",
-      ],
-    },
-    {
-      date: "Mars 2026",
-      version: "v2.0",
-      icon: Shield,
-      color: "from-cyan-500 to-blue-500",
-      title: "Lancement Kultads",
-      items: [
-        "Génération d'ads par IA (Gemini)",
-        "Analyse automatique de votre site e-commerce",
-        "Export HD carré et story",
-        "Dashboard complet",
-      ],
-    },
-  ];
-
-  return (
-    <section className="py-24 px-6 bg-white">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-100 rounded-full px-4 py-1.5 mb-4">
-            <Clock className="w-4 h-4 text-violet-500" />
-            <span className="text-sm font-semibold text-violet-700">Changelog</span>
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            On améliore Kultads chaque jour
-          </h2>
-          <p className="mt-4 text-gray-500 text-lg">
-            Suivez les dernières mises à jour de la plateforme.
-          </p>
-        </div>
-
-        <div className="relative">
-          {/* Timeline line */}
-          <div className="absolute left-6 top-0 bottom-0 w-px bg-gray-200" />
-
-          <div className="space-y-8">
-            {updates.map((update, i) => (
-              <div key={i} className="relative flex gap-5">
-                {/* Timeline dot */}
-                <div className={`relative z-10 w-12 h-12 rounded-xl bg-gradient-to-br ${update.color} flex items-center justify-center flex-shrink-0 shadow-lg`}>
-                  <update.icon className="w-5 h-5 text-white" />
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 pb-2">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{update.date}</span>
-                    <span className="text-xs font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{update.version}</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{update.title}</h3>
-                  <ul className="space-y-1.5">
-                    {update.items.map((item, j) => (
-                      <li key={j} className="flex items-start gap-2 text-sm text-gray-600">
-                        <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /* ─────────────────────── FINAL CTA ─────────────────────── */
 
 function FinalCTA() {
@@ -1092,6 +972,17 @@ export default async function Home() {
         <Testimonials />
         <FAQ />
         <FinalCTA />
+        {/* Changelog link */}
+        <div className="py-8 text-center">
+          <Link
+            href="/changelog"
+            className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-violet-500 transition-colors"
+          >
+            <Clock className="w-4 h-4" />
+            Voir toutes les mises à jour
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
       </main>
       <Footer />
     </>

@@ -16,11 +16,27 @@ import {
 const updates = [
   {
     date: "26 Mars 2026",
+    version: "v2.4.1",
+    icon: ImageIcon,
+    color: "from-pink-500 to-rose-500",
+    title: "Bibliothèque enrichie",
+    description: "Nouvelles ads ajoutées chaque jour dans la bibliothèque.",
+    tag: "bibliotheque",
+    items: [
+      "+15 nouvelles ads cosmétique & beauté",
+      "+10 nouvelles ads food & boisson",
+      "+8 nouvelles ads tech & gadgets",
+      "Amélioration du matching template ↔ produit",
+    ],
+  },
+  {
+    date: "26 Mars 2026",
     version: "v2.4",
     icon: CreditCard,
     color: "from-green-500 to-emerald-500",
     title: "Paiement & Crédits",
     description: "Monétisation complète avec Stripe et système de crédits intelligent.",
+    tag: "feature",
     items: [
       "Intégration Stripe complète (Starter, Pro, Agency)",
       "Packs de crédits supplémentaires (Boost, Growth, Scale)",
