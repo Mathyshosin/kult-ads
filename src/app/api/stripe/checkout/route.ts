@@ -80,8 +80,9 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: "Plan ou pack invalide" }, { status: 400 });
-  } catch (error) {
-    console.error("[stripe/checkout] Error:", error);
-    return NextResponse.json({ error: "Erreur lors de la création du checkout" }, { status: 500 });
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error("[stripe/checkout] Error:", errMsg);
+    return NextResponse.json({ error: `Erreur checkout: ${errMsg}` }, { status: 500 });
   }
 }
