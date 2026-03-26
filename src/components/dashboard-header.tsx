@@ -178,6 +178,14 @@ export default function DashboardHeader() {
                   <Building2 className="w-4 h-4 text-gray-400" />
                   Ma Marque
                 </Link>
+                <Link
+                  href="/dashboard/billing"
+                  onClick={() => setShowProfile(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Zap className="w-4 h-4 text-gray-400" />
+                  Mon abonnement
+                </Link>
                 {isAdmin && (
                   <Link
                     href="/dashboard/templates"

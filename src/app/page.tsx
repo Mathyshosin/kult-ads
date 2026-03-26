@@ -701,22 +701,6 @@ function Pricing() {
           ))}
         </div>
 
-        {/* Credit packs */}
-        <div className="mt-16 max-w-3xl mx-auto">
-          <h3 className="text-center text-lg font-semibold text-gray-900 mb-2">Besoin de plus de crédits ?</h3>
-          <p className="text-center text-sm text-gray-400 mb-8">Achetez des packs de crédits supplémentaires à tout moment.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {packs.map((pack) => (
-              <div key={pack.name} className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl px-5 py-4 hover:shadow-md transition-shadow">
-                <div>
-                  <p className="font-bold text-gray-900">{pack.name}</p>
-                  <p className="text-xs text-gray-400">{pack.credits} crédits</p>
-                </div>
-                <span className="text-lg font-extrabold text-violet-600">{pack.price}</span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );
