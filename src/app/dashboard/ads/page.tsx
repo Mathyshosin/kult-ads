@@ -20,6 +20,7 @@ import {
   Images,
   Filter,
   Smartphone,
+  Gift,
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { FunFact } from "@/components/fun-facts";
@@ -167,6 +168,13 @@ function CompletedCard({ ad, onClick, onToggleFavorite, onModify, onDownload, on
           className="absolute inset-0 w-full h-full object-cover"
           loading="lazy"
         />
+        {/* Gift badge */}
+        {ad.isGift && (
+          <div className="absolute top-3 left-3 z-20 flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-bold shadow-md">
+            <Gift className="w-3 h-3" />
+            Cadeau
+          </div>
+        )}
         {/* Hover overlay with download */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <button

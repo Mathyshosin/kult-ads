@@ -58,6 +58,7 @@ export interface GeneratedAd {
   conversionAngle?: string;
   templateId?: string;          // Template used for this ad (library mode)
   isFavorite?: boolean;          // User-marked favorite
+  isGift?: boolean;              // Daily gift ad
   timestamp: number;
   status?: "generating" | "completed" | "failed";
   error?: string;
