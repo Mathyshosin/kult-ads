@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { loadLatestBrandAnalysis, loadUploadedImages } from "@/lib/supabase/sync";
 
 // GET — check if user has a pending gift today
 export async function GET() {
@@ -66,81 +67,30 @@ export async function POST() {
       return NextResponse.json({ error: "Pas de cadeau en attente" }, { status: 404 });
     }
 
-    // Get user's brand analysis
-    const { data: brand } = await supabase
-      .from("brand_analyses")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (!brand) {
+    // Load brand analysis using the same function as the rest of the app
+    const brandResult = await loadLatestBrandAnalysis(user.id);
+    if (!brandResult) {
       return NextResponse.json({ error: "Configurez votre marque d'abord" }, { status: 400 });
     }
 
-    const brandAnalysis = brand.analysis_data;
-    const products = brandAnalysis?.products || [];
-    if (products.length === 0) {
+    const { analysis: brandAnalysis, id: brandAnalysisId } = brandResult;
+    if (!brandAnalysis.products || brandAnalysis.products.length === 0) {
       return NextResponse.json({ error: "Aucun produit configuré" }, { status: 400 });
     }
 
     // Pick random product
-    const product = products[Math.floor(Math.random() * products.length)];
+    const product = brandAnalysis.products[Math.floor(Math.random() * brandAnalysis.products.length)];
+    const offer = brandAnalysis.offers.find((o) => o.productId === product.id) || null;
 
     // Pick random format
     const format = Math.random() > 0.5 ? "square" : "story";
 
-    // Generate via internal API call
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://kult-ads.vercel.app";
-
-    // Get product image
-    const { data: images } = await supabase
-      .from("uploaded_images")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("brand_analysis_id", brand.id)
-      .eq("is_logo", false)
-      .limit(1);
-
-    let productImageBase64: string | undefined;
-    let productImageMimeType: string | undefined;
-
-    if (images && images[0]) {
-      const { data: fileData } = await supabase.storage
-        .from("user-images")
-        .download(images[0].storage_path);
-      if (fileData) {
-        const buffer = await fileData.arrayBuffer();
-        productImageBase64 = Buffer.from(buffer).toString("base64");
-        productImageMimeType = images[0].mime_type;
-      }
-    }
-
-    // Get logo
-    const { data: logoRows } = await supabase
-      .from("uploaded_images")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("brand_analysis_id", brand.id)
-      .eq("is_logo", true)
-      .limit(1);
-
-    let brandLogoBase64: string | undefined;
-    let brandLogoMimeType: string | undefined;
-
-    if (logoRows && logoRows[0]) {
-      const { data: logoFile } = await supabase.storage
-        .from("user-images")
-        .download(logoRows[0].storage_path);
-      if (logoFile) {
-        const buffer = await logoFile.arrayBuffer();
-        brandLogoBase64 = Buffer.from(buffer).toString("base64");
-        brandLogoMimeType = logoRows[0].mime_type;
-      }
-    }
+    // Load images (product + logo) in parallel
+    const { images, logo } = await loadUploadedImages(user.id, brandAnalysisId);
+    const productImage = images.find((img) => img.productId === product.id) || images[0];
 
     // Select a random template
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://kult-ads.vercel.app";
     const templateRes = await fetch(`${origin}/api/templates/select`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -153,24 +103,25 @@ export async function POST() {
       templateId = templateIds?.[0];
     }
 
-    // Generate the ad
+    // Generate the ad via internal API
     const genRes = await fetch(`${origin}/api/generate-ad`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        cookie: `sb-access-token=${user.id}`, // Pass auth context
+        cookie: `sb-access-token=${user.id}`,
       },
       body: JSON.stringify({
         brandAnalysis,
         product,
-        productImageBase64,
-        productImageMimeType,
-        brandLogoBase64,
-        brandLogoMimeType,
+        offer,
+        productImageBase64: productImage?.base64,
+        productImageMimeType: productImage?.mimeType,
+        brandLogoBase64: logo?.base64,
+        brandLogoMimeType: logo?.mimeType,
         format,
         templateId,
         isGift: true,
-        skipCreditCheck: true, // Don't deduct credits for gifts
+        skipCreditCheck: true,
       }),
     });
 
