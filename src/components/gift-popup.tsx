@@ -1,9 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Gift, Sparkles, X, Loader2, PartyPopper } from "lucide-react";
+import { useWizardStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/auth-store";
+import type { GeneratedAd } from "@/lib/types";
 
 export default function GiftPopup() {
+  const router = useRouter();
+  const addGeneratedAd = useWizardStore((s) => s.addGeneratedAd);
+  const syncGeneratedAd = useWizardStore((s) => s.syncGeneratedAd);
+  const currentUser = useAuthStore((s) => s.currentUser);
   const [state, setState] = useState<"hidden" | "checking" | "intro" | "generating" | "ready" | "revealed">("checking");
   const [adImage, setAdImage] = useState<string | null>(null);
   const [adMime, setAdMime] = useState<string>("image/png");
@@ -62,11 +70,31 @@ export default function GiftPopup() {
             setAdMime(adData.mimeType || "image/png");
           }
 
-          // Step 3: Mark gift as completed
+          // Step 3: Save ad to store + Supabase
+          const newAd: GeneratedAd = {
+            id: adData.id || `gift-${Date.now()}`,
+            format: adData.format || "square",
+            imageBase64: adData.imageBase64,
+            mimeType: adData.mimeType || "image/png",
+            headline: adData.headline || "",
+            bodyText: adData.bodyText || "",
+            callToAction: adData.callToAction || "",
+            productId: adData.productId,
+            templateId: adData.templateId,
+            timestamp: Date.now(),
+            isGift: true,
+          };
+
+          addGeneratedAd(newAd);
+          if (currentUser) {
+            syncGeneratedAd(currentUser.id, newAd);
+          }
+
+          // Step 4: Mark gift as completed
           await fetch("/api/gift", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "complete", adId: adData.id }),
+            body: JSON.stringify({ action: "complete", adId: newAd.id }),
           });
         }
 
@@ -82,7 +110,13 @@ export default function GiftPopup() {
 
   const handleClose = () => {
     setState("hidden");
-    fetch("/api/gift", { method: "PATCH" }).catch(() => {});
+    fetch("/api/gift", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }).catch(() => {});
+  };
+
+  const handleGoToAds = () => {
+    setState("hidden");
+    fetch("/api/gift", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }).catch(() => {});
+    router.push("/dashboard/ads");
   };
 
   if (state === "hidden" || state === "checking") return null;
@@ -210,7 +244,7 @@ export default function GiftPopup() {
                   />
                 </div>
                 <button
-                  onClick={handleClose}
+                  onClick={handleGoToAds}
                   className="w-full bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   <Sparkles className="w-4 h-4" />
@@ -223,7 +257,7 @@ export default function GiftPopup() {
                 <p className="text-gray-600 font-semibold mb-1">Publicité ajoutée !</p>
                 <p className="text-sm text-gray-400 mb-4">Retrouvez-la dans votre bibliothèque</p>
                 <button
-                  onClick={handleClose}
+                  onClick={handleGoToAds}
                   className="bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold px-8 py-3 rounded-xl hover:shadow-lg transition-all"
                 >
                   Voir dans Mes Ads
