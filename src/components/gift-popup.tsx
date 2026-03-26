@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Gift, Sparkles, X, Loader2, PartyPopper } from "lucide-react";
 import { useWizardStore } from "@/lib/store";
@@ -12,9 +12,12 @@ export default function GiftPopup() {
   const addGeneratedAd = useWizardStore((s) => s.addGeneratedAd);
   const syncGeneratedAd = useWizardStore((s) => s.syncGeneratedAd);
   const currentUser = useAuthStore((s) => s.currentUser);
+
   const [state, setState] = useState<"hidden" | "checking" | "intro" | "generating" | "ready" | "revealed">("checking");
+  const [minimized, setMinimized] = useState(false);
   const [adImage, setAdImage] = useState<string | null>(null);
   const [adMime, setAdMime] = useState<string>("image/png");
+  const generatingRef = useRef(false);
 
   useEffect(() => {
     fetch("/api/gift")
@@ -22,91 +25,92 @@ export default function GiftPopup() {
       .then((data) => {
         if (!data.gift) { setState("hidden"); return; }
         if (data.gift.seen) { setState("hidden"); return; }
-
         if (data.gift.status === "pending") {
-          // Show intro first, generate on "Découvrir" click
           setState("intro");
-        } else if (data.gift.status === "completed" && data.gift.adImage) {
-          // Already generated, show it
-          setAdImage(data.gift.adImage);
-          setAdMime(data.gift.adMimeType || "image/png");
-          setState("ready");
         } else if (data.gift.status === "completed" && !data.gift.seen) {
-          // Completed but no image in response — show generic reveal
           setState("ready");
         }
       })
       .catch(() => setState("hidden"));
   }, []);
 
-  const [giftId, setGiftId] = useState<string | null>(null);
+  const doGenerate = useCallback(async () => {
+    if (generatingRef.current) return;
+    generatingRef.current = true;
 
-  const handleDiscover = useCallback(async () => {
+    try {
+      const res = await fetch("/api/gift", { method: "POST" });
+      const data = await res.json();
+
+      if (!data.generatePayload) { setState("ready"); return; }
+
+      // Force square format
+      data.generatePayload.format = "square";
+
+      const genRes = await fetch("/api/generate-ad", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data.generatePayload),
+      });
+
+      if (genRes.ok) {
+        const adData = await genRes.json();
+        if (adData.imageBase64) {
+          setAdImage(adData.imageBase64);
+          setAdMime(adData.mimeType || "image/png");
+        }
+
+        const newAd: GeneratedAd = {
+          id: adData.id || `gift-${Date.now()}`,
+          format: "square",
+          imageBase64: adData.imageBase64,
+          mimeType: adData.mimeType || "image/png",
+          headline: adData.headline || "",
+          bodyText: adData.bodyText || "",
+          callToAction: adData.callToAction || "",
+          productId: adData.productId,
+          templateId: adData.templateId,
+          timestamp: Date.now(),
+          isGift: true,
+        };
+
+        addGeneratedAd(newAd);
+        if (currentUser) {
+          syncGeneratedAd(currentUser.id, newAd);
+        }
+
+        await fetch("/api/gift", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "complete", adId: newAd.id }),
+        });
+      }
+
+      setState("ready");
+      setMinimized(false);
+    } catch (err) {
+      console.error("[gift] Generation failed:", err);
+      setState("ready");
+      setMinimized(false);
+    }
+  }, [addGeneratedAd, syncGeneratedAd, currentUser]);
+
+  const handleDiscover = useCallback(() => {
     if (state === "intro") {
       setState("generating");
-      try {
-        // Step 1: Get generation payload from gift API
-        const res = await fetch("/api/gift", { method: "POST" });
-        const data = await res.json();
-
-        if (!data.generatePayload) {
-          setState("ready");
-          return;
-        }
-
-        setGiftId(data.gift?.id || null);
-
-        // Step 2: Call generate-ad with proper browser auth cookies
-        const genRes = await fetch("/api/generate-ad", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data.generatePayload),
-        });
-
-        if (genRes.ok) {
-          const adData = await genRes.json();
-          if (adData.imageBase64) {
-            setAdImage(adData.imageBase64);
-            setAdMime(adData.mimeType || "image/png");
-          }
-
-          // Step 3: Save ad to store + Supabase
-          const newAd: GeneratedAd = {
-            id: adData.id || `gift-${Date.now()}`,
-            format: adData.format || "square",
-            imageBase64: adData.imageBase64,
-            mimeType: adData.mimeType || "image/png",
-            headline: adData.headline || "",
-            bodyText: adData.bodyText || "",
-            callToAction: adData.callToAction || "",
-            productId: adData.productId,
-            templateId: adData.templateId,
-            timestamp: Date.now(),
-            isGift: true,
-          };
-
-          addGeneratedAd(newAd);
-          if (currentUser) {
-            syncGeneratedAd(currentUser.id, newAd);
-          }
-
-          // Step 4: Mark gift as completed
-          await fetch("/api/gift", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "complete", adId: newAd.id }),
-          });
-        }
-
-        setState("ready");
-      } catch (err) {
-        console.error("[gift] Generation failed:", err);
-        setState("ready");
-      }
+      doGenerate();
     } else if (state === "ready") {
       setState("revealed");
     }
-  }, [state]);
+  }, [state, doGenerate]);
+
+  const handleMinimize = () => {
+    setMinimized(true);
+  };
+
+  const handleRestore = () => {
+    setMinimized(false);
+  };
 
   const handleClose = () => {
     setState("hidden");
@@ -121,32 +125,64 @@ export default function GiftPopup() {
 
   if (state === "hidden" || state === "checking") return null;
 
+  // ── Minimized notification bar ──
+  if (minimized && state === "generating") {
+    return (
+      <div className="fixed bottom-6 right-6 z-[100] animate-in slide-in-from-bottom duration-300">
+        <div
+          onClick={handleRestore}
+          className="flex items-center gap-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white px-5 py-3 rounded-2xl shadow-xl shadow-amber-500/20 cursor-pointer hover:shadow-2xl transition-all"
+        >
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-sm font-bold">Cadeau en préparation...</span>
+          <Gift className="w-4 h-4" />
+        </div>
+      </div>
+    );
+  }
+
+  if (minimized && state === "ready") {
+    return (
+      <div className="fixed bottom-6 right-6 z-[100] animate-in slide-in-from-bottom duration-300">
+        <div
+          onClick={() => { setMinimized(false); setState("ready"); }}
+          className="flex items-center gap-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white px-5 py-3 rounded-2xl shadow-xl shadow-amber-500/20 cursor-pointer hover:shadow-2xl hover:scale-105 transition-all animate-pulse"
+        >
+          <PartyPopper className="w-4 h-4" />
+          <span className="text-sm font-bold">Votre cadeau est prêt !</span>
+          <span className="bg-white/20 rounded-lg px-2 py-0.5 text-xs font-bold">Ouvrir</span>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Full popup ──
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center animate-in fade-in duration-300">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={state === "generating" ? handleMinimize : undefined} />
 
-      {/* Confetti particles */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 rounded-full animate-bounce"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              backgroundColor: ["#F59E0B", "#EC4899", "#8B5CF6", "#10B981", "#3B82F6"][i % 5],
-              animationDelay: `${Math.random() * 2}s`,
-              animationDuration: `${1 + Math.random() * 2}s`,
-              opacity: 0.6,
-            }}
-          />
-        ))}
-      </div>
+      {/* Confetti */}
+      {(state === "intro" || state === "ready" || state === "revealed") && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 rounded-full animate-bounce"
+              style={{
+                left: `${10 + (i * 4.2) % 80}%`,
+                top: `${5 + (i * 7.3) % 85}%`,
+                backgroundColor: ["#F59E0B", "#EC4899", "#8B5CF6", "#10B981", "#3B82F6"][i % 5],
+                animationDelay: `${(i * 0.15) % 2}s`,
+                animationDuration: `${1.5 + (i % 3) * 0.5}s`,
+                opacity: 0.6,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
-      {/* Content */}
       <div className="relative z-10 max-w-sm w-full mx-4">
-        {/* INTRO — Gift box animation */}
+        {/* INTRO */}
         {state === "intro" && (
           <div className="bg-white rounded-3xl overflow-hidden shadow-2xl text-center">
             <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-pink-500 p-8">
@@ -171,10 +207,16 @@ export default function GiftPopup() {
           </div>
         )}
 
-        {/* GENERATING — Loading animation */}
+        {/* GENERATING */}
         {state === "generating" && (
           <div className="bg-white rounded-3xl overflow-hidden shadow-2xl text-center">
-            <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-pink-500 p-8">
+            <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-pink-500 p-8 relative">
+              <button
+                onClick={handleMinimize}
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
               <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4">
                 <div className="animate-spin">
                   <Sparkles className="w-12 h-12 text-white" />
@@ -191,11 +233,14 @@ export default function GiftPopup() {
               <div className="mt-4 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                 <div className="bg-gradient-to-r from-amber-400 to-orange-500 h-full rounded-full animate-pulse" style={{ width: "60%" }} />
               </div>
+              <button onClick={handleMinimize} className="mt-4 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+                Continuer en arrière-plan
+              </button>
             </div>
           </div>
         )}
 
-        {/* READY — Show "Ouvrir" button */}
+        {/* READY */}
         {state === "ready" && (
           <div className="bg-white rounded-3xl overflow-hidden shadow-2xl text-center">
             <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-pink-500 p-8">
@@ -217,7 +262,7 @@ export default function GiftPopup() {
           </div>
         )}
 
-        {/* REVEALED — Show the ad */}
+        {/* REVEALED */}
         {state === "revealed" && (
           <div className="bg-white rounded-3xl overflow-hidden shadow-2xl">
             <div className="bg-gradient-to-r from-amber-400 via-orange-400 to-pink-500 px-6 py-4 flex items-center justify-between">

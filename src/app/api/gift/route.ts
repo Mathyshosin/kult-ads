@@ -134,8 +134,8 @@ export async function POST() {
     const product = brandAnalysis.products[Math.floor(Math.random() * brandAnalysis.products.length)];
     const offer = brandAnalysis.offers.find((o) => o.productId === product.id) || null;
 
-    // Pick random format
-    const format: "square" | "story" = Math.random() > 0.5 ? "square" : "story";
+    // Always square format for gift ads
+    const format: "square" | "story" = "square";
 
     // Load images (product + logo)
     const { data: imgRows } = await supabase
