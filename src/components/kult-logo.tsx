@@ -1,4 +1,4 @@
-// Kultads logo — infinity symbol (∞) = infinite ad generation
+// Kultads logo — stylized infinity ∞ with inner spark
 export function KultLogoIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
@@ -10,15 +10,16 @@ export function KultLogoIcon({ className }: { className?: string }) {
         </linearGradient>
       </defs>
       <rect width="36" height="36" rx="10" fill="url(#kg1)" />
-      {/* Infinity symbol ∞ — thick, rounded, slightly tilted for dynamism */}
+      {/* Clean centered infinity ∞ */}
       <path
-        d="M11.5 18c0-2.5 2-4.5 4.5-4.5 1.8 0 3.2 1 4 2.5l0.5 0.9 0.5-0.9c0.8-1.5 2.2-2.5 4-2.5 2.5 0 4.5 2 4.5 4.5s-2 4.5-4.5 4.5c-1.8 0-3.2-1-4-2.5l-0.5-0.9-0.5 0.9c-0.8 1.5-2.2 2.5-4 2.5-2.5 0-4.5-2-4.5-4.5z"
+        d="M13 18c0-1.65 1.35-3 3-3 1.2 0 2.1.7 2.5 1.5L18 18l.5 1.5c.4.8 1.3 1.5 2.5 1.5 1.65 0 3-1.35 3-3s-1.35-3-3-3c-1.2 0-2.1.7-2.5 1.5L18 18l-.5-1.5C17.1 15.7 16.2 15 15 15c-1.65 0-3 1.35-3 3s1.35 3 3 3c1.2 0 2.1-.7 2.5-1.5"
         stroke="white"
-        strokeWidth="2.4"
+        strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill="none"
       />
+      {/* Small spark dot at center crossing */}
+      <circle cx="18" cy="18" r="1.2" fill="white" opacity="0.9" />
     </svg>
   );
 }
