@@ -1125,11 +1125,37 @@ export default function BrandPage() {
           >
             <div className="space-y-6">
               {/* Tip */}
-              <div className="flex items-start gap-3 bg-blue-500/[0.04] border border-primary/10 rounded-xl px-4 py-3">
-                <Camera className="w-4 h-4 text-blue-500/60 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  <span className="font-semibold text-gray-900">Conseil :</span> Utilisez des photos de vos produits sur fond blanc ou transparent (sans fond) pour de meilleurs résultats. L&apos;IA intègrera votre produit naturellement dans les publicités.
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0">
+                    <Camera className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <p className="text-sm font-bold text-gray-900">Photo produit sur fond blanc</p>
+                </div>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  Pour des publicités de qualité professionnelle, uploadez vos produits <strong>sur fond blanc ou transparent</strong> (détourés).
+                  L&apos;IA pourra les intégrer parfaitement dans n&apos;importe quel design.
                 </p>
+                <div className="flex items-center gap-4 pt-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-lg bg-white border-2 border-green-300 flex items-center justify-center">
+                      <Check className="w-5 h-5 text-green-500" />
+                    </div>
+                    <span className="text-[11px] text-green-700 font-medium">Fond blanc</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-lg bg-white border-2 border-green-300 flex items-center justify-center">
+                      <Check className="w-5 h-5 text-green-500" />
+                    </div>
+                    <span className="text-[11px] text-green-700 font-medium">Détouré (PNG)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-lg bg-gray-100 border-2 border-red-300 flex items-center justify-center">
+                      <X className="w-5 h-5 text-red-400" />
+                    </div>
+                    <span className="text-[11px] text-red-600 font-medium">Fond chargé</span>
+                  </div>
+                </div>
               </div>
 
               {/* Upload zone */}
