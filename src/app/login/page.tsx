@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Sparkles, Mail, Lock, ArrowRight } from "lucide-react";
 import { useState, Suspense } from "react";
 import { useAuthStore } from "@/lib/auth-store";
+import { createClient } from "@/lib/supabase/client";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -15,6 +16,16 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const planId = searchParams.get("plan");
   const login = useAuthStore((s) => s.login);
+
+  const handleGoogleLogin = async () => {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/dashboard/generate`,
+      },
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +112,7 @@ function LoginForm() {
 
           {/* Social login */}
           <div className="mt-8 space-y-3">
-            <button className="w-full flex items-center justify-center gap-3 border border-border rounded-xl py-3 text-sm font-medium text-foreground hover:bg-gray-50 transition-colors">
+            <button onClick={handleGoogleLogin} className="w-full flex items-center justify-center gap-3 border border-border rounded-xl py-3 text-sm font-medium text-foreground hover:bg-gray-50 transition-colors">
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
