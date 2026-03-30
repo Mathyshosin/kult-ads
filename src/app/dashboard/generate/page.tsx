@@ -233,6 +233,8 @@ export default function GeneratePage() {
       const ad = await res.json();
       completeGeneration(placeholderId, ad);
       if (currentUser) syncGeneratedAd(currentUser.id, { ...ad, id: placeholderId });
+      // Update credits counter in header
+      window.dispatchEvent(new Event("credits-updated"));
       addToast({
         type: "success",
         message: "Publicité générée !",

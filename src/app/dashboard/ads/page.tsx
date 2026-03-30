@@ -562,6 +562,8 @@ export default function AdsGalleryPage() {
       if (currentUser && brandAnalysisId) {
         syncGeneratedAd(currentUser.id, { ...data, id: targetId, format: targetFormat });
       }
+      // Update credits counter in header
+      window.dispatchEvent(new Event("credits-updated"));
     } catch (err) {
       failGeneration(targetId, err instanceof Error ? err.message : "Échec de la modification");
     }

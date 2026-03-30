@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useLayoutEffect, useTransition } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useTransition, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, Zap, Images, Building2, Settings, ChevronDown } from "lucide-react";
@@ -17,14 +17,21 @@ export default function DashboardHeader() {
   const isAdmin = currentUser?.email === "mathys.hosin@gmail.com";
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Fetch credits
-  useEffect(() => {
+  // Fetch credits + listen for updates
+  const refreshCredits = useCallback(() => {
     if (!currentUser) return;
     fetch("/api/user/subscription")
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setCredits(data.creditsRemaining); })
       .catch(() => {});
   }, [currentUser]);
+
+  useEffect(() => {
+    refreshCredits();
+    // Listen for credit changes (fired after generation)
+    window.addEventListener("credits-updated", refreshCredits);
+    return () => window.removeEventListener("credits-updated", refreshCredits);
+  }, [refreshCredits]);
 
   const handleLogout = async () => {
     setShowProfile(false);
