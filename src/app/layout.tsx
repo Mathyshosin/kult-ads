@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Adly | Générateur de publicités pour les marques",
+  title: "Kultads | Générateur de publicités pour les marques",
   description:
-    "Créez des publicités percutantes pour vos marques en quelques clics grâce à l'IA. Adly, le générateur d'ads intelligent.",
+    "Créez des publicités percutantes pour vos marques en quelques clics grâce à l'IA. Kultads, le générateur d'ads intelligent.",
 };
 
 export default function RootLayout({

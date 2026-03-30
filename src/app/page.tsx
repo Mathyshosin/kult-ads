@@ -105,7 +105,7 @@ function Hero({ adsCount }: { adsCount: number }) {
 
               {/* After (Generated — HelloBoku) */}
               <div className="absolute inset-0 hero-after-slide overflow-hidden">
-                <Image src="/template-after.png" alt="Publicité générée par adly" fill className="object-cover" sizes="500px" />
+                <Image src="/template-after.png" alt="Publicité générée par kultads" fill className="object-cover" sizes="500px" />
               </div>
 
               {/* Labels — separate from layers for proper visibility */}
@@ -416,14 +416,14 @@ function Comparison() {
             </div>
           </div>
 
-          {/* adly — highlighted center */}
+          {/* kultads — highlighted center */}
           <div className="relative bg-gradient-to-br from-violet-600 via-indigo-600 to-violet-700 rounded-2xl p-6 shadow-2xl shadow-violet-500/25 md:-mt-4 md:mb-[-16px]">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-400 text-[10px] font-bold uppercase tracking-wider text-gray-900 px-4 py-1 rounded-full shadow-lg whitespace-nowrap">
               Outil n°1 pour le e-commerce
             </div>
             <div className="flex items-center gap-3 mb-6 mt-2">
               <AdlyLogoIcon className="w-10 h-10" />
-              <span className="text-white font-bold text-lg">adly</span>
+              <span className="text-white font-bold text-lg">kultads</span>
             </div>
             <div className="space-y-3.5">
               {[
@@ -498,7 +498,7 @@ function WhyUs() {
             </span>
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
-            {"Derrière adly, une agence qui a créé des milliers de publicités e-commerce. Notre IA ne génère pas au hasard — elle reproduit ce qui fait vraiment vendre."}
+            {"Derrière kultads, une agence qui a créé des milliers de publicités e-commerce. Notre IA ne génère pas au hasard — elle reproduit ce qui fait vraiment vendre."}
           </p>
         </div>
 
@@ -548,7 +548,7 @@ function WhyUs() {
           <p className="text-gray-500 text-sm italic max-w-lg mx-auto">
             {"\u00AB On a créé l'outil qu'on aurait rêvé d'avoir quand on faisait 200 ads par mois pour nos clients. \u00BB"}
           </p>
-          <p className="text-violet-600 text-xs font-semibold mt-2">{"L'équipe adly"}</p>
+          <p className="text-violet-600 text-xs font-semibold mt-2">{"L'équipe kultads"}</p>
         </div>
       </div>
     </section>
@@ -727,7 +727,7 @@ function Testimonials() {
     {
       name: "Sarah M.",
       role: "Fondatrice, Skincare Brand",
-      text: "On a remplacé notre freelance à 800€/mois par Adly. Les résultats sont bluffants, surtout en copy-ads. On génère nos visuels en 2 minutes chrono.",
+      text: "On a remplacé notre freelance à 800€/mois par Kultads. Les résultats sont bluffants, surtout en copy-ads. On génère nos visuels en 2 minutes chrono.",
       stars: 5,
       metric: "ROAS x2.3",
     },
@@ -748,7 +748,7 @@ function Testimonials() {
     {
       name: "Marc R.",
       role: "CEO, Agence Digitale",
-      text: "On utilise Adly pour nos clients qui n'ont pas le budget pour un DA. Le rapport qualité/prix est imbattable. La modification par prompt est un game-changer.",
+      text: "On utilise Kultads pour nos clients qui n'ont pas le budget pour un DA. Le rapport qualité/prix est imbattable. La modification par prompt est un game-changer.",
       stars: 4,
       metric: "15 clients équipés",
     },
@@ -820,7 +820,7 @@ function Testimonials() {
 function FAQ() {
   const questions = [
     {
-      q: "Comment fonctionne adly ?",
+      q: "Comment fonctionne kultads ?",
       a: "Collez l'URL de votre boutique en ligne, notre IA analyse votre marque (logo, couleurs, produits, ton) puis génère des publicités professionnelles inspirées des meilleures ads du marché. Le tout en 30 secondes.",
     },
     {
@@ -922,7 +922,7 @@ function Footer() {
           <Link href="/cgu" className="hover:text-gray-700 transition-colors">
             CGU
           </Link>
-          <a href="mailto:contact@adly.io" className="hover:text-gray-700 transition-colors">
+          <a href="mailto:contact@kultads.io" className="hover:text-gray-700 transition-colors">
             Contact
           </a>
           <a href="#fonctionnalites" className="hover:text-gray-700 transition-colors">
@@ -930,7 +930,7 @@ function Footer() {
           </a>
         </div>
         <p className="text-sm text-gray-400">
-          &copy; 2026 Adly
+          &copy; 2026 Kultads
         </p>
       </div>
     </footer>
