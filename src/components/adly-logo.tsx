@@ -26,7 +26,7 @@ export function AdlyLogoFull({ iconSize = "w-9 h-9", textSize = "text-[17px]" }:
         priority
       />
       <div className="flex items-baseline">
-        <span className={`${textSize} font-black tracking-tight text-gray-900`}>ad</span>
+        <span className={`${textSize} font-black tracking-tight text-gray-900`}>Ad</span>
         <span className={`${textSize} font-black tracking-tight bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent`}>ly</span>
       </div>
     </div>
