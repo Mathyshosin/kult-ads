@@ -532,9 +532,37 @@ export default function BrandPage() {
             </div>
 
             {analysisError && (
-              <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3">
-                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-red-700">{analysisError}</p>
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700">{analysisError}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <p className="text-sm font-semibold text-gray-900 mb-1">Le site bloque le scan ?</p>
+                  <p className="text-xs text-gray-500 mb-3">Pas de souci ! Configurez votre marque manuellement en quelques minutes.</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAnalysisError("");
+                      setBrandAnalysis({
+                        url: url.trim() || "",
+                        brandName: "",
+                        brandDescription: "",
+                        tone: "",
+                        colors: [],
+                        targetAudience: "",
+                        uniqueSellingPoints: [],
+                        competitorProducts: [],
+                        products: [],
+                        offers: [],
+                      });
+                    }}
+                    className="w-full bg-gray-900 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Building2 className="w-4 h-4" />
+                    Configurer manuellement
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1100,7 +1128,7 @@ export default function BrandPage() {
               <div className="flex items-start gap-3 bg-blue-500/[0.04] border border-primary/10 rounded-xl px-4 py-3">
                 <Camera className="w-4 h-4 text-blue-500/60 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-gray-500 leading-relaxed">
-                  <span className="font-semibold text-gray-900">Conseil :</span> Utilisez des photos de vos produits avec leur packaging réel. Cela permet à l&apos;IA de reproduire fidèlement votre produit sans inventer un packaging fictif.
+                  <span className="font-semibold text-gray-900">Conseil :</span> Utilisez des photos de vos produits sur fond blanc ou transparent (sans fond) pour de meilleurs résultats. L&apos;IA intègrera votre produit naturellement dans les publicités.
                 </p>
               </div>
 
