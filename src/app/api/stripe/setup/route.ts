@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
 
   // Create separate products for each plan
   const starterProduct = await stripe.products.create({
-    name: "Kultads Starter",
-    description: "5 publicités pour découvrir Kultads",
+    name: "Adly Starter",
+    description: "5 publicités pour découvrir Adly",
   });
   const starterPrice = await stripe.prices.create({
     product: starterProduct.id,
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   });
 
   const proProduct = await stripe.products.create({
-    name: "Kultads Pro",
+    name: "Adly Pro",
     description: "500 crédits/mois — Pour les e-commerces ambitieux",
   });
   const proPrice = await stripe.prices.create({
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   });
 
   const agencyProduct = await stripe.products.create({
-    name: "Kultads Agency",
+    name: "Adly Agency",
     description: "2000 crédits/mois — Volume illimité pour les agences",
   });
   const agencyPrice = await stripe.prices.create({
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
   // Credit packs — separate products too
   const boostProduct = await stripe.products.create({
-    name: "Kultads Boost — 50 crédits",
+    name: "Adly Boost — 50 crédits",
     description: "Recharge de 50 crédits supplémentaires",
   });
   const boostPrice = await stripe.prices.create({
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
   });
 
   const growthProduct = await stripe.products.create({
-    name: "Kultads Growth — 130 crédits",
+    name: "Adly Growth — 130 crédits",
     description: "Recharge de 130 crédits supplémentaires",
   });
   const growthPrice = await stripe.prices.create({
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
   });
 
   const scaleProduct = await stripe.products.create({
-    name: "Kultads Scale — 300 crédits",
+    name: "Adly Scale — 300 crédits",
     description: "Recharge de 300 crédits supplémentaires",
   });
   const scalePrice = await stripe.prices.create({

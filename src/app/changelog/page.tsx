@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { KultLogoFull } from "@/components/kult-logo";
+import { AdlyLogoFull } from "@/components/adly-logo";
 import { createClient } from "@/lib/supabase/server";
 import {
   Check,
@@ -90,7 +90,7 @@ const fallbackEntries = [
     version: "v2.0",
     icon: "Shield",
     color: "from-cyan-500 to-blue-500",
-    title: "Lancement de Kultads",
+    title: "Lancement de Adly",
     description: "Première version publique.",
     items: [
       "Génération d'ads par IA (Gemini)",
@@ -138,7 +138,7 @@ export default async function ChangelogPage() {
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-5 h-14 flex items-center justify-between">
           <Link href="/" className="hover:opacity-80 transition-opacity">
-            <KultLogoFull />
+            <AdlyLogoFull />
           </Link>
           <Link
             href="/"
@@ -161,7 +161,7 @@ export default async function ChangelogPage() {
             Nouveautés & Mises à jour
           </h1>
           <p className="text-lg text-gray-500">
-            On améliore Kultads chaque jour. Suivez toutes les évolutions de la plateforme.
+            On améliore Adly chaque jour. Suivez toutes les évolutions de la plateforme.
           </p>
         </div>
 

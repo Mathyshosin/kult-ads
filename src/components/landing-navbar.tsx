@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { KultLogoFull } from "@/components/kult-logo";
+import { AdlyLogoFull } from "@/components/adly-logo";
 
 export default function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -35,7 +35,7 @@ export default function LandingNavbar() {
         }`}>
           {/* Logo */}
           <Link href="/" aria-label="Accueil" className="relative z-10 flex-shrink-0">
-            <KultLogoFull iconSize={scrolled ? "w-7 h-7" : "w-9 h-9"} textSize={scrolled ? "text-[15px]" : "text-[17px]"} />
+            <AdlyLogoFull iconSize={scrolled ? "w-7 h-7" : "w-9 h-9"} textSize={scrolled ? "text-[15px]" : "text-[17px]"} />
           </Link>
 
           {/* Center links — desktop */}

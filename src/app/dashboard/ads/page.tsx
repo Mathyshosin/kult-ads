@@ -241,12 +241,12 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite, isAd
       const dataUrl = await toPng(cardRef.current, { quality: 1, pixelRatio: 2, cacheBust: true });
       const link = document.createElement("a");
       link.href = dataUrl;
-      link.download = `kult-ad-${ad.format}-${Date.now()}.png`;
+      link.download = `adly-${ad.format}-${Date.now()}.png`;
       link.click();
     } catch {
       const link = document.createElement("a");
       link.href = ad.imageUrl || `data:${ad.mimeType};base64,${ad.imageBase64}`;
-      link.download = `kult-ad-${ad.format}-${ad.id}.png`;
+      link.download = `adly-${ad.format}-${ad.id}.png`;
       link.click();
     }
     setIsExporting(false);
@@ -465,7 +465,7 @@ export default function AdsGalleryPage() {
     if (!src) return;
     const link = document.createElement("a");
     link.href = src;
-    link.download = `kult-ad-${ad.format}-${ad.id}.png`;
+    link.download = `adly-${ad.format}-${ad.id}.png`;
     link.click();
   };
 

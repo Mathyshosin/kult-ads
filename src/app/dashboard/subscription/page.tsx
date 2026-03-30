@@ -13,7 +13,7 @@ const plans = [
     price: "5€",
     period: "unique",
     credits: "5 crédits",
-    description: "Découvrez Kultads",
+    description: "Découvrez Adly",
     features: [
       "5 publicités générées par IA",
       "Accès à la bibliothèque",

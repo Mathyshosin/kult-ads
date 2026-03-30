@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useTransition, useCallbac
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, Zap, Images, Building2, Settings, ChevronDown } from "lucide-react";
-import { KultLogoFull } from "./kult-logo";
+import { AdlyLogoFull } from "./adly-logo";
 import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 
@@ -102,7 +102,7 @@ export default function DashboardHeader() {
         <div className="h-14 flex items-center justify-between">
           {/* Logo */}
           <Link href="/dashboard/generate" className="group hover:opacity-90 transition-opacity">
-            <KultLogoFull />
+            <AdlyLogoFull />
           </Link>
 
           {/* Navigation tabs with sliding pill */}
