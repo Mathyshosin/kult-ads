@@ -24,7 +24,9 @@ import {
   Search,
   Save,
   Camera,
+  ArrowRight,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // ── Scene types for AI generation ──
 const sceneTypes = [
@@ -124,6 +126,7 @@ export default function BrandPage() {
   const syncDeleteImage = useWizardStore((s) => s.syncDeleteImage);
   const syncDeleteLogo = useWizardStore((s) => s.syncDeleteLogo);
   const currentUser = useAuthStore((s) => s.currentUser);
+  const router = useRouter();
 
   // ── Analysis state ──
   const [url, setUrl] = useState("");
@@ -1359,9 +1362,9 @@ export default function BrandPage() {
         )}
       </div>
 
-      {/* Sticky save button */}
+      {/* Sticky action buttons */}
       {brandAnalysis && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3">
           <button
             onClick={() => {
               if (currentUser) {
@@ -1371,10 +1374,22 @@ export default function BrandPage() {
                 saveTimerRef.current = setTimeout(() => setShowSaved(false), 2000);
               }
             }}
-            className="bg-gradient-to-r from-blue-500 to-violet-500 hover:shadow-lg hover:shadow-blue-500/20 flex items-center gap-2 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/5-lg"
+            className="bg-white border border-gray-200 hover:border-gray-300 flex items-center gap-2 text-gray-700 px-5 py-3 rounded-xl text-sm font-semibold shadow-lg"
           >
             <Save className="w-4 h-4" />
-            Sauvegarder les modifications
+            Sauvegarder
+          </button>
+          <button
+            onClick={() => {
+              if (currentUser) {
+                syncBrandAnalysis(currentUser.id);
+              }
+              router.push("/dashboard/generate");
+            }}
+            className="bg-gradient-to-r from-blue-500 to-violet-500 hover:shadow-lg hover:shadow-blue-500/20 flex items-center gap-2 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-lg"
+          >
+            Créer une publicité
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       )}
