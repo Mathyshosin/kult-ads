@@ -51,7 +51,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         <div className="py-8">{children}</div>
       )}
       <ToastContainer />
-      <GiftPopup />
+      {/* <GiftPopup /> — disabled for now, re-enable when gift system is stable */}
     </div>
   );
 }
