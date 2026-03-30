@@ -36,17 +36,21 @@ export async function generateImage(
     try {
       console.log(`[gemini] Attempt ${attempt}/${maxRetries}...`);
 
-      const response = await ai.models.generateContent({
+      // 50s timeout to stay within Vercel's 60s limit
+      const genPromise = ai.models.generateContent({
         model: "gemini-3.1-flash-image-preview",
         contents,
         config: {
           responseModalities: ["IMAGE", "TEXT"],
-          // Aspect ratio in config for proper image dimensions
           imageConfig: {
             aspectRatio,
           },
         },
       });
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Gemini timeout (50s)")), 50000)
+      );
+      const response = await Promise.race([genPromise, timeoutPromise]);
 
       // Extract image from response
       const parts = response.candidates?.[0]?.content?.parts || [];

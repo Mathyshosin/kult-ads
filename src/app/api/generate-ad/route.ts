@@ -341,7 +341,7 @@ export async function POST(request: Request) {
       : "Mets en avant le bénéfice le plus fort du produit avec les vrais arguments de la marque.";
 
     const [visualResult, copyRaw] = await Promise.all([
-      generateImage(visualPrompt, aspectRatio, referenceImages),
+      generateImage(visualPrompt, aspectRatio, referenceImages, 1),
       generateAdCopy(brandContext, format, copyAngle),
     ]);
 
