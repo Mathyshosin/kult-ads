@@ -134,7 +134,7 @@ function StepUrlAnimation() {
 
 function StepTemplateAnimation() {
   return (
-    <div className="h-[280px] flex items-center">
+    <div className="h-[280px] flex items-center justify-center bg-gray-50 rounded-xl">
       <LiveTemplateCarousel />
     </div>
   );
@@ -142,7 +142,7 @@ function StepTemplateAnimation() {
 
 function StepGenerateAnimation() {
   return (
-    <div className="bg-gray-50 rounded-xl p-4 overflow-hidden h-[280px] flex flex-col">
+    <div className="bg-gray-50 rounded-xl p-4 h-[280px] flex flex-col">
       <div className="relative flex-1 rounded-lg overflow-hidden">
         {/* Before */}
         <div className="absolute inset-0">
