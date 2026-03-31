@@ -23,15 +23,11 @@ export default function LandingNavbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50">
       {/* Floating bar container */}
-      <div className={`mx-auto transition-all duration-500 ease-out ${
-        scrolled
-          ? "max-w-3xl mt-3 px-2"
-          : "max-w-7xl mt-0 px-6"
-      }`}>
-        <div className={`flex items-center justify-between transition-all duration-500 ease-out ${
+      <div className="mx-auto max-w-7xl px-6">
+        <div className={`flex items-center justify-between transition-all duration-300 ease-out h-16 ${
           scrolled
-            ? "bg-white/80 backdrop-blur-2xl shadow-lg shadow-black/[0.04] rounded-2xl px-5 h-14"
-            : "bg-transparent px-0 h-16"
+            ? "bg-white/80 backdrop-blur-2xl shadow-lg shadow-black/[0.04] rounded-2xl px-5 -mx-1"
+            : "bg-transparent"
         }`}>
           {/* Logo */}
           <Link href="/" aria-label="Accueil" className="relative z-10 flex-shrink-0">

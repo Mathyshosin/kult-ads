@@ -395,12 +395,20 @@ html {
 }
 .step-check-pop { animation: check-pop 5s ease-out infinite; }
 
-@keyframes generate-reveal {
-  0%, 30% { clip-path: inset(0 0 100% 0); }
-  60%, 85% { clip-path: inset(0 0 0 0); }
-  95%, 100% { clip-path: inset(0 0 100% 0); }
+/* Step 3 cooking animation: before (0-30%) → cooking overlay (30-60%) → after reveal (60-90%) → reset */
+@keyframes cooking-overlay {
+  0%, 25% { opacity: 0; }
+  30%, 55% { opacity: 1; }
+  60%, 100% { opacity: 0; }
 }
-.step-generate-reveal { animation: generate-reveal 5s ease-in-out infinite; }
+.step-cooking-overlay { opacity: 0; animation: cooking-overlay 8s ease-in-out infinite; }
+
+@keyframes generate-reveal {
+  0%, 55% { clip-path: inset(0 0 100% 0); }
+  65%, 85% { clip-path: inset(0 0 0 0); }
+  92%, 100% { clip-path: inset(0 0 100% 0); }
+}
+.step-generate-reveal { animation: generate-reveal 8s ease-in-out infinite; }
 
 @keyframes zap-pulse {
   0%, 100% { opacity: 0.3; }
