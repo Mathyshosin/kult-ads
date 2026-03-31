@@ -143,9 +143,9 @@ function StepTemplateAnimation() {
 function StepGenerateAnimation() {
   return (
     <div className="rounded-xl h-[280px] relative">
-      <div className="absolute inset-0 rounded-xl overflow-hidden">
+      <div className="absolute inset-0 rounded-xl overflow-hidden bg-gray-100">
         {/* Before */}
-        <Image src="/template-before.png" alt="Template original" fill className="object-cover" sizes="400px" />
+        <Image src="/template-before.png" alt="Template original" fill className="object-contain" sizes="400px" />
         {/* Cooking animation overlay */}
         <div className="absolute inset-0 step-cooking-overlay bg-violet-600/90 flex items-center justify-center z-10">
           <div className="text-center">
@@ -155,7 +155,7 @@ function StepGenerateAnimation() {
         </div>
         {/* After */}
         <div className="absolute inset-0 step-generate-reveal z-20">
-          <Image src="/template-after.png" alt="Ad générée" fill className="object-cover" sizes="400px" />
+          <Image src="/template-after.png" alt="Ad générée" fill className="object-contain" sizes="400px" />
         </div>
       </div>
       <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-1.5 z-30">
