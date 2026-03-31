@@ -22,7 +22,7 @@ import {
 
 function Hero({ adsCount }: { adsCount: number }) {
   return (
-    <section className="pt-28 pb-20 px-6 bg-white relative overflow-hidden">
+    <section className="pt-36 pb-20 px-6 bg-white relative overflow-hidden">
       <div className="absolute inset-0 bg-dots opacity-40 pointer-events-none" />
 
       <div className="max-w-5xl mx-auto text-center relative z-10">
@@ -91,7 +91,7 @@ function Hero({ adsCount }: { adsCount: number }) {
 
 function StepUrlAnimation() {
   return (
-    <div className="bg-gray-900 rounded-xl p-4 overflow-hidden h-[180px]">
+    <div className="bg-gray-900 rounded-xl p-4 overflow-hidden h-[220px]">
       <div className="flex items-center gap-1.5 mb-3">
         <div className="w-2 h-2 rounded-full bg-red-400" />
         <div className="w-2 h-2 rounded-full bg-yellow-400" />
@@ -134,7 +134,7 @@ function StepUrlAnimation() {
 
 function StepTemplateAnimation() {
   return (
-    <div className="h-[180px] flex items-center">
+    <div className="h-[220px] flex items-center">
       <LiveTemplateCarousel />
     </div>
   );
@@ -142,7 +142,7 @@ function StepTemplateAnimation() {
 
 function StepGenerateAnimation() {
   return (
-    <div className="bg-gray-50 rounded-xl p-4 overflow-hidden h-[180px] flex flex-col">
+    <div className="bg-gray-50 rounded-xl p-4 overflow-hidden h-[220px] flex flex-col">
       <div className="relative flex-1 rounded-lg overflow-hidden">
         {/* Before */}
         <div className="absolute inset-0">
@@ -676,27 +676,41 @@ function FAQ() {
 
 function FinalCTA() {
   return (
-    <section className="py-24 px-6">
-      <div className="max-w-4xl mx-auto text-center bg-violet-600 rounded-3xl p-12 md:p-20 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+    <section className="py-24 px-6 bg-white">
+      <div className="max-w-5xl mx-auto">
+        <div className="relative rounded-[2rem] overflow-hidden">
+          {/* Background with subtle pattern */}
+          <div className="absolute inset-0 bg-gray-900" />
+          <div className="absolute inset-0 opacity-30" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, rgba(139,92,246,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(99,102,241,0.2) 0%, transparent 50%)" }} />
 
-        <div className="relative z-10">
-          <h2 className="text-3xl md:text-5xl font-extrabold text-white leading-tight">
-            Vos concurrents lancent déjà leurs pubs.<br className="hidden md:block" />
-            Et vous ?
-          </h2>
-          <p className="mt-5 text-lg text-white/70 max-w-xl mx-auto">
-            30 secondes pour créer votre première pub. Gratuitement.
-          </p>
-          <div className="mt-10">
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-2 bg-white text-violet-700 font-bold px-8 py-4 rounded-2xl text-lg hover:shadow-xl hover:shadow-black/10 transition-all duration-200 hover:scale-[1.02]"
-            >
-              Essayer maintenant
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+          <div className="relative z-10 px-8 py-16 md:px-16 md:py-24 text-center">
+            {/* Small badge */}
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/10 rounded-full px-4 py-1.5 mb-8">
+              <Zap className="w-3.5 h-3.5 text-violet-400" />
+              <span className="text-sm font-medium text-white/70">Prêt en 30 secondes</span>
+            </div>
+
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white leading-tight mb-5">
+              Arrêtez de payer trop cher<br className="hidden md:block" />
+              pour vos publicités.
+            </h2>
+            <p className="text-lg text-white/50 max-w-xl mx-auto mb-10">
+              Rejoignez les e-commerçants qui génèrent des pubs professionnelles en quelques clics.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                href="/signup"
+                className="inline-flex items-center gap-2 bg-white text-gray-900 font-bold px-8 py-4 rounded-2xl text-lg hover:shadow-xl hover:shadow-white/10 transition-all duration-200 hover:scale-[1.02]"
+              >
+                Commencer gratuitement
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            </div>
+
+            <p className="mt-5 text-sm text-white/30">
+              1 pub offerte &middot; Sans carte bancaire
+            </p>
           </div>
         </div>
       </div>
