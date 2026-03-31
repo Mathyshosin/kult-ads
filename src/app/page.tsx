@@ -142,27 +142,27 @@ function StepTemplateAnimation() {
 
 function StepGenerateAnimation() {
   return (
-    <div className="bg-gray-50 rounded-xl p-4 h-[280px] flex flex-col">
-      <div className="relative flex-1 rounded-lg overflow-hidden">
+    <div className="rounded-xl h-[280px] relative">
+      <div className="absolute inset-0 rounded-xl overflow-hidden">
         {/* Before */}
-        <div className="absolute inset-0">
-          <Image src="/template-before.png" alt="Template original" fill className="object-cover" sizes="300px" />
-        </div>
+        <Image src="/template-before.png" alt="Template original" fill className="object-cover" sizes="400px" />
         {/* Cooking animation overlay */}
-        <div className="absolute inset-0 step-cooking-overlay bg-violet-600/90 flex items-center justify-center">
+        <div className="absolute inset-0 step-cooking-overlay bg-violet-600/90 flex items-center justify-center z-10">
           <div className="text-center">
-            <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-2" />
-            <span className="text-[10px] font-bold text-white/80">Génération...</span>
+            <div className="w-10 h-10 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-2" />
+            <span className="text-xs font-bold text-white/80">Génération...</span>
           </div>
         </div>
         {/* After */}
-        <div className="absolute inset-0 step-generate-reveal">
-          <Image src="/template-after.png" alt="Ad générée" fill className="object-cover" sizes="300px" />
+        <div className="absolute inset-0 step-generate-reveal z-20">
+          <Image src="/template-after.png" alt="Ad générée" fill className="object-cover" sizes="400px" />
         </div>
       </div>
-      <div className="flex items-center justify-center gap-1.5 mt-2">
-        <Zap className="w-3 h-3 text-violet-600 step-zap-pulse" />
-        <span className="text-[10px] font-medium text-gray-500">~30 secondes</span>
+      <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-1.5 z-30">
+        <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1.5">
+          <Zap className="w-3 h-3 text-violet-600 step-zap-pulse" />
+          <span className="text-[10px] font-medium text-gray-600">~30 secondes</span>
+        </div>
       </div>
     </div>
   );
