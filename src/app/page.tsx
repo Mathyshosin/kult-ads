@@ -22,7 +22,7 @@ import {
 
 function Hero({ adsCount }: { adsCount: number }) {
   return (
-    <section className="pt-44 pb-20 px-6 bg-white relative overflow-hidden">
+    <section className="pt-52 pb-20 px-6 bg-white relative overflow-hidden">
       <div className="absolute inset-0 bg-dots opacity-40 pointer-events-none" />
 
       <div className="max-w-5xl mx-auto text-center relative z-10">
