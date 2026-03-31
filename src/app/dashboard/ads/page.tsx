@@ -138,11 +138,12 @@ function FailedCard({ ad, onRetry, onDelete }: { ad: GeneratedAd; onRetry?: () =
 }
 
 // ── Completed card with actions below ──
-function CompletedCard({ ad, onClick, onToggleFavorite, onModify, onDownload, onOpenModify }: {
+function CompletedCard({ ad, onClick, onToggleFavorite, onModify, onDownload, onDelete, onOpenModify }: {
   ad: GeneratedAd;
   onClick: () => void;
   onToggleFavorite: () => void;
   onModify: (ad: GeneratedAd, prompt: string, formatOverride?: "square" | "story") => void;
+  onDelete: (id: string) => void;
   onDownload: (ad: GeneratedAd) => void;
   onOpenModify: () => void;
 }) {
@@ -177,13 +178,21 @@ function CompletedCard({ ad, onClick, onToggleFavorite, onModify, onDownload, on
         )}
         {/* Hover overlay with download */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <button
-          onClick={(e) => { e.stopPropagation(); onDownload(ad); }}
-          className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/90 backdrop-blur-sm text-gray-700 text-[11px] font-semibold shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-white active:scale-95"
-        >
-          <Download className="w-3 h-3" />
-          Télécharger
-        </button>
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
+          <button
+            onClick={(e) => { e.stopPropagation(); onDownload(ad); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/90 backdrop-blur-sm text-gray-700 text-[11px] font-semibold shadow-sm hover:bg-white active:scale-95"
+          >
+            <Download className="w-3 h-3" />
+            Télécharger
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(ad.id); }}
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/90 backdrop-blur-sm text-white shadow-sm hover:bg-red-600 active:scale-95"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
         {/* Favorite */}
         <button
           onClick={handleFavorite}
@@ -670,6 +679,7 @@ export default function AdsGalleryPage() {
                 onToggleFavorite={() => handleToggleFavorite(ad.id)}
                 onModify={handleModify}
                 onDownload={handleQuickDownload}
+                onDelete={handleDelete}
                 onOpenModify={() => { setOpenModify(true); setSelectedAd(ad); }}
               />
             );
