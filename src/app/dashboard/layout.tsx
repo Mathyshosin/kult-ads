@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import DashboardHeader from "@/components/dashboard-header";
 import AuthGuard from "@/components/auth-guard";
@@ -16,9 +16,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [subChecked, setSubChecked] = useState(false);
+  const hydrationStarted = useRef(false);
 
   useEffect(() => {
-    if (currentUser && !isHydrated) {
+    if (currentUser && !isHydrated && !hydrationStarted.current) {
+      hydrationStarted.current = true;
       hydrateFromSupabase(currentUser.id);
     }
   }, [currentUser, isHydrated, hydrateFromSupabase]);
