@@ -534,23 +534,36 @@ export default function AdsGalleryPage() {
     setSelectedAd(null);
 
     try {
-      const res = await fetch("/api/generate-ad", {
+      const genBody = JSON.stringify({
+        brandAnalysis,
+        product,
+        format: targetFormat,
+        modificationPrompt: prompt,
+        previousAdId: ad.id,
+        previousAdBase64: ad.imageBase64,
+        previousAdMimeType: ad.mimeType,
+        productImageBase64: productImage?.base64,
+        productImageMimeType: productImage?.mimeType,
+        brandLogoBase64: brandLogo?.base64,
+        brandLogoMimeType: brandLogo?.mimeType,
+      });
+
+      let res = await fetch("/api/generate-ad", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          brandAnalysis,
-          product,
-          format: targetFormat,
-          modificationPrompt: prompt,
-          previousAdId: ad.id,
-          previousAdBase64: ad.imageBase64,
-          previousAdMimeType: ad.mimeType,
-          productImageBase64: productImage?.base64,
-          productImageMimeType: productImage?.mimeType,
-          brandLogoBase64: brandLogo?.base64,
-          brandLogoMimeType: brandLogo?.mimeType,
-        }),
+        body: genBody,
       });
+
+      // Auto-retry once on failure (except credit errors)
+      if (!res.ok && res.status !== 402) {
+        console.log("[modify] First attempt failed, retrying...");
+        await new Promise((r) => setTimeout(r, 2000));
+        res = await fetch("/api/generate-ad", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: genBody,
+        });
+      }
 
       if (!res.ok) {
         const text = await res.text();
