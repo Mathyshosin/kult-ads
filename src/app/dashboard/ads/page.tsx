@@ -25,6 +25,33 @@ import {
 import { toPng } from "html-to-image";
 import { FunFact } from "@/components/fun-facts";
 
+// Compress base64 image to reduce payload size for modifications
+async function compressBase64(base64: string, mimeType: string, maxSize = 768): Promise<{ base64: string; mimeType: string }> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      let w = img.width;
+      let h = img.height;
+      if (w > maxSize || h > maxSize) {
+        const ratio = Math.min(maxSize / w, maxSize / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve({ base64, mimeType }); return; }
+      ctx.drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      const compressed = dataUrl.split(",")[1];
+      resolve({ base64: compressed, mimeType: "image/jpeg" });
+    };
+    img.onerror = () => resolve({ base64, mimeType });
+    img.src = `data:${mimeType};base64,${base64}`;
+  });
+}
+
 // Helper: use public URL when available, fallback to base64
 function adImageSrc(ad: GeneratedAd): string {
   if (ad.imageUrl) return ad.imageUrl;
@@ -525,15 +552,15 @@ export default function AdsGalleryPage() {
     setSelectedAd(null);
 
     try {
-      // Always send ad base64 for modifications (IDs in store don't match Supabase UUIDs)
-      // Don't send product/logo images (not used by Gemini in edit mode)
+      // Compress the ad image before sending (reduces ~1MB to ~200KB)
+      const compressed = await compressBase64(ad.imageBase64, ad.mimeType);
       const genBody = JSON.stringify({
         brandAnalysis,
         product,
         format: targetFormat,
         modificationPrompt: prompt,
-        previousAdBase64: ad.imageBase64,
-        previousAdMimeType: ad.mimeType,
+        previousAdBase64: compressed.base64,
+        previousAdMimeType: compressed.mimeType,
       });
 
       let res = await fetch("/api/generate-ad", {
