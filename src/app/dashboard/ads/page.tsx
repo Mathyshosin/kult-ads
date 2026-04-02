@@ -534,18 +534,19 @@ export default function AdsGalleryPage() {
     setSelectedAd(null);
 
     try {
+      // For modifications: don't send product/logo images (not used by Gemini in edit mode)
+      // Only send ad base64 if not yet saved in Supabase
+      const adSavedInSupabase = ad.id && !ad.id.startsWith("gen-");
       const genBody = JSON.stringify({
         brandAnalysis,
         product,
         format: targetFormat,
         modificationPrompt: prompt,
         previousAdId: ad.id,
-        previousAdBase64: ad.imageBase64,
-        previousAdMimeType: ad.mimeType,
-        productImageBase64: productImage?.base64,
-        productImageMimeType: productImage?.mimeType,
-        brandLogoBase64: brandLogo?.base64,
-        brandLogoMimeType: brandLogo?.mimeType,
+        ...(adSavedInSupabase ? {} : {
+          previousAdBase64: ad.imageBase64,
+          previousAdMimeType: ad.mimeType,
+        }),
       });
 
       let res = await fetch("/api/generate-ad", {
