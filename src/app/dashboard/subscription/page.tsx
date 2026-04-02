@@ -8,14 +8,14 @@ type SubData = { plan: string; creditsRemaining: number; creditsMonthly: number 
 
 const plans = [
   {
-    id: "starter",
-    name: "Starter",
-    price: "5€",
-    period: "unique",
-    credits: "5 crédits",
-    description: "Découvrez Kultads",
+    id: "free",
+    name: "Gratuit",
+    price: "0€",
+    period: "",
+    credits: "2 crédits offerts",
+    description: "Testez Kultads gratuitement",
     features: [
-      "5 publicités générées par IA",
+      "2 publicités générées par IA",
       "Accès à la bibliothèque",
       "4 modes de création",
       "Export HD",
@@ -25,8 +25,8 @@ const plans = [
     bgLight: "bg-blue-50",
     borderColor: "border-blue-200",
     popular: false,
-    badge: "Meilleur pour débuter",
-    badgeColor: "bg-blue-100 text-blue-700",
+    badge: "Essai gratuit",
+    badgeColor: "bg-green-100 text-green-700",
   },
   {
     id: "pro",

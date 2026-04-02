@@ -60,13 +60,13 @@ export async function getOrCreateSubscription(userId: string, userEmail?: string
 
   if (data) return data as UserSubscription;
 
-  // Create free subscription (0 credits)
+  // Create free subscription with 2 trial credits
   const { data: newSub } = await supabase
     .from("user_subscriptions")
     .insert({
       user_id: userId,
       plan: "free",
-      credits_remaining: 0,
+      credits_remaining: 2,
       credits_monthly: 0,
     })
     .select()

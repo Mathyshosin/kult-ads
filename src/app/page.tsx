@@ -406,21 +406,21 @@ function WhyUs() {
 function Pricing() {
   const plans = [
     {
-      name: "Starter",
-      price: "5€",
+      name: "Gratuit",
+      price: "0€",
       period: "",
-      description: "Le meilleur moyen de tester Kultads sur votre marque",
-      badge: "Idéal pour tester",
+      description: "Testez Kultads gratuitement sur votre marque",
+      badge: "Essai gratuit",
       features: [
-        "5 publicités générées par IA",
+        "2 publicités générées par IA",
         "Tous les formats (carré + story)",
         "Accès à la bibliothèque complète",
         "Retouche IA incluse",
-        "Paiement unique — pas d'abonnement",
+        "Sans carte bancaire",
       ],
-      cta: "Tester pour 5€",
+      cta: "Essayer gratuitement",
       highlighted: false,
-      planId: "starter",
+      planId: "free",
     },
     {
       name: "Pro",
@@ -467,7 +467,7 @@ function Pricing() {
             Moins cher qu&apos;un freelance. Plus rapide qu&apos;une agence.
           </h2>
           <p className="mt-4 text-gray-500 text-lg">
-            Testez dès 5€. Sans engagement. Sans abonnement pour commencer.
+            2 pubs offertes pour tester. Sans engagement. Sans carte bancaire.
           </p>
         </div>
 
@@ -689,7 +689,7 @@ function FinalCTA() {
           href="/signup"
           className="inline-flex items-center gap-2 bg-white text-violet-700 font-bold px-10 py-4 rounded-2xl text-lg hover:shadow-xl hover:shadow-black/10 transition-all duration-200 hover:scale-[1.02]"
         >
-          Commencer maintenant (5€)
+          Essayer gratuitement
           <ArrowRight className="w-5 h-5" />
         </Link>
         <p className="mt-5 text-sm text-white/50">
