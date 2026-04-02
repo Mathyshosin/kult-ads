@@ -243,22 +243,13 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite, isAd
   const [modifyPrompt, setModifyPrompt] = useState("");
 
   async function handleDownload() {
-    if (!cardRef.current) return;
-    setIsExporting(true);
-    try {
-      await new Promise((r) => setTimeout(r, 50));
-      const dataUrl = await toPng(cardRef.current, { quality: 1, pixelRatio: 2, cacheBust: true });
-      const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = `kultads-${ad.format}-${Date.now()}.png`;
-      link.click();
-    } catch {
-      const link = document.createElement("a");
-      link.href = ad.imageUrl || `data:${ad.mimeType};base64,${ad.imageBase64}`;
-      link.download = `kultads-${ad.format}-${ad.id}.png`;
-      link.click();
-    }
-    setIsExporting(false);
+    // Download raw image directly (no DOM capture = no rounded corners)
+    const src = ad.imageUrl || (ad.imageBase64 ? `data:${ad.mimeType};base64,${ad.imageBase64}` : null);
+    if (!src) return;
+    const link = document.createElement("a");
+    link.href = src;
+    link.download = `kultads-${ad.format}-${Date.now()}.png`;
+    link.click();
   }
 
   const handleToggleFavorite = useCallback(() => {
