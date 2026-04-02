@@ -96,16 +96,17 @@ export default function GeneratePage() {
     }
   }, [selectedProduct, brandAnalysis]);
 
-  // Auto-select image for product
+  // Auto-select image only when product changes (not when selectedImage changes)
   useEffect(() => {
     if (!selectedProduct || uploadedImages.length === 0) return;
     const productImg = uploadedImages.find((img) => img.productId === selectedProduct.id);
     if (productImg) {
       setSelectedImage(productImg.id);
-    } else if (!selectedImage) {
-      setSelectedImage(uploadedImages[0].id);
+    } else {
+      setSelectedImage(uploadedImages[0]?.id || "");
     }
-  }, [selectedProduct, uploadedImages, selectedImage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProduct, uploadedImages]);
 
   const handleReferenceUpload = useCallback(
     async (files: File[]) => {
