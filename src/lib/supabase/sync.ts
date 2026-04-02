@@ -453,28 +453,35 @@ export async function loadGeneratedAds(
 
   if (!rows || rows.length === 0) return [];
 
-  // Don't download images — use signed URLs for display (much faster for 50+ ads)
-  const ads: GeneratedAd[] = [];
-  for (const row of rows) {
-    // Get signed URL (valid 1 hour)
-    const { data: urlData } = await sb.storage
-      .from("generated-ads")
-      .createSignedUrl(row.image_path, 3600);
+  // Get signed URLs in batch (parallel, not sequential)
+  const paths = rows.map((r) => r.image_path);
+  const { data: signedUrls } = await sb.storage
+    .from("generated-ads")
+    .createSignedUrls(paths, 3600);
 
+  // Build a map of path → signed URL
+  const urlMap = new Map<string, string>();
+  if (signedUrls) {
+    for (const item of signedUrls) {
+      if (item.signedUrl) urlMap.set(item.path || "", item.signedUrl);
+    }
+  }
+
+  return rows.map((row) => {
     let debugInfo: GeneratedAd["_debug"] | undefined;
     if (row.debug_info) {
       try {
         debugInfo = typeof row.debug_info === "string"
           ? JSON.parse(row.debug_info)
           : row.debug_info;
-      } catch { /* ignore parse errors */ }
+      } catch { /* ignore */ }
     }
 
-    ads.push({
+    return {
       id: row.id,
       format: row.format,
       imageBase64: "",
-      imageUrl: urlData?.signedUrl || "",
+      imageUrl: urlMap.get(row.image_path) || "",
       mimeType: row.image_path.endsWith(".png") ? "image/png" : "image/jpeg",
       headline: row.headline || "",
       bodyText: row.body_text || "",
@@ -486,10 +493,8 @@ export async function loadGeneratedAds(
       timestamp: new Date(row.created_at).getTime(),
       _debug: debugInfo,
       storagePath: row.image_path,
-    });
-  }
-
-  return ads;
+    };
+  });
 }
 
 export async function deleteGeneratedAd(
