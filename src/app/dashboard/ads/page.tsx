@@ -607,7 +607,7 @@ export default function AdsGalleryPage() {
   };
 
   // Only show loading if no ads in memory yet and still loading
-  if (!isHydrated || (!adsLoaded && generatedAds.length === 0)) {
+  if (!isHydrated) {
     return (
       <div className="max-w-7xl mx-auto px-5">
         <AdsLoadingState />
@@ -684,7 +684,7 @@ export default function AdsGalleryPage() {
           </div>
         </div>
       ) : (
-        <div className="columns-2 sm:columns-3 lg:columns-4 gap-4 space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {filtered.map((ad) => {
             const status = ad.status || "completed";
             if (status === "generating") {
