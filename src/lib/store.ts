@@ -319,23 +319,19 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
     try {
       const result = await loadLatestBrandAnalysis(userId);
       if (result) {
-        // Phase 1: brand + product images (fast, needed for Créer page)
-        const { images, logo } = await loadUploadedImages(userId, result.id);
+        // Load brand + images + ads all in parallel
+        const [{ images, logo }, ads] = await Promise.all([
+          loadUploadedImages(userId, result.id),
+          loadGeneratedAds(userId, result.id),
+        ]);
         set({
           brandAnalysis: result.analysis,
           brandAnalysisId: result.id,
           uploadedImages: images,
           brandLogo: logo,
+          generatedAds: ads,
           isHydrated: true,
-        });
-
-        // Phase 2: ads (slow, loaded in background for Mes Ads page)
-        loadGeneratedAds(userId, result.id).then((ads) => {
-          if (ads.length > 0) set({ generatedAds: ads, adsLoaded: true });
-          else set({ adsLoaded: true });
-        }).catch((err) => {
-          console.error("[sync] Error loading ads:", err);
-          set({ adsLoaded: true });
+          adsLoaded: true,
         });
       } else {
         set({ isHydrated: true, adsLoaded: true });
