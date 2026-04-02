@@ -147,12 +147,26 @@ export async function POST(request: Request) {
       let precomputedAnalysis = await getTemplateAnalysisFromDb(template.id);
 
       if (!precomputedAnalysis) {
-        console.log(`[generate-ad] No cached metadata for ${template.id}, analyzing and caching...`);
-        precomputedAnalysis = await analyzeTemplateMetadata(template.imageBase64, template.mimeType);
-        saveTemplateAnalysisToDb(template.id, precomputedAnalysis).catch((err) =>
-          console.error("[generate-ad] Failed to cache template analysis:", err)
-        );
-        console.log(`[generate-ad] Template ${template.id} analyzed and cached to Supabase`);
+        // Skip live analysis — too slow (7s+), would cause timeout on Vercel
+        // Use minimal defaults instead. Template will be analyzed later via admin.
+        console.log(`[generate-ad] No cached metadata for ${template.id}, using defaults (skip Sonnet to save time)`);
+        precomputedAnalysis = {
+          templateType: "product-showcase",
+          isTextOnly: false,
+          layout: {
+            backgroundStyle: "clean professional background",
+            textPlacement: "top",
+            productPlacement: "center",
+            logoPlacement: "top-left",
+            accentColor: "",
+            textColor: "",
+          },
+          tags: { industry: "", adType: "", productType: "" },
+        } as unknown as TemplateAnalysisData;
+        // Fire-and-forget: cache analysis for next time (won't block this request)
+        analyzeTemplateMetadata(template.imageBase64, template.mimeType)
+          .then((analysis) => saveTemplateAnalysisToDb(template.id, analysis))
+          .catch(() => {});
       } else {
         console.log(`[generate-ad] Using cached metadata from Supabase for ${template.id}`);
       }
