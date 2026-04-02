@@ -59,6 +59,7 @@ export interface GeneratedAd {
   templateId?: string;          // Template used for this ad (library mode)
   isFavorite?: boolean;          // User-marked favorite
   isGift?: boolean;              // Daily gift ad
+  storagePath?: string;          // Supabase Storage path for server-side download
   timestamp: number;
   status?: "generating" | "completed" | "failed";
   error?: string;

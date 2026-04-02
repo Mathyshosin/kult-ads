@@ -270,13 +270,31 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite, isAd
   const [modifyPrompt, setModifyPrompt] = useState("");
 
   async function handleDownload() {
-    // Download raw image directly (no DOM capture = no rounded corners)
-    const src = ad.imageUrl || (ad.imageBase64 ? `data:${ad.mimeType};base64,${ad.imageBase64}` : null);
-    if (!src) return;
-    const link = document.createElement("a");
-    link.href = src;
-    link.download = `kultads-${ad.format}-${Date.now()}.png`;
-    link.click();
+    const filename = `kultads-${ad.format}-${Date.now()}.png`;
+    // If we have base64, use it directly
+    if (ad.imageBase64) {
+      const link = document.createElement("a");
+      link.href = `data:${ad.mimeType};base64,${ad.imageBase64}`;
+      link.download = filename;
+      link.click();
+      return;
+    }
+    // If we have a URL, fetch and download as blob
+    if (ad.imageUrl) {
+      try {
+        const res = await fetch(ad.imageUrl);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      } catch {
+        // Fallback: open in new tab
+        window.open(ad.imageUrl, "_blank");
+      }
+    }
   }
 
   const handleToggleFavorite = useCallback(() => {
@@ -487,13 +505,29 @@ export default function AdsGalleryPage() {
   const [openModify, setOpenModify] = useState(false);
 
   // Quick download helper
-  const handleQuickDownload = (ad: GeneratedAd) => {
-    const src = adImageSrc(ad);
-    if (!src) return;
-    const link = document.createElement("a");
-    link.href = src;
-    link.download = `kultads-${ad.format}-${ad.id}.png`;
-    link.click();
+  const handleQuickDownload = async (ad: GeneratedAd) => {
+    const filename = `kultads-${ad.format}-${ad.id}.png`;
+    if (ad.imageBase64) {
+      const link = document.createElement("a");
+      link.href = `data:${ad.mimeType};base64,${ad.imageBase64}`;
+      link.download = filename;
+      link.click();
+      return;
+    }
+    if (ad.imageUrl) {
+      try {
+        const res = await fetch(ad.imageUrl);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      } catch {
+        window.open(ad.imageUrl, "_blank");
+      }
+    }
   };
 
   // Sort: generating first, then by timestamp desc
@@ -552,16 +586,20 @@ export default function AdsGalleryPage() {
     setSelectedAd(null);
 
     try {
-      // Compress the ad image before sending (reduces ~1MB to ~200KB)
-      const compressed = await compressBase64(ad.imageBase64, ad.mimeType);
-      const genBody = JSON.stringify({
+      // If ad has base64 (just generated), compress and send. Otherwise use server-side download via ID.
+      let modBody: Record<string, unknown> = {
         brandAnalysis,
         product,
         format: targetFormat,
         modificationPrompt: prompt,
-        previousAdBase64: compressed.base64,
-        previousAdMimeType: compressed.mimeType,
-      });
+        previousAdId: ad.id,
+      };
+      if (ad.imageBase64) {
+        const compressed = await compressBase64(ad.imageBase64, ad.mimeType);
+        modBody.previousAdBase64 = compressed.base64;
+        modBody.previousAdMimeType = compressed.mimeType;
+      }
+      const genBody = JSON.stringify(modBody);
 
       let res = await fetch("/api/generate-ad", {
         method: "POST",

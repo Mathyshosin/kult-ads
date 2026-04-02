@@ -453,52 +453,43 @@ export async function loadGeneratedAds(
 
   if (!rows || rows.length === 0) return [];
 
-  // Download all images in parallel — loading state stays until complete
-  const results = await Promise.all(
-    rows.map(async (row): Promise<GeneratedAd | null> => {
+  // Don't download images — use signed URLs for display (much faster for 50+ ads)
+  const ads: GeneratedAd[] = [];
+  for (const row of rows) {
+    // Get signed URL (valid 1 hour)
+    const { data: urlData } = await sb.storage
+      .from("generated-ads")
+      .createSignedUrl(row.image_path, 3600);
+
+    let debugInfo: GeneratedAd["_debug"] | undefined;
+    if (row.debug_info) {
       try {
-        const { data: fileData } = await sb.storage
-          .from("generated-ads")
-          .download(row.image_path);
+        debugInfo = typeof row.debug_info === "string"
+          ? JSON.parse(row.debug_info)
+          : row.debug_info;
+      } catch { /* ignore parse errors */ }
+    }
 
-        if (!fileData) return null;
+    ads.push({
+      id: row.id,
+      format: row.format,
+      imageBase64: "",
+      imageUrl: urlData?.signedUrl || "",
+      mimeType: row.image_path.endsWith(".png") ? "image/png" : "image/jpeg",
+      headline: row.headline || "",
+      bodyText: row.body_text || "",
+      callToAction: row.call_to_action || "",
+      productId: row.product_local_id || undefined,
+      offerId: row.offer_local_id || undefined,
+      templateId: row.template_id || undefined,
+      isFavorite: row.is_favorite || false,
+      timestamp: new Date(row.created_at).getTime(),
+      _debug: debugInfo,
+      storagePath: row.image_path,
+    });
+  }
 
-        const buffer = await fileData.arrayBuffer();
-        const base64 = btoa(
-          new Uint8Array(buffer).reduce((d, b) => d + String.fromCharCode(b), "")
-        );
-
-        let debugInfo: GeneratedAd["_debug"] | undefined;
-        if (row.debug_info) {
-          try {
-            debugInfo = typeof row.debug_info === "string"
-              ? JSON.parse(row.debug_info)
-              : row.debug_info;
-          } catch { /* ignore parse errors */ }
-        }
-
-        return {
-          id: row.id,
-          format: row.format,
-          imageBase64: base64,
-          mimeType: row.image_path.endsWith(".png") ? "image/png" : "image/jpeg",
-          headline: row.headline || "",
-          bodyText: row.body_text || "",
-          callToAction: row.call_to_action || "",
-          productId: row.product_local_id || undefined,
-          offerId: row.offer_local_id || undefined,
-          templateId: row.template_id || undefined,
-          isFavorite: row.is_favorite || false,
-          timestamp: new Date(row.created_at).getTime(),
-          _debug: debugInfo,
-        };
-      } catch {
-        return null;
-      }
-    })
-  );
-
-  return results.filter((ad): ad is GeneratedAd => ad !== null);
+  return ads;
 }
 
 export async function deleteGeneratedAd(
