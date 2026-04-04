@@ -12,10 +12,10 @@ const plans = [
     name: "Gratuit",
     price: "0€",
     period: "",
-    credits: "2 crédits offerts",
+    credits: "2 crédits (2 publicités)",
     description: "Testez Loopad gratuitement",
     features: [
-      "2 publicités générées par IA",
+      "2 publicités gratuites",
       "Accès à la bibliothèque",
       "4 modes de création",
       "Export HD",
@@ -33,10 +33,10 @@ const plans = [
     name: "Pro",
     price: "29€",
     period: "/mois",
-    credits: "500 crédits/mois",
+    credits: "5 000 crédits/mois",
     description: "Pour les e-commerces ambitieux",
     features: [
-      "500 publicités/mois",
+      "500 publicités/mois (10 crédits/ad)",
       "Accès complet à la bibliothèque",
       "4 modes de création",
       "Modification intelligente par IA",
@@ -57,10 +57,10 @@ const plans = [
     name: "Agency",
     price: "79€",
     period: "/mois",
-    credits: "2000 crédits/mois",
+    credits: "20 000 crédits/mois",
     description: "Volume illimité pour les agences",
     features: [
-      "2000 publicités/mois",
+      "2 000 publicités/mois (10 crédits/ad)",
       "Tout le plan Pro inclus",
       "Multi-boutiques",
       "Support dédié",
@@ -77,9 +77,9 @@ const plans = [
 ];
 
 const packs = [
-  { id: "boost", name: "Boost", credits: 50, price: "4,90€" },
-  { id: "growth", name: "Growth", credits: 130, price: "9,90€", best: true },
-  { id: "scale", name: "Scale", credits: 300, price: "19,90€" },
+  { id: "boost", name: "Boost", credits: 500, price: "4,90€" },
+  { id: "growth", name: "Growth", credits: 1300, price: "9,90€", best: true },
+  { id: "scale", name: "Scale", credits: 3000, price: "19,90€" },
 ];
 
 export default function SubscriptionPage() {

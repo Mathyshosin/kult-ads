@@ -415,7 +415,7 @@ function Pricing() {
       description: "Testez Loopad gratuitement sur votre marque",
       badge: "Essai gratuit",
       features: [
-        "2 publicités générées par IA",
+        "2 crédits offerts (2 publicités)",
         "Tous les formats (carré + story)",
         "Accès à la bibliothèque complète",
         "Retouche IA incluse",
@@ -432,7 +432,7 @@ function Pricing() {
       description: "Pour les e-commerçants qui veulent scaler leurs campagnes",
       badge: "Le plus populaire",
       features: [
-        "500 publicités / mois",
+        "5 000 crédits / mois (500 publicités)",
         "Tous les formats (carré + story)",
         "Retouche IA illimitée",
         "Bibliothèque complète",
@@ -450,7 +450,7 @@ function Pricing() {
       description: "Pour les agences et les e-commerces à fort volume",
       badge: "BEST ROI",
       features: [
-        "2 000 publicités / mois",
+        "20 000 crédits / mois (2 000 publicités)",
         "Tout le plan Pro inclus",
         "Multi-marques",
         "Support dédié",
