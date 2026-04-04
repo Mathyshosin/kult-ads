@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════
--- Kult-ads Supabase Schema
+-- Loopad Supabase Schema
 -- Run this in the Supabase SQL Editor
 -- ═══════════════════════════════════════════
 

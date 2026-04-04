@@ -90,7 +90,7 @@ const fallbackEntries = [
     version: "v2.0",
     icon: "Shield",
     color: "from-cyan-500 to-blue-500",
-    title: "Lancement de Kultads",
+    title: "Lancement de Loopad",
     description: "Première version publique.",
     items: [
       "Génération d'ads par IA (Gemini)",
@@ -161,7 +161,7 @@ export default async function ChangelogPage() {
             Nouveautés & Mises à jour
           </h1>
           <p className="text-lg text-gray-500">
-            On améliore Kultads chaque jour. Suivez toutes les évolutions de la plateforme.
+            On améliore Loopad chaque jour. Suivez toutes les évolutions de la plateforme.
           </p>
         </div>
 

@@ -13,7 +13,7 @@ const plans = [
     price: "0€",
     period: "",
     credits: "2 crédits offerts",
-    description: "Testez Kultads gratuitement",
+    description: "Testez Loopad gratuitement",
     features: [
       "2 publicités générées par IA",
       "Accès à la bibliothèque",

@@ -64,7 +64,7 @@ function Hero({ adsCount }: { adsCount: number }) {
                 <Image src="/template-before.png" alt="Template d'inspiration" fill className="object-cover" sizes="500px" />
               </div>
               <div className="absolute inset-0 hero-after-slide overflow-hidden">
-                <Image src="/template-after.png" alt="Publicité générée par Kultads" fill className="object-cover" sizes="500px" />
+                <Image src="/template-after.png" alt="Publicité générée par Loopad" fill className="object-cover" sizes="500px" />
               </div>
               <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm rounded-md px-2.5 py-1 text-[10px] font-bold text-white z-30 hero-label-before">
                 Avant
@@ -268,14 +268,14 @@ function Comparison() {
             </div>
           </div>
 
-          {/* Kultads — highlighted center */}
+          {/* Loopad — highlighted center */}
           <div className="relative bg-violet-600 rounded-2xl p-6 shadow-2xl shadow-violet-500/25 md:-mt-4 md:mb-[-16px]">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-[10px] font-bold uppercase tracking-wider text-gray-900 px-4 py-1 rounded-full shadow-lg whitespace-nowrap">
               Outil n°1 pour le e-commerce
             </div>
             <div className="flex items-center gap-3 mb-6 mt-2">
               <KultadsLogoIcon className="w-10 h-10" />
-              <span className="text-white font-bold text-lg">Kultads</span>
+              <span className="text-white font-bold text-lg">Loopad</span>
             </div>
             <div className="space-y-3.5">
               {[
@@ -344,7 +344,7 @@ function WhyUs() {
             <span className="text-violet-600">Une expertise.</span>
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
-            {"Derrière Kultads, une agence qui a créé des milliers de publicités e-commerce. Notre IA ne génère pas au hasard — elle reproduit ce qui fait vraiment vendre."}
+            {"Derrière Loopad, une agence qui a créé des milliers de publicités e-commerce. Notre IA ne génère pas au hasard — elle reproduit ce qui fait vraiment vendre."}
           </p>
         </div>
 
@@ -394,7 +394,7 @@ function WhyUs() {
           <p className="text-gray-500 text-sm italic max-w-lg mx-auto">
             {"\u00AB On a créé l'outil qu'on aurait rêvé d'avoir quand on faisait 200 ads par mois pour nos clients. \u00BB"}
           </p>
-          <p className="text-violet-600 text-xs font-semibold mt-2">{"L'équipe Kultads"}</p>
+          <p className="text-violet-600 text-xs font-semibold mt-2">{"L'équipe Loopad"}</p>
         </div>
       </div>
     </section>
@@ -409,7 +409,7 @@ function Pricing() {
       name: "Gratuit",
       price: "0€",
       period: "",
-      description: "Testez Kultads gratuitement sur votre marque",
+      description: "Testez Loopad gratuitement sur votre marque",
       badge: "Essai gratuit",
       features: [
         "2 publicités générées par IA",
@@ -535,7 +535,7 @@ function Testimonials() {
     {
       name: "Sarah M.",
       role: "Fondatrice, Skincare Brand",
-      text: "On a remplacé notre freelance à 800€/mois par Kultads. Les résultats sont bluffants, surtout en copy-ads. On génère nos visuels en 2 minutes chrono.",
+      text: "On a remplacé notre freelance à 800€/mois par Loopad. Les résultats sont bluffants, surtout en copy-ads. On génère nos visuels en 2 minutes chrono.",
       stars: 5,
       metric: "ROAS x2.3",
     },
@@ -556,7 +556,7 @@ function Testimonials() {
     {
       name: "Marc R.",
       role: "CEO, Agence Digitale",
-      text: "On utilise Kultads pour nos clients qui n'ont pas le budget pour un DA. Le rapport qualité/prix est imbattable. La modification par prompt est un game-changer.",
+      text: "On utilise Loopad pour nos clients qui n'ont pas le budget pour un DA. Le rapport qualité/prix est imbattable. La modification par prompt est un game-changer.",
       stars: 4,
       metric: "15 clients équipés",
     },
@@ -621,7 +621,7 @@ function Testimonials() {
 function FAQ() {
   const questions = [
     {
-      q: "Comment fonctionne Kultads ?",
+      q: "Comment fonctionne Loopad ?",
       a: "Collez l'URL de votre boutique en ligne, notre IA analyse votre marque (logo, couleurs, produits, ton) puis génère des publicités professionnelles inspirées des meilleures ads du marché. Le tout en 30 secondes.",
     },
     {
@@ -638,7 +638,7 @@ function FAQ() {
     },
     {
       q: "Quelle différence avec ChatGPT ou Midjourney ?",
-      a: "ChatGPT génère des images génériques sans connaître le marketing e-commerce. Kultads est entraîné sur des milliers d'ads qui ont fait leurs preuves et intègre automatiquement vos produits.",
+      a: "ChatGPT génère des images génériques sans connaître le marketing e-commerce. Loopad est entraîné sur des milliers d'ads qui ont fait leurs preuves et intègre automatiquement vos produits.",
     },
   ];
 
@@ -693,7 +693,7 @@ function FinalCTA() {
           <ArrowRight className="w-5 h-5" />
         </Link>
         <p className="mt-5 text-sm text-white/50">
-          Testez Kultads sur votre marque &middot; Résultat immédiat
+          Testez Loopad sur votre marque &middot; Résultat immédiat
         </p>
       </div>
     </section>
@@ -714,12 +714,12 @@ function Footer() {
           <Link href="/cgu" className="hover:text-gray-700 transition-colors">
             CGU
           </Link>
-          <a href="mailto:contact@kultads.io" className="hover:text-gray-700 transition-colors">
+          <a href="mailto:contact@loopad.io" className="hover:text-gray-700 transition-colors">
             Contact
           </a>
         </div>
         <p className="text-sm text-gray-400">
-          &copy; 2026 Kultads
+          &copy; 2026 Loopad
         </p>
       </div>
     </footer>
