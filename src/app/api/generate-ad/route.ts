@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateAdCopy } from "@/lib/claude";
+// generateAdCopy removed — Gemini handles all text on the image directly
 import type { TemplateAnalysisData } from "@/lib/template-store";
 import { generateImage } from "@/lib/gemini";
 import { getRandomTemplateWithImage, getTemplateByIdWithImage } from "@/lib/template-store";
@@ -350,17 +350,10 @@ export async function POST(request: Request) {
       visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). ${productImageBase64 ? "Feature the product exactly as shown in the product photo — same shape, colors, details, fully visible." : ""} ${brandLogoBase64 ? `Place the logo provided for "${brandAnalysis.brandName}" as-is.` : `Write "${brandAnalysis.brandName}" in clean typography.`} Write a short headline about "${headlineHint}".${fallbackCta} Premium, minimalist, Instagram-ready.${safeZoneNote} ${langInstruction}`;
     }
 
-    // ── PARALLEL: Image + copy at the same time ──
-    console.log(`[generate-ad] Calling Gemini (${referenceImages.length} refs) + Claude copy in PARALLEL...`);
+    // ── IMAGE ONLY: skip Haiku copy to maximize time for Gemini ──
+    console.log(`[generate-ad] Calling Gemini (${referenceImages.length} refs)...`);
 
-    const copyAngle = customPrompt
-      ? `Adapte le texte à cette direction créative : ${customPrompt}`
-      : "Mets en avant le bénéfice le plus fort du produit avec les vrais arguments de la marque.";
-
-    const [visualResult, copyRaw] = await Promise.all([
-      generateImage(visualPrompt, aspectRatio, referenceImages, 1),
-      generateAdCopy(brandContext, format, copyAngle),
-    ]);
+    const visualResult = await generateImage(visualPrompt, aspectRatio, referenceImages, 1);
 
     if (!visualResult) {
       console.error("[generate-ad] Gemini returned null — image generation failed after all retries");
@@ -369,25 +362,16 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-    console.log("[generate-ad] Gemini image + Claude copy done");
+    console.log("[generate-ad] Gemini image done");
 
-    // Gemini now handles all text directly — no Satori overlay needed
     const finalImage = { imageBase64: visualResult.imageBase64, mimeType: visualResult.mimeType };
 
-    // Parse copy
-    let copy;
-    try {
-      copy = JSON.parse(copyRaw);
-    } catch {
-      const jsonMatch = copyRaw.match(/\{[\s\S]*\}/);
-      copy = jsonMatch
-        ? JSON.parse(jsonMatch[0])
-        : {
-            headline: brandAnalysis.brandName,
-            bodyText: product.description?.slice(0, 60) || "",
-            callToAction: ctaText || "",
-          };
-    }
+    // Simple copy metadata (no Haiku call — saves time, Gemini handles text on image)
+    const copy = {
+      headline: brandContext.offerTitle || brandContext.uniqueSellingPoints?.[0] || product.name,
+      bodyText: brandContext.productDescription?.slice(0, 80) || "",
+      callToAction: ctaText || "",
+    };
 
     // Save reference ad as pending template for admin moderation (must await on Vercel)
     if (isReference && referenceAdBase64) {

@@ -607,10 +607,10 @@ export default function AdsGalleryPage() {
         body: genBody,
       });
 
-      // Auto-retry once on failure (except credit errors)
-      if (!res.ok && res.status !== 402) {
-        console.log("[modify] First attempt failed, retrying...");
-        await new Promise((r) => setTimeout(r, 2000));
+      // Auto-retry up to 2 times on failure (3 attempts total)
+      for (let retry = 0; retry < 2 && !res.ok && res.status !== 402; retry++) {
+        console.log(`[modify] Retry ${retry + 1}...`);
+        await new Promise((r) => setTimeout(r, 1500));
         res = await fetch("/api/generate-ad", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

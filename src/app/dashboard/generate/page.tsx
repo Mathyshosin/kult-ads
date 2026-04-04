@@ -206,8 +206,10 @@ export default function GeneratePage() {
         body: genBody,
       });
 
-      if (!res.ok && res.status !== 402) {
-        await new Promise((r) => setTimeout(r, 2000));
+      // Auto-retry up to 2 times on failure (3 attempts total)
+      for (let retry = 0; retry < 2 && !res.ok && res.status !== 402; retry++) {
+        console.log(`[generate] Retry ${retry + 1}...`);
+        await new Promise((r) => setTimeout(r, 1500));
         res = await fetch("/api/generate-ad", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
