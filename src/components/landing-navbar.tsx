@@ -21,13 +21,13 @@ export default function LandingNavbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 pt-3">
-      <div className={`max-w-6xl mx-auto bg-white rounded-full shadow-md shadow-black/[0.06] border border-gray-100/80 transition-all duration-300 ${
-        scrolled ? "shadow-lg shadow-black/[0.08]" : ""
+      <div className={`max-w-6xl mx-auto bg-gray-900/60 backdrop-blur-xl rounded-full border border-white/10 transition-all duration-300 ${
+        scrolled ? "bg-gray-900/80 shadow-lg shadow-black/20" : ""
       }`}>
         <div className="flex items-center justify-between px-4 sm:px-6 h-12">
           {/* Logo — left */}
           <Link href="/" aria-label="Accueil" className="flex-shrink-0">
-            <LoopadLogoFull iconSize="w-7 h-7" textSize="text-[15px]" />
+            <LoopadLogoFull iconSize="w-7 h-7" textSize="text-[15px]" dark />
           </Link>
 
           {/* Center links — desktop */}
@@ -36,7 +36,7 @@ export default function LandingNavbar() {
               <a
                 key={link.href}
                 href={link.href}
-                className="text-[13px] font-medium text-gray-500 hover:text-gray-900 px-4 py-1.5 rounded-full hover:bg-gray-50 transition-all duration-200 whitespace-nowrap"
+                className="text-[13px] font-medium text-white/70 hover:text-white px-4 py-1.5 rounded-full hover:bg-white/10 transition-all duration-200 whitespace-nowrap"
               >
                 {link.label}
               </a>
@@ -47,13 +47,13 @@ export default function LandingNavbar() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <Link
               href="/login"
-              className="hidden sm:inline-flex text-[13px] font-medium text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded-full hover:bg-gray-50 transition-all duration-200"
+              className="hidden sm:inline-flex text-[13px] font-medium text-white/70 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/10 transition-all duration-200"
             >
               Connexion
             </Link>
             <Link
               href="/signup"
-              className="text-[12px] sm:text-[13px] font-semibold text-white bg-gray-900 hover:bg-gray-800 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full transition-all duration-200"
+              className="text-[12px] sm:text-[13px] font-semibold text-gray-900 bg-white hover:bg-gray-100 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full transition-all duration-200"
             >
               Commencer
             </Link>
@@ -61,17 +61,17 @@ export default function LandingNavbar() {
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-50 transition-colors ml-1"
+              className="md:hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors ml-1"
               aria-label="Menu"
             >
               <div className="w-3.5 h-2.5 flex flex-col justify-between">
-                <span className={`block h-[1.5px] bg-gray-700 rounded-full transition-all duration-300 origin-center ${
+                <span className={`block h-[1.5px] bg-white rounded-full transition-all duration-300 origin-center ${
                   mobileOpen ? "rotate-45 translate-y-[4.5px]" : ""
                 }`} />
-                <span className={`block h-[1.5px] bg-gray-700 rounded-full transition-all duration-200 ${
+                <span className={`block h-[1.5px] bg-white rounded-full transition-all duration-200 ${
                   mobileOpen ? "opacity-0 scale-x-0" : ""
                 }`} />
-                <span className={`block h-[1.5px] bg-gray-700 rounded-full transition-all duration-300 origin-center ${
+                <span className={`block h-[1.5px] bg-white rounded-full transition-all duration-300 origin-center ${
                   mobileOpen ? "-rotate-45 -translate-y-[4.5px]" : ""
                 }`} />
               </div>

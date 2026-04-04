@@ -14,7 +14,8 @@ export function LoopadLogoIcon({ className }: { className?: string }) {
   );
 }
 
-export function LoopadLogoFull({ iconSize = "w-9 h-9", textSize = "text-[17px]" }: { iconSize?: string; textSize?: string }) {
+export function LoopadLogoFull({ iconSize = "w-9 h-9", textSize = "text-[17px]", dark = false }: { iconSize?: string; textSize?: string; dark?: boolean }) {
+  const textColor = dark ? "text-white" : "text-gray-900";
   return (
     <div className="flex items-center gap-2.5">
       <Image
@@ -26,10 +27,10 @@ export function LoopadLogoFull({ iconSize = "w-9 h-9", textSize = "text-[17px]" 
         priority
       />
       <div className="flex items-baseline">
-        <span className={`${textSize} font-black tracking-tight text-gray-900`}>L</span>
-        <span className={`font-black tracking-tight bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent`} style={{ fontSize: "1.3em", lineHeight: "1" }}>∞</span>
-        <span className={`${textSize} font-black tracking-tight text-gray-900`}>p</span>
-        <span className={`${textSize} font-black tracking-tight bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent`}>ad</span>
+        <span className={`${textSize} font-black tracking-tight ${textColor}`}>L</span>
+        <span className={`font-black tracking-tight ${dark ? "text-violet-400" : "bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent"}`} style={{ fontSize: "1.3em", lineHeight: "1" }}>∞</span>
+        <span className={`${textSize} font-black tracking-tight ${textColor}`}>p</span>
+        <span className={`${textSize} font-black tracking-tight ${dark ? "text-violet-400" : "bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent"}`}>ad</span>
       </div>
     </div>
   );
