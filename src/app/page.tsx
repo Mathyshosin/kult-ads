@@ -26,6 +26,9 @@ function Hero({ adsCount }: { adsCount: number }) {
       <div className="absolute inset-0 bg-dots opacity-40 pointer-events-none" />
 
       <div className="max-w-5xl mx-auto text-center relative z-10">
+        <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 rounded-full px-4 py-1.5 mb-6 animate-fade-in">
+          <span className="text-sm font-semibold text-violet-700">Outil n°1 en France pour créer des publicités par IA</span>
+        </div>
         <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-[1.1] tracking-tight animate-fade-in-up">
           Doublez vos ventes avec des pubs{" "}
           <span className="text-violet-600">

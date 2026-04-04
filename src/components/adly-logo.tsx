@@ -27,7 +27,7 @@ export function LoopadLogoFull({ iconSize = "w-9 h-9", textSize = "text-[17px]" 
       />
       <div className="flex items-baseline">
         <span className={`${textSize} font-black tracking-tight text-gray-900`}>L</span>
-        <span className={`${textSize} font-black tracking-tight bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent`}>∞</span>
+        <span className={`font-black tracking-tight bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent`} style={{ fontSize: "1.3em", lineHeight: "1" }}>∞</span>
         <span className={`${textSize} font-black tracking-tight text-gray-900`}>p</span>
         <span className={`${textSize} font-black tracking-tight bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 bg-clip-text text-transparent`}>ad</span>
       </div>
