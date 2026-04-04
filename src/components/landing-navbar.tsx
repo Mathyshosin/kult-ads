@@ -21,8 +21,8 @@ export default function LandingNavbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 pt-3">
-      <div className={`max-w-6xl mx-auto bg-gray-900/60 backdrop-blur-xl rounded-full border border-white/10 transition-all duration-300 ${
-        scrolled ? "bg-gray-900/80 shadow-lg shadow-black/20" : ""
+      <div className={`max-w-6xl mx-auto bg-gray-900/30 backdrop-blur-xl rounded-full border border-white/10 transition-all duration-300 ${
+        scrolled ? "bg-gray-900/50 shadow-lg shadow-black/10" : ""
       }`}>
         <div className="flex items-center justify-between px-4 sm:px-6 h-12">
           {/* Logo — left */}
