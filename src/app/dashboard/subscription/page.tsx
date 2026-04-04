@@ -33,10 +33,10 @@ const plans = [
     name: "Pro",
     price: "29€",
     period: "/mois",
-    credits: "5 000 crédits/mois",
+    credits: "500 crédits/mois",
     description: "Pour les e-commerces ambitieux",
     features: [
-      "500 publicités/mois (10 crédits/ad)",
+      "500 publicités/mois",
       "Accès complet à la bibliothèque",
       "4 modes de création",
       "Modification intelligente par IA",
@@ -57,10 +57,10 @@ const plans = [
     name: "Agency",
     price: "79€",
     period: "/mois",
-    credits: "20 000 crédits/mois",
+    credits: "2 000 crédits/mois",
     description: "Volume illimité pour les agences",
     features: [
-      "2 000 publicités/mois (10 crédits/ad)",
+      "2 000 publicités/mois",
       "Tout le plan Pro inclus",
       "Multi-boutiques",
       "Support dédié",
@@ -77,9 +77,9 @@ const plans = [
 ];
 
 const packs = [
-  { id: "boost", name: "Boost", credits: 500, price: "4,90€" },
-  { id: "growth", name: "Growth", credits: 1300, price: "9,90€", best: true },
-  { id: "scale", name: "Scale", credits: 3000, price: "19,90€" },
+  { id: "boost", name: "Boost", credits: 50, price: "4,90€" },
+  { id: "growth", name: "Growth", credits: 130, price: "9,90€", best: true },
+  { id: "scale", name: "Scale", credits: 300, price: "19,90€" },
 ];
 
 export default function SubscriptionPage() {
@@ -127,7 +127,7 @@ export default function SubscriptionPage() {
   }
 
   const currentPlan = sub?.plan || "free";
-  const planOrder = ["free", "starter", "pro", "agency"];
+  const planOrder = ["free", "pro", "agency"];
   const currentPlanIndex = planOrder.indexOf(currentPlan);
 
   return (

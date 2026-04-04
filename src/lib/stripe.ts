@@ -11,21 +11,15 @@ export function getStripe(): Stripe {
 
 // Plan configuration
 export const PLANS = {
-  starter: {
-    name: "Starter",
-    credits: 50,
-    monthly: false,
-    priceId: process.env.STRIPE_PRICE_STARTER || "",
-  },
   pro: {
     name: "Pro",
-    credits: 5000,
+    credits: 500,
     monthly: true,
     priceId: process.env.STRIPE_PRICE_PRO || "",
   },
   agency: {
     name: "Agency",
-    credits: 20000,
+    credits: 2000,
     monthly: true,
     priceId: process.env.STRIPE_PRICE_AGENCY || "",
   },
@@ -34,17 +28,17 @@ export const PLANS = {
 export const CREDIT_PACKS = {
   boost: {
     name: "Boost",
-    credits: 500,
+    credits: 50,
     priceId: process.env.STRIPE_PRICE_BOOST || "",
   },
   growth: {
     name: "Growth",
-    credits: 1300,
+    credits: 130,
     priceId: process.env.STRIPE_PRICE_GROWTH || "",
   },
   scale: {
     name: "Scale",
-    credits: 3000,
+    credits: 300,
     priceId: process.env.STRIPE_PRICE_SCALE || "",
   },
 } as const;

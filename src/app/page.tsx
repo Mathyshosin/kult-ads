@@ -432,7 +432,7 @@ function Pricing() {
       description: "Pour les e-commerçants qui veulent scaler leurs campagnes",
       badge: "Le plus populaire",
       features: [
-        "5 000 crédits / mois (500 publicités)",
+        "500 crédits / mois",
         "Tous les formats (carré + story)",
         "Retouche IA illimitée",
         "Bibliothèque complète",
@@ -450,7 +450,7 @@ function Pricing() {
       description: "Pour les agences et les e-commerces à fort volume",
       badge: "BEST ROI",
       features: [
-        "20 000 crédits / mois (2 000 publicités)",
+        "2 000 crédits / mois",
         "Tout le plan Pro inclus",
         "Multi-marques",
         "Support dédié",
