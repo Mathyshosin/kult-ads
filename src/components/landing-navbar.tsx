@@ -17,79 +17,62 @@ export default function LandingNavbar() {
   const links = [
     { href: "#comment-ca-marche", label: "Comment ça marche" },
     { href: "#tarifs", label: "Tarifs" },
-    { href: "/login", label: "Connexion" },
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50">
-      <div className={`transition-all duration-500 ease-out ${
-        scrolled ? "mx-4 sm:mx-8 mt-3" : "mx-0 mt-0"
+    <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 pt-3">
+      <div className={`max-w-6xl mx-auto bg-white rounded-full shadow-md shadow-black/[0.06] border border-gray-100/80 transition-all duration-300 ${
+        scrolled ? "shadow-lg shadow-black/[0.08]" : ""
       }`}>
-        <div className={`flex items-center justify-between transition-all duration-500 ease-out px-6 sm:px-8 ${
-          scrolled
-            ? "bg-white/90 backdrop-blur-2xl shadow-lg shadow-black/[0.06] rounded-full h-12"
-            : "bg-white border-b border-gray-100 rounded-none h-14"
-        }`}>
-          {/* Left links — desktop */}
-          <div className="hidden md:flex items-center gap-1 flex-1">
+        <div className="flex items-center justify-between px-4 sm:px-6 h-12">
+          {/* Logo — left */}
+          <Link href="/" aria-label="Accueil" className="flex-shrink-0">
+            <LoopadLogoFull iconSize="w-7 h-7" textSize="text-[15px]" />
+          </Link>
+
+          {/* Center links — desktop */}
+          <div className="hidden md:flex items-center gap-1">
             {links.map((link) => (
-              link.href.startsWith("/") ? (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-[13px] font-medium text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded-full hover:bg-gray-100/60 transition-all duration-200 whitespace-nowrap"
-                >
-                  {link.label}
-                </Link>
-              ) : (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="text-[13px] font-medium text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded-full hover:bg-gray-100/60 transition-all duration-200 whitespace-nowrap"
-                >
-                  {link.label}
-                </a>
-              )
+              <a
+                key={link.href}
+                href={link.href}
+                className="text-[13px] font-medium text-gray-500 hover:text-gray-900 px-4 py-1.5 rounded-full hover:bg-gray-50 transition-all duration-200 whitespace-nowrap"
+              >
+                {link.label}
+              </a>
             ))}
           </div>
 
-          {/* Center logo */}
-          <Link href="/" aria-label="Accueil" className="absolute left-1/2 -translate-x-1/2">
-            <LoopadLogoFull iconSize="w-8 h-8" textSize="text-[16px]" />
-          </Link>
-
-          {/* Right CTA */}
-          <div className="hidden md:flex items-center gap-2 flex-1 justify-end">
+          {/* Right — Connexion + CTA */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link
+              href="/login"
+              className="hidden sm:inline-flex text-[13px] font-medium text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded-full hover:bg-gray-50 transition-all duration-200"
+            >
+              Connexion
+            </Link>
             <Link
               href="/signup"
-              className="text-[13px] font-semibold text-white bg-violet-600 hover:bg-violet-700 px-5 py-2 rounded-full transition-all duration-200 hover:shadow-lg hover:shadow-violet-500/20"
+              className="text-[12px] sm:text-[13px] font-semibold text-white bg-gray-900 hover:bg-gray-800 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full transition-all duration-200"
             >
               Commencer
             </Link>
-          </div>
 
-          {/* Mobile hamburger */}
-          <div className="md:hidden flex items-center gap-2 ml-auto">
-            <Link
-              href="/signup"
-              className="text-[12px] font-semibold text-white bg-violet-600 px-4 py-1.5 rounded-full"
-            >
-              Commencer
-            </Link>
+            {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100/80 transition-colors"
+              className="md:hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-50 transition-colors ml-1"
               aria-label="Menu"
             >
-              <div className="w-4 h-3 flex flex-col justify-between">
+              <div className="w-3.5 h-2.5 flex flex-col justify-between">
                 <span className={`block h-[1.5px] bg-gray-700 rounded-full transition-all duration-300 origin-center ${
-                  mobileOpen ? "rotate-45 translate-y-[5.25px]" : ""
+                  mobileOpen ? "rotate-45 translate-y-[4.5px]" : ""
                 }`} />
                 <span className={`block h-[1.5px] bg-gray-700 rounded-full transition-all duration-200 ${
                   mobileOpen ? "opacity-0 scale-x-0" : ""
                 }`} />
                 <span className={`block h-[1.5px] bg-gray-700 rounded-full transition-all duration-300 origin-center ${
-                  mobileOpen ? "-rotate-45 -translate-y-[5.25px]" : ""
+                  mobileOpen ? "-rotate-45 -translate-y-[4.5px]" : ""
                 }`} />
               </div>
             </button>
@@ -101,33 +84,29 @@ export default function LandingNavbar() {
       <div className={`md:hidden transition-all duration-300 ease-out ${
         mobileOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
       }`}>
-        <div className="mx-4 mt-2 bg-white/95 backdrop-blur-2xl rounded-2xl shadow-xl shadow-black/[0.08] border border-gray-100 p-3 space-y-0.5">
+        <div className="max-w-6xl mx-auto mt-2 bg-white rounded-2xl shadow-xl shadow-black/[0.08] border border-gray-100 p-3 space-y-0.5">
           {links.map((link) => (
-            link.href.startsWith("/") ? (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className="block text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50/80 px-4 py-3 rounded-xl transition-colors"
-              >
-                {link.label}
-              </Link>
-            ) : (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className="block text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50/80 px-4 py-3 rounded-xl transition-colors"
-              >
-                {link.label}
-              </a>
-            )
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={() => setMobileOpen(false)}
+              className="block text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-4 py-3 rounded-xl transition-colors"
+            >
+              {link.label}
+            </a>
           ))}
           <div className="border-t border-gray-100 my-2" />
           <Link
+            href="/login"
+            onClick={() => setMobileOpen(false)}
+            className="block text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-4 py-3 rounded-xl transition-colors"
+          >
+            Se connecter
+          </Link>
+          <Link
             href="/signup"
             onClick={() => setMobileOpen(false)}
-            className="block text-sm font-semibold text-center text-white bg-violet-600 px-4 py-3 rounded-xl"
+            className="block text-sm font-semibold text-center text-white bg-gray-900 px-4 py-3 rounded-xl"
           >
             Commencer gratuitement
           </Link>
