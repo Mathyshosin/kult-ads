@@ -68,7 +68,8 @@ export default function GeneratePage() {
   const [customPrompt, setCustomPrompt] = useState("");
   const [launching, setLaunching] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
-  const [templates, setTemplates] = useState<{ id: string; format: string; previewUrl: string }[]>([]);
+  const [templates, setTemplates] = useState<{ id: string; format: string; category?: string; previewUrl: string }[]>([]);
+  const [libraryFilter, setLibraryFilter] = useState("all");
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [editedOffer, setEditedOffer] = useState<{ title: string; discountValue: string; originalPrice: string; salePrice: string } | null>(null);
   const [ctaEnabled, setCtaEnabled] = useState(false);
@@ -388,10 +389,35 @@ export default function GeneratePage() {
             <div>
               <h1 className="text-xl font-bold text-gray-900">Choisissez une ad à copier</h1>
               <p className="text-sm text-gray-400 mt-0.5">
-                {templates.length} ads disponibles — cliquez pour sélectionner
+                {libraryFilter === "all" ? templates.length : templates.filter((t) => t.category === libraryFilter).length} ads disponibles — cliquez pour sélectionner
               </p>
             </div>
           </div>
+
+          {/* Category filters */}
+          {!loadingTemplates && templates.length > 0 && (
+            <div className="flex items-center gap-2 mb-6 flex-wrap">
+              {[
+                { id: "all", label: "Tous" },
+                { id: "benefit", label: "Bénéfice" },
+                { id: "social-proof", label: "Social Proof" },
+                { id: "promo", label: "Promo" },
+                { id: "comparison", label: "Comparaison" },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setLibraryFilter(cat.id)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    libraryFilter === cat.id
+                      ? "bg-violet-600 text-white shadow-sm"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {loadingTemplates ? (
             <div className="flex items-center justify-center py-20">
@@ -407,7 +433,7 @@ export default function GeneratePage() {
             </div>
           ) : (
             <div className="columns-2 sm:columns-3 lg:columns-4 gap-4 space-y-4">
-              {templates.map((t) => (
+              {templates.filter((t) => libraryFilter === "all" || t.category === libraryFilter).map((t) => (
                 <button
                   key={t.id}
                   onClick={() => {
