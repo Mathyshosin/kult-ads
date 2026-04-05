@@ -1,7 +1,7 @@
 "use client";
 
 import type { AdTemplate } from "@/lib/types";
-import { X, Package, Monitor } from "lucide-react";
+import { X, Package, Monitor, Tag } from "lucide-react";
 
 interface TemplateCardProps {
   template: AdTemplate;
@@ -119,6 +119,39 @@ export default function TemplateCard({
                 <Monitor className="w-3 h-3" />
                 Service
               </button>
+            </div>
+
+            {/* Category selector */}
+            <div className="flex flex-wrap gap-1">
+              {[
+                { id: "benefit", label: "Bénéfice", color: "emerald" },
+                { id: "social-proof", label: "Social Proof", color: "blue" },
+                { id: "promo", label: "Promo", color: "rose" },
+                { id: "comparison", label: "Comparaison", color: "violet" },
+              ].map((cat) => {
+                const isActive = template.category === cat.id;
+                const colors = {
+                  emerald: isActive ? "bg-emerald-50 border-emerald-300 text-emerald-700" : "",
+                  blue: isActive ? "bg-blue-50 border-blue-300 text-blue-700" : "",
+                  rose: isActive ? "bg-rose-50 border-rose-300 text-rose-700" : "",
+                  violet: isActive ? "bg-violet-50 border-violet-300 text-violet-700" : "",
+                }[cat.color] || "";
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUpdate?.({ category: cat.id });
+                    }}
+                    className={`flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md border transition-colors ${
+                      isActive ? colors : "border-gray-200 text-gray-400 hover:bg-gray-50"
+                    }`}
+                  >
+                    <Tag className="w-2.5 h-2.5" />
+                    {cat.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ) : (
