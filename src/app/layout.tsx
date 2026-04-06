@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Loopad | Générateur de publicités pour les marques",
+  title: "Klonr. | Générateur de publicités pour les marques",
   description:
-    "Créez des publicités percutantes pour vos marques en quelques clics grâce à l'IA. Loopad, le générateur d'ads intelligent.",
+    "Créez des publicités percutantes pour vos marques en quelques clics grâce à l'IA. Klonr., le générateur d'ads intelligent.",
 };
 
 export default function RootLayout({

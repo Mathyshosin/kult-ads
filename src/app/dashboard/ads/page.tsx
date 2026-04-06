@@ -270,7 +270,7 @@ function AdDetailModal({ ad, onClose, onDelete, onModify, onToggleFavorite, isAd
   const [modifyPrompt, setModifyPrompt] = useState("");
 
   async function handleDownload() {
-    const filename = `loopad-${ad.format}-${Date.now()}.png`;
+    const filename = `klonr-${ad.format}-${Date.now()}.png`;
     // If we have base64, use it directly
     if (ad.imageBase64) {
       const link = document.createElement("a");
@@ -506,7 +506,7 @@ export default function AdsGalleryPage() {
 
   // Quick download helper
   const handleQuickDownload = async (ad: GeneratedAd) => {
-    const filename = `loopad-${ad.format}-${ad.id}.png`;
+    const filename = `klonr-${ad.format}-${ad.id}.png`;
     if (ad.imageBase64) {
       const link = document.createElement("a");
       link.href = `data:${ad.mimeType};base64,${ad.imageBase64}`;

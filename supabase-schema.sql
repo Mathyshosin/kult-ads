@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════
--- Loopad Supabase Schema
+-- Klonr Supabase Schema
 -- Run this in the Supabase SQL Editor
 -- ═══════════════════════════════════════════
 

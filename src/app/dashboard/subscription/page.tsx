@@ -13,7 +13,7 @@ const plans = [
     price: "0€",
     period: "",
     credits: "2 crédits (2 publicités)",
-    description: "Testez Loopad gratuitement",
+    description: "Testez Klonr. gratuitement",
     features: [
       "2 publicités gratuites",
       "Accès à la bibliothèque",
