@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
 
-// One-time endpoint to create Stripe products and prices
-// Admin only — run once then delete or disable
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -13,80 +11,51 @@ export async function POST(req: NextRequest) {
 
   const stripe = getStripe();
 
-  // Create separate products for each plan
-  const starterProduct = await stripe.products.create({
-    name: "Klonr. Starter",
-    description: "5 publicités pour découvrir Klonr.",
-  });
-  const starterPrice = await stripe.prices.create({
-    product: starterProduct.id,
-    unit_amount: 500,
-    currency: "eur",
-    metadata: { plan: "starter" },
-  });
+  // Helper: find existing product or create new one
+  async function findOrCreateProduct(name: string, description: string) {
+    const existing = await stripe.products.search({ query: `name:"${name}"` });
+    if (existing.data.length > 0) {
+      // Update description
+      await stripe.products.update(existing.data[0].id, { description });
+      return existing.data[0];
+    }
+    return stripe.products.create({ name, description });
+  }
 
-  const proProduct = await stripe.products.create({
-    name: "Klonr. Pro",
-    description: "500 crédits/mois — Pour les e-commerces ambitieux",
-  });
-  const proPrice = await stripe.prices.create({
-    product: proProduct.id,
-    unit_amount: 2900,
-    currency: "eur",
-    recurring: { interval: "month" },
-    metadata: { plan: "pro" },
-  });
+  // Helper: find active price for product or create new one
+  async function findOrCreatePrice(productId: string, amount: number, recurring?: boolean, metadata?: Record<string, string>) {
+    const prices = await stripe.prices.list({ product: productId, active: true });
+    const match = prices.data.find((p) => p.unit_amount === amount && (recurring ? p.recurring?.interval === "month" : !p.recurring));
+    if (match) return match;
+    return stripe.prices.create({
+      product: productId,
+      unit_amount: amount,
+      currency: "eur",
+      ...(recurring ? { recurring: { interval: "month" } } : {}),
+      metadata: metadata || {},
+    });
+  }
 
-  const agencyProduct = await stripe.products.create({
-    name: "Klonr. Agency",
-    description: "2000 crédits/mois — Volume illimité pour les agences",
-  });
-  const agencyPrice = await stripe.prices.create({
-    product: agencyProduct.id,
-    unit_amount: 7900,
-    currency: "eur",
-    recurring: { interval: "month" },
-    metadata: { plan: "agency" },
-  });
+  // ── Plans ──
+  const proProduct = await findOrCreateProduct("Klonr. Pro", "2 000 crédits/mois — 200 publicités professionnelles par IA");
+  const proPrice = await findOrCreatePrice(proProduct.id, 3900, true, { plan: "pro" });
 
-  // Credit packs — separate products too
-  const boostProduct = await stripe.products.create({
-    name: "Klonr. Boost — 50 crédits",
-    description: "Recharge de 50 crédits supplémentaires",
-  });
-  const boostPrice = await stripe.prices.create({
-    product: boostProduct.id,
-    unit_amount: 490,
-    currency: "eur",
-    metadata: { pack: "boost", credits: "50" },
-  });
+  const agencyProduct = await findOrCreateProduct("Klonr. Agency", "5 000 crédits/mois — 500 publicités pour les agences et gros volumes");
+  const agencyPrice = await findOrCreatePrice(agencyProduct.id, 7900, true, { plan: "agency" });
 
-  const growthProduct = await stripe.products.create({
-    name: "Klonr. Growth — 130 crédits",
-    description: "Recharge de 130 crédits supplémentaires",
-  });
-  const growthPrice = await stripe.prices.create({
-    product: growthProduct.id,
-    unit_amount: 990,
-    currency: "eur",
-    metadata: { pack: "growth", credits: "130" },
-  });
+  // ── Credit packs ──
+  const boostProduct = await findOrCreateProduct("Klonr. Boost", "+50 crédits de génération");
+  const boostPrice = await findOrCreatePrice(boostProduct.id, 490, false, { pack: "boost", credits: "50" });
 
-  const scaleProduct = await stripe.products.create({
-    name: "Klonr. Scale — 300 crédits",
-    description: "Recharge de 300 crédits supplémentaires",
-  });
-  const scalePrice = await stripe.prices.create({
-    product: scaleProduct.id,
-    unit_amount: 1990,
-    currency: "eur",
-    metadata: { pack: "scale", credits: "300" },
-  });
+  const growthProduct = await findOrCreateProduct("Klonr. Growth", "+130 crédits — Meilleur rapport qualité/prix");
+  const growthPrice = await findOrCreatePrice(growthProduct.id, 990, false, { pack: "growth", credits: "130" });
+
+  const scaleProduct = await findOrCreateProduct("Klonr. Scale", "+300 crédits pour les gros volumes");
+  const scalePrice = await findOrCreatePrice(scaleProduct.id, 1990, false, { pack: "scale", credits: "300" });
 
   return NextResponse.json({
-    message: "Stripe products created! Update your .env.local and Vercel with these price IDs:",
+    message: "Stripe products updated! Update Vercel env vars with these price IDs:",
     prices: {
-      STRIPE_PRICE_STARTER: starterPrice.id,
       STRIPE_PRICE_PRO: proPrice.id,
       STRIPE_PRICE_AGENCY: agencyPrice.id,
       STRIPE_PRICE_BOOST: boostPrice.id,
