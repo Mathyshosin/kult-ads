@@ -31,12 +31,12 @@ const plans = [
   {
     id: "pro",
     name: "Pro",
-    price: "29€",
+    price: "39€",
     period: "/mois",
-    credits: "500 crédits/mois",
+    credits: "2 000 crédits/mois",
     description: "Pour les e-commerces ambitieux",
     features: [
-      "500 publicités/mois",
+      "200 publicités/mois (10 crédits/ad)",
       "Accès complet à la bibliothèque",
       "4 modes de création",
       "Modification intelligente par IA",
@@ -57,10 +57,10 @@ const plans = [
     name: "Agency",
     price: "79€",
     period: "/mois",
-    credits: "2 000 crédits/mois",
+    credits: "5 000 crédits/mois",
     description: "Volume illimité pour les agences",
     features: [
-      "2 000 publicités/mois",
+      "500 publicités/mois (10 crédits/ad)",
       "Tout le plan Pro inclus",
       "Multi-boutiques",
       "Support dédié",

@@ -86,9 +86,13 @@ export async function deductCredit(userId: string): Promise<boolean> {
 
   if (!data || data.credits_remaining <= 0) return false;
 
+  // Free plan: 1 credit per action, Paid plans: 10 credits per action
+  const cost = data.plan === "free" ? 1 : 10;
+  const newCredits = Math.max(0, data.credits_remaining - cost);
+
   const { error } = await supabase
     .from("user_subscriptions")
-    .update({ credits_remaining: data.credits_remaining - 1 })
+    .update({ credits_remaining: newCredits })
     .eq("user_id", userId);
 
   return !error;

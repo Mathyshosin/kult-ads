@@ -13,13 +13,13 @@ export function getStripe(): Stripe {
 export const PLANS = {
   pro: {
     name: "Pro",
-    credits: 500,
+    credits: 2000,
     monthly: true,
     priceId: process.env.STRIPE_PRICE_PRO || "",
   },
   agency: {
     name: "Agency",
-    credits: 2000,
+    credits: 5000,
     monthly: true,
     priceId: process.env.STRIPE_PRICE_AGENCY || "",
   },
