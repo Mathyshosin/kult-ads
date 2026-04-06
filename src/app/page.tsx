@@ -717,7 +717,7 @@ function Footer() {
           <Link href="/cgu" className="hover:text-gray-700 transition-colors">
             CGU
           </Link>
-          <a href="mailto:contact@klonr.io" className="hover:text-gray-700 transition-colors">
+          <a href="mailto:contact@kult-agency.com" className="hover:text-gray-700 transition-colors">
             Contact
           </a>
         </div>

@@ -58,8 +58,16 @@ export default function CGUPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-3">9. Contact</h2>
-            <p>Pour toute question relative aux presentes CGU, vous pouvez nous contacter a l&apos;adresse : <a href="mailto:contact@klonr.io" className="text-blue-500 hover:underline">contact@klonr.io</a></p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">9. Mentions legales</h2>
+            <p><strong>Editeur :</strong> Kult.</p>
+            <p className="mt-1"><strong>Adresse :</strong> 212 Rue de Solferino, 59800 Lille, France</p>
+            <p className="mt-1"><strong>SIRET :</strong> 99447700800019</p>
+            <p className="mt-1"><strong>Email :</strong> <a href="mailto:contact@kult-agency.com" className="text-blue-500 hover:underline">contact@kult-agency.com</a></p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">10. Contact</h2>
+            <p>Pour toute question relative aux presentes CGU, vous pouvez nous contacter a l&apos;adresse : <a href="mailto:contact@kult-agency.com" className="text-blue-500 hover:underline">contact@kult-agency.com</a></p>
           </section>
         </div>
       </div>
