@@ -253,24 +253,19 @@ export async function POST(request: Request) {
     let visualPrompt: string;
     const layout = metadata?.layout;
 
-    // Core rules for all modes
-    const ctaRule = ctaText ? `Add a CTA button: "${ctaText}".` : "Do NOT add any CTA button or call-to-action.";
-    const productRule = productImageBase64 ? "Copy the product photo EXACTLY as-is — same shape, colors, packaging. Never redesign it." : "";
-    const brandRule = `Write "${brandAnalysis.brandName}" in clean typography where the template has a brand name.`;
-    const storyRule = format === "story" ? " Story format (9:16): leave top 15% and bottom 20% empty." : "";
-    const langRule = "ALL text MUST be in French.";
+    // Simple rules
+    const ctaRule = ctaText ? `Add a CTA: "${ctaText}".` : "";
+    const storyRule = format === "story" ? " Leave top 15% and bottom 20% empty (Story format)." : "";
 
     if (isModification) {
-      visualPrompt = `Edit this ad: "${modificationPrompt}". Keep EVERYTHING else identical — same layout, colors, text, composition. Only apply the requested change. ${langRule}`;
+      visualPrompt = `Edit this ad: "${modificationPrompt}". Change ONLY what is requested. Keep everything else identical. Text in French.`;
 
-    } else if (isReference) {
-      visualPrompt = `Recreate this ad for "${brandAnalysis.brandName}" selling "${product.name}". Keep the EXACT same layout, composition, number of text elements, and visual structure as the reference. Replace: the brand → "${brandAnalysis.brandName}", the product → use the provided product photo. ${productRule} ${brandRule} ${ctaRule} Keep text minimal — only replace existing text, don't add more. Never invent fake prices or claims.${storyRule} ${langRule}`;
-
-    } else if (template) {
-      visualPrompt = `Recreate this ad template for "${brandAnalysis.brandName}" selling "${product.name}". CRITICAL: Keep the EXACT same layout — same number of text blocks, same text positions, same composition, same visual balance. Simply SWAP: the brand name → "${brandAnalysis.brandName}", the product → use the provided product photo, the headline → something about "${product.name}" (2-5 words max). ${productRule} ${brandRule} ${ctaRule} Do NOT add extra text, prices, or elements that aren't in the template. Do NOT add decorative elements. Keep it clean and faithful to the template's structure.${storyRule} ${langRule}`;
+    } else if (isReference || template) {
+      // Same prompt for both reference (user upload) and template (library)
+      visualPrompt = `You are a creative strategist. Here is an ad we love and want to adapt for our brand "${brandAnalysis.brandName}" selling "${product.name}". Analyze the ad's concept, layout, and marketing angle — then recreate it for us using our product photo. Keep the same creative idea but make it ours. ${ctaRule}${storyRule} Text in French.`;
 
     } else {
-      visualPrompt = `Create a clean, professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}". ${productRule} ${brandRule} Short headline (2-5 words). ${ctaRule} Minimal, modern design.${storyRule} ${langRule}`;
+      visualPrompt = `You are a creative strategist. Create a stunning Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}". Use the product photo provided. Clean, professional, eye-catching. ${ctaRule}${storyRule} Text in French.`;
     }
 
     // ── IMAGE ONLY: skip Haiku copy to maximize time for Gemini ──
