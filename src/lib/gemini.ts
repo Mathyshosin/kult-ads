@@ -48,7 +48,7 @@ export async function generateImage(
         },
       });
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Gemini timeout (55s)")), 55000)
+        setTimeout(() => reject(new Error("Gemini timeout (120s)")), 120000)
       );
       const response = await Promise.race([genPromise, timeoutPromise]);
 
