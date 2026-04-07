@@ -290,18 +290,8 @@ export async function POST(request: Request) {
     // Language instruction: all text on the ad must be in French unless specified otherwise
     const langInstruction = "ALL text on the image MUST be written in French (headlines, descriptions, CTA, prices). Do NOT write text in English unless the user explicitly requested another language.";
 
-    // Product fidelity instruction: never invent information, always use real brand data
-    const fidelityInstruction = `CRITICAL RULES — NEVER BREAK THESE:
-1. PRODUCT FIDELITY: If a product photo is provided, reproduce it EXACTLY as-is — same shape, same colors, same packaging, same details. NEVER modify, redesign, or reimagine the product. It must be a pixel-perfect copy of the original photo.
-2. ACCURATE INFORMATION ONLY: Use ONLY real information provided about the brand and product. The price is "${brandContext.productPrice || ""}". The original price is "${brandContext.productOriginalPrice || ""}". The sale price is "${brandContext.productSalePrice || ""}". The offer is "${brandContext.offerTitle || ""}". NEVER invent prices, discounts, features, or claims that were not provided.
-3. BRAND NAME: The brand name is "${brandAnalysis.brandName}". Write it exactly as provided — correct spelling, correct capitalization. NEVER alter the brand name.
-4. NO HALLUCINATION: Do NOT add fake reviews, fake statistics, fake certifications, or fake claims. Only use the real features and USPs provided: ${brandContext.productFeatures?.join(", ") || "none provided"}.`;
-
-    // Brand color instruction: always adapt template colors to match the brand
-    const brandColors = brandAnalysis.colors?.length > 0 ? brandAnalysis.colors.join(", ") : "";
-    const brandColorInstruction = brandColors
-      ? `IMPORTANT: Adapt the color palette to match the brand's identity. The brand colors are: ${brandColors}. Use these colors for backgrounds, accents, text highlights, and decorative elements instead of the template's original colors. The final ad must look like it belongs to "${brandAnalysis.brandName}", not to the original template's brand.`
-      : `IMPORTANT: Adapt the color palette to match "${brandAnalysis.brandName}"'s brand identity. Do NOT keep the template's original brand colors — replace them with colors that fit this brand.`;
+    // Fidelity + template matching instruction (kept short to avoid timeout)
+    const fidelityInstruction = `RULES: Copy the product photo exactly as-is. Use ONLY real info: price "${brandContext.productSalePrice || brandContext.productPrice || ""}", offer "${brandContext.offerTitle || ""}". Brand name is "${brandAnalysis.brandName}" — spell it exactly. Never invent fake prices, claims, or reviews. Match the template's exact layout: same number of text blocks, same text placement, same composition structure.`;
 
     if (isModification) {
       visualPrompt = `You are an image editor. The provided image is an existing advertisement. Your job is to make ONE specific edit to it: "${modificationPrompt}". CRITICAL: Keep everything else EXACTLY the same — same background, same layout, same product placement, same text style, same colors, same composition. The result must look like the same ad with only the requested modification applied. Do NOT redesign, recreate, or reimagine the ad. ${langInstruction}`;
@@ -322,7 +312,7 @@ export async function POST(request: Request) {
       const refSafeZoneNote = format === "story"
         ? " IMPORTANT: This is a Story format (9:16). Leave the TOP 15% and BOTTOM 20% of the image EMPTY (no text, no important elements) — these areas are covered by platform UI. Place ALL content in the middle 65% of the image."
         : "";
-      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). Use the reference image as creative direction — match its overall style, mood, and marketing approach. ${refProductInstruction} ${refLogoInstruction} Write a short, punchy headline about "${headlineHint}" (2-5 words max).${refCtaInstruction}${priceText} Do NOT copy decorative elements from the reference (flowers, leaves, cotton, props) — keep the background clean. All text must be sharp and readable. The result should be a polished, modern ad inspired by the reference's style. ${fidelityInstruction} ${brandColorInstruction}${refSafeZoneNote} ${langInstruction}`;
+      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). Use the reference image as creative direction — match its overall style, mood, and marketing approach. ${refProductInstruction} ${refLogoInstruction} Write a short, punchy headline about "${headlineHint}" (2-5 words max).${refCtaInstruction}${priceText} Do NOT copy decorative elements from the reference (flowers, leaves, cotton, props) — keep the background clean. All text must be sharp and readable. The result should be a polished, modern ad inspired by the reference's style. ${fidelityInstruction}${refSafeZoneNote} ${langInstruction}`;
 
     } else if (template && layout) {
       // TEMPLATE INSPIRATION MODE — use template as creative direction reference
@@ -352,7 +342,7 @@ export async function POST(request: Request) {
         ? " IMPORTANT: This is a Story format (9:16). Leave the TOP 15% and BOTTOM 20% of the image EMPTY (no text, no important elements) — these areas are covered by platform UI (profile bar at top, swipe-up/CTA at bottom). Place ALL content in the middle 65% of the image."
         : "";
 
-      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). Use the template image as creative direction — match its overall style, mood, and marketing approach (${metadata?.templateType || "product-showcase"}). ${productInstruction} ${logoInstruction} ${textInstruction}${comparisonNote} Do NOT copy decorative elements from the template (flowers, leaves, cotton, props) — keep the background clean. All text must be sharp and readable. The result should be a polished, modern ad inspired by the template's style. ${fidelityInstruction} ${brandColorInstruction}${safeZoneNote} ${langInstruction}`;
+      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). Use the template image as creative direction — match its overall style, mood, and marketing approach (${metadata?.templateType || "product-showcase"}). ${productInstruction} ${logoInstruction} ${textInstruction}${comparisonNote} Do NOT copy decorative elements from the template (flowers, leaves, cotton, props) — keep the background clean. All text must be sharp and readable. The result should be a polished, modern ad inspired by the template's style. ${fidelityInstruction}${safeZoneNote} ${langInstruction}`;
 
     } else {
       const safeZoneNote = format === "story"
@@ -360,7 +350,7 @@ export async function POST(request: Request) {
         : "";
       // Fallback: no template — create from scratch
       const fallbackCta = ctaText ? ` Add a CTA button saying "${ctaText}".` : "";
-      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). ${productImageBase64 ? "Feature the product exactly as shown in the product photo — same shape, colors, details, fully visible." : ""} ${brandLogoBase64 ? `Place the logo provided for "${brandAnalysis.brandName}" as-is.` : `Write "${brandAnalysis.brandName}" in clean typography.`} Write a short headline about "${headlineHint}".${fallbackCta} Premium, minimalist, Instagram-ready. ${fidelityInstruction} ${brandColorInstruction}${safeZoneNote} ${langInstruction}`;
+      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). ${productImageBase64 ? "Feature the product exactly as shown in the product photo — same shape, colors, details, fully visible." : ""} ${brandLogoBase64 ? `Place the logo provided for "${brandAnalysis.brandName}" as-is.` : `Write "${brandAnalysis.brandName}" in clean typography.`} Write a short headline about "${headlineHint}".${fallbackCta} Premium, minimalist, Instagram-ready. ${fidelityInstruction}${safeZoneNote} ${langInstruction}`;
     }
 
     // ── IMAGE ONLY: skip Haiku copy to maximize time for Gemini ──
