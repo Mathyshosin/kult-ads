@@ -369,105 +369,118 @@ function PromptsTab() {
 }
 
 // ══════════════════════════════════════════
-// Prompt History Tab
+// Prompt History Tab — versions des prompts
 // ══════════════════════════════════════════
 
-interface PromptHistoryItem {
-  id: string;
-  format: string;
-  templateId: string;
-  createdAt: string;
-  imageUrl: string;
-  prompt: string;
-  templateType: string;
-  referenceLabels: string[];
-}
+const PROMPT_VERSIONS = [
+  {
+    date: "7 avril 2026",
+    version: "v5 — Actuelle",
+    badge: "active",
+    changes: "Suppression logo, ajout détourage produit, prompts ultra-courts",
+    prompts: {
+      modification: `Edit this ad: "{instruction}". Keep EVERYTHING else identical — same layout, colors, text, composition. Only apply the requested change. ALL text MUST be in French.`,
+      reference: `Recreate this ad for "{brandName}" selling "{productName}". Keep the EXACT same layout, composition, number of text elements, and visual structure as the reference. Replace: the brand → "{brandName}", the product → use the provided product photo. Copy the product photo EXACTLY as-is — same shape, colors, packaging. Never redesign it. Write "{brandName}" in clean typography where the template has a brand name. Do NOT add any CTA button or call-to-action. Keep text minimal — only replace existing text, don't add more. Never invent fake prices or claims. ALL text MUST be in French.`,
+      template: `Recreate this ad template for "{brandName}" selling "{productName}". CRITICAL: Keep the EXACT same layout — same number of text blocks, same text positions, same composition, same visual balance. Simply SWAP: the brand name → "{brandName}", the product → use the provided product photo, the headline → something about "{productName}" (2-5 words max). Copy the product photo EXACTLY as-is — same shape, colors, packaging. Never redesign it. Write "{brandName}" in clean typography where the template has a brand name. Do NOT add any CTA button or call-to-action. Do NOT add extra text, prices, or elements that aren't in the template. Do NOT add decorative elements. Keep it clean and faithful to the template's structure. ALL text MUST be in French.`,
+      fallback: `Create a clean, professional Instagram ad for "{brandName}" selling "{productName}". Copy the product photo EXACTLY as-is. Write "{brandName}" cleanly. Short headline (2-5 words). Do NOT add any CTA button. Minimal, modern design. ALL text MUST be in French.`,
+    },
+  },
+  {
+    date: "6 avril 2026",
+    version: "v4 — Fidélité + Couleurs marque",
+    badge: "",
+    changes: "Ajout règles de fidélité produit, adaptation couleurs de la marque, texte FR obligatoire",
+    prompts: {
+      modification: `You are an image editor. The provided image is an existing advertisement. Your job is to make ONE specific edit to it: "{modificationPrompt}". CRITICAL: Keep everything else EXACTLY the same. ALL text MUST be in French.`,
+      reference: `Create a professional Instagram ad for "{brandName}" selling "{productName}". Use the reference image as creative direction — match its overall style, mood, and marketing approach. Feature the product from the product photo — copy it exactly as-is. Use the provided logo exactly as-is. Write a short headline (2-5 words max). Do NOT add any CTA. RULES: Copy the product photo exactly as-is. Use ONLY real info. Brand name is "{brandName}" — spell it exactly. Never invent fake prices, claims, or reviews. IMPORTANT: Adapt the color palette to match the brand's identity. ALL text MUST be in French.`,
+      template: `Create a professional Instagram ad for "{brandName}" selling "{productName}". Use the template image as creative direction — match its overall style, mood, and marketing approach. Simply SWAP: brand name, product, headline. Do NOT copy decorative elements. RULES: Copy the product photo exactly. Use ONLY real info. Match the template's exact layout: same number of text blocks, same text placement. Adapt colors to match brand identity. ALL text MUST be in French.`,
+      fallback: `Create a professional Instagram ad for "{brandName}" selling "{productName}". Feature the product exactly as shown. Place the logo as-is. Short headline. Premium, minimalist. Adapt colors to brand. ALL text MUST be in French.`,
+    },
+  },
+  {
+    date: "5 avril 2026",
+    version: "v3 — Sans Haiku + Prix injectés",
+    badge: "",
+    changes: "Suppression appel Claude Haiku, injection des prix dans le prompt, CTA optionnel",
+    prompts: {
+      modification: `You are an image editor. Make ONE specific edit: "{modificationPrompt}". Keep everything else EXACTLY the same — same background, layout, product placement, text style, colors, composition.`,
+      reference: `Create a professional Instagram ad for "{brandName}" selling "{productName}" ({description}). Use the reference image as creative direction — match its overall style, color palette, mood, and marketing approach. Feature the product — copy it exactly. Use the provided logo exactly as-is. Write a short, punchy headline about "{headlineHint}" (2-5 words max). Do NOT add any CTA button. Replace any price with: original price "{originalPrice}" crossed out, sale price "{salePrice}" highlighted. Do NOT copy decorative elements. Do NOT invent product features or claims. ALL text MUST be in French.`,
+      template: `Create a professional Instagram ad for "{brandName}" selling "{productName}" ({description}). Use the template image as creative direction — match its overall style, color palette ({backgroundStyle}), mood, and marketing approach ({templateType}). Feature the product — copy it exactly. Use the provided logo. Write a short headline (2-5 words max). Do NOT add any CTA. Replace any price with real prices. Do NOT copy decorative elements. Do NOT invent product features. ALL text must be sharp and readable. ALL text MUST be in French.`,
+      fallback: `Create a professional Instagram ad for "{brandName}" selling "{productName}". Feature the product exactly as shown. Place the logo as-is. Write a short headline about "{headlineHint}". Premium, minimalist, Instagram-ready. ALL text MUST be in French.`,
+    },
+  },
+  {
+    date: "Mars 2026",
+    version: "v2 — Inspiration mode",
+    badge: "",
+    changes: "Templates comme inspiration créative, suppression du mode copie exacte, anti-décoration",
+    prompts: {
+      modification: `You are an image editor. Make ONE specific edit. Keep everything else identical.`,
+      reference: `Create a professional Instagram ad inspired by the reference. Match its style, color palette, mood, and marketing approach. Feature the product exactly as shown. Use the provided logo. Write a short headline. Do NOT copy decorative elements (flowers, leaves, cotton, props). Do NOT invent product features.`,
+      template: `Create a professional Instagram ad for "{brandName}" selling "{productName}". Use the template image as creative direction — match its overall style, color palette, mood, and marketing approach. Feature the product from the product photo — copy it exactly as-is. Use the provided logo exactly as-is, no modification. Write a short, punchy headline. Do NOT copy decorative elements from the template — keep the background clean. Do NOT invent product features or claims. All text must be sharp and readable.`,
+      fallback: `Create a professional Instagram ad for "{brandName}" selling "{productName}". Feature the product. Place the logo. Write a short headline. Premium, minimalist, Instagram-ready.`,
+    },
+  },
+  {
+    date: "Mars 2026",
+    version: "v1 — Premier prompt",
+    badge: "",
+    changes: "Prompt initial — Gemini + Haiku en parallèle, mode copie exacte du template",
+    prompts: {
+      modification: "(Non disponible dans cette version)",
+      reference: "(Non disponible dans cette version)",
+      template: `Create a professional Instagram ad for "{brandName}" selling "{productName}". Use the template image as creative direction — match its overall style, color palette, mood, and marketing approach. Feature the product. Use the provided logo. All text must be sharp and readable. The result should be a polished, modern ad inspired by the template's style.`,
+      fallback: `Create a professional Instagram ad for "{brandName}" selling "{productName}". Feature the product. Place the logo. Write a headline. Premium, minimalist.`,
+    },
+  },
+];
 
 function PromptHistoryTab() {
-  const [history, setHistory] = useState<PromptHistoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/admin/prompt-history")
-      .then((r) => r.json())
-      .then((data) => { setHistory(data.history || []); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-      </div>
-    );
-  }
-
-  if (history.length === 0) {
-    return (
-      <div className="text-center py-20 text-gray-400">
-        <p className="font-medium">Aucun historique de prompt</p>
-        <p className="text-sm mt-1">Les prompts apparaîtront ici après les générations via template.</p>
-      </div>
-    );
-  }
+  const [expandedVersion, setExpandedVersion] = useState<string | null>("v5 — Actuelle");
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-gray-500 mb-4">{history.length} dernières générations via template</p>
-      {history.map((item) => {
-        const isExpanded = expandedId === item.id;
-        const date = new Date(item.createdAt);
-        const dateStr = date.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
-        const timeStr = date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-
+      <p className="text-sm text-gray-500 mb-4">Historique de toutes les versions de prompts Gemini</p>
+      {PROMPT_VERSIONS.map((v) => {
+        const isExpanded = expandedVersion === v.version;
         return (
-          <div key={item.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+          <div key={v.version} className={`border rounded-xl overflow-hidden bg-white ${v.badge === "active" ? "border-green-300 ring-1 ring-green-200" : "border-gray-200"}`}>
             <button
-              onClick={() => setExpandedId(isExpanded ? null : item.id)}
+              onClick={() => setExpandedVersion(isExpanded ? null : v.version)}
               className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors text-left"
             >
-              {/* Ad thumbnail */}
-              {item.imageUrl && (
-                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
-                </div>
-              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-gray-800">{dateStr}</span>
-                  <span className="text-xs text-gray-400">{timeStr}</span>
-                  <span className="text-[10px] font-medium bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{item.format}</span>
-                  {item.templateType && (
-                    <span className="text-[10px] font-medium bg-violet-50 text-violet-600 px-2 py-0.5 rounded-full">{item.templateType}</span>
+                  <span className="text-sm font-bold text-gray-800">{v.version}</span>
+                  {v.badge === "active" && (
+                    <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">EN PRODUCTION</span>
                   )}
                 </div>
-                <p className="text-xs text-gray-400 truncate mt-0.5">Template: {item.templateId}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{v.date} — {v.changes}</p>
               </div>
               <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
             </button>
 
             {isExpanded && (
-              <div className="px-4 pb-4 space-y-3">
-                <div>
-                  <span className="text-[10px] font-semibold text-green-600 uppercase tracking-wider">Prompt Gemini</span>
-                  <pre className="bg-gray-900 text-green-400 text-[11px] p-4 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed font-mono max-h-[400px] overflow-y-auto mt-1.5">
-                    {item.prompt || "Prompt non disponible"}
-                  </pre>
-                </div>
-                {item.referenceLabels.length > 0 && (
-                  <div>
-                    <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">Images envoyées</span>
-                    <ul className="mt-1.5 space-y-1">
-                      {item.referenceLabels.map((label, i) => (
-                        <li key={i} className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2 font-mono">
-                          {i + 1}. {label}
-                        </li>
-                      ))}
-                    </ul>
+              <div className="px-4 pb-4 space-y-4">
+                {(["modification", "reference", "template", "fallback"] as const).map((mode) => (
+                  <div key={mode}>
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider ${
+                      mode === "modification" ? "text-amber-600" :
+                      mode === "reference" ? "text-blue-600" :
+                      mode === "template" ? "text-violet-600" :
+                      "text-gray-500"
+                    }`}>
+                      {mode === "modification" ? "Mode Modification" :
+                       mode === "reference" ? "Mode Copy-Ads" :
+                       mode === "template" ? "Mode Template / Auto" :
+                       "Mode Fallback"}
+                    </span>
+                    <pre className="bg-gray-900 text-green-400 text-[11px] p-4 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed font-mono max-h-[300px] overflow-y-auto mt-1.5">
+                      {v.prompts[mode]}
+                    </pre>
                   </div>
-                )}
+                ))}
               </div>
             )}
           </div>
