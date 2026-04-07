@@ -369,6 +369,115 @@ function PromptsTab() {
 }
 
 // ══════════════════════════════════════════
+// Prompt History Tab
+// ══════════════════════════════════════════
+
+interface PromptHistoryItem {
+  id: string;
+  format: string;
+  templateId: string;
+  createdAt: string;
+  imageUrl: string;
+  prompt: string;
+  templateType: string;
+  referenceLabels: string[];
+}
+
+function PromptHistoryTab() {
+  const [history, setHistory] = useState<PromptHistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/prompt-history")
+      .then((r) => r.json())
+      .then((data) => { setHistory(data.history || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (history.length === 0) {
+    return (
+      <div className="text-center py-20 text-gray-400">
+        <p className="font-medium">Aucun historique de prompt</p>
+        <p className="text-sm mt-1">Les prompts apparaîtront ici après les générations via template.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-gray-500 mb-4">{history.length} dernières générations via template</p>
+      {history.map((item) => {
+        const isExpanded = expandedId === item.id;
+        const date = new Date(item.createdAt);
+        const dateStr = date.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+        const timeStr = date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
+        return (
+          <div key={item.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+            <button
+              onClick={() => setExpandedId(isExpanded ? null : item.id)}
+              className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors text-left"
+            >
+              {/* Ad thumbnail */}
+              {item.imageUrl && (
+                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-gray-800">{dateStr}</span>
+                  <span className="text-xs text-gray-400">{timeStr}</span>
+                  <span className="text-[10px] font-medium bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{item.format}</span>
+                  {item.templateType && (
+                    <span className="text-[10px] font-medium bg-violet-50 text-violet-600 px-2 py-0.5 rounded-full">{item.templateType}</span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 truncate mt-0.5">Template: {item.templateId}</p>
+              </div>
+              <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+            </button>
+
+            {isExpanded && (
+              <div className="px-4 pb-4 space-y-3">
+                <div>
+                  <span className="text-[10px] font-semibold text-green-600 uppercase tracking-wider">Prompt Gemini</span>
+                  <pre className="bg-gray-900 text-green-400 text-[11px] p-4 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed font-mono max-h-[400px] overflow-y-auto mt-1.5">
+                    {item.prompt || "Prompt non disponible"}
+                  </pre>
+                </div>
+                {item.referenceLabels.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">Images envoyées</span>
+                    <ul className="mt-1.5 space-y-1">
+                      {item.referenceLabels.map((label, i) => (
+                        <li key={i} className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2 font-mono">
+                          {i + 1}. {label}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
 // Analytics Tab
 // ══════════════════════════════════════════
 
@@ -835,7 +944,7 @@ export default function AdminPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const isLoading = useAuthStore((s) => s.isLoading);
   const initialize = useAuthStore((s) => s.initialize);
-  const [activeTab, setActiveTab] = useState<"moderation" | "prompts" | "analytics" | "changelog">("moderation");
+  const [activeTab, setActiveTab] = useState<"moderation" | "prompts" | "history" | "analytics" | "changelog">("moderation");
   const initRef = useRef(false);
 
   useEffect(() => {
@@ -897,6 +1006,16 @@ export default function AdminPage() {
               Prompts IA
             </button>
             <button
+              onClick={() => setActiveTab("history")}
+              className={`text-xs font-medium px-4 py-1.5 rounded-lg transition-colors ${
+                activeTab === "history"
+                  ? "bg-gray-900 text-white"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Historique
+            </button>
+            <button
               onClick={() => setActiveTab("analytics")}
               className={`text-xs font-medium px-4 py-1.5 rounded-lg transition-colors ${
                 activeTab === "analytics"
@@ -922,6 +1041,7 @@ export default function AdminPage() {
         {/* Content */}
         {activeTab === "moderation" && <ModerationTab />}
         {activeTab === "prompts" && <PromptsTab />}
+        {activeTab === "history" && <PromptHistoryTab />}
         {activeTab === "analytics" && <AnalyticsTab />}
         {activeTab === "changelog" && <ChangelogTab />}
       </div>
