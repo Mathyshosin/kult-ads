@@ -219,13 +219,6 @@ export async function POST(request: Request) {
         });
       }
 
-      if (brandLogoBase64) {
-        referenceImages.push({
-          base64: brandLogoBase64,
-          mimeType: detectMimeType(brandLogoBase64, brandLogoMimeType || "image/png"),
-          label: `Logo for "${brandAnalysis.brandName}" — place this exact logo in the ad as-is, no modification, no background shape added.`,
-        });
-      }
     } else if (isReference && referenceAdBase64) {
       // REFERENCE MODE: treat uploaded ad same as template — creative direction first
       referenceImages.push({
@@ -242,13 +235,6 @@ export async function POST(request: Request) {
         });
       }
 
-      if (brandLogoBase64) {
-        referenceImages.push({
-          base64: brandLogoBase64,
-          mimeType: detectMimeType(brandLogoBase64, brandLogoMimeType || "image/png"),
-          label: `Logo for "${brandAnalysis.brandName}" — place this exact logo in the ad as-is, no modification, no background shape added.`,
-        });
-      }
     } else {
       // NO TEMPLATE / NO REFERENCE: product first, then logo
       if (productImageBase64) {
@@ -259,13 +245,6 @@ export async function POST(request: Request) {
         });
       }
 
-      if (brandLogoBase64) {
-        referenceImages.push({
-          base64: brandLogoBase64,
-          mimeType: detectMimeType(brandLogoBase64, brandLogoMimeType || "image/png"),
-          label: `Official logo for "${brandAnalysis.brandName}". Place as-is without modification.`,
-        });
-      }
     }
 
     // (modification image already added at the top of referenceImages)
@@ -277,7 +256,7 @@ export async function POST(request: Request) {
     // Core rules for all modes
     const ctaRule = ctaText ? `Add a CTA button: "${ctaText}".` : "Do NOT add any CTA button or call-to-action.";
     const productRule = productImageBase64 ? "Copy the product photo EXACTLY as-is — same shape, colors, packaging. Never redesign it." : "";
-    const logoRule = brandLogoBase64 ? `Use the provided logo for "${brandAnalysis.brandName}" exactly as-is.` : `Write "${brandAnalysis.brandName}" cleanly.`;
+    const brandRule = `Write "${brandAnalysis.brandName}" in clean typography where the template has a brand name.`;
     const storyRule = format === "story" ? " Story format (9:16): leave top 15% and bottom 20% empty." : "";
     const langRule = "ALL text MUST be in French.";
 
@@ -285,13 +264,13 @@ export async function POST(request: Request) {
       visualPrompt = `Edit this ad: "${modificationPrompt}". Keep EVERYTHING else identical — same layout, colors, text, composition. Only apply the requested change. ${langRule}`;
 
     } else if (isReference) {
-      visualPrompt = `Recreate this ad for "${brandAnalysis.brandName}" selling "${product.name}". Keep the EXACT same layout, composition, number of text elements, and visual structure as the reference. Replace: the brand → "${brandAnalysis.brandName}", the product → use the provided product photo. ${productRule} ${logoRule} ${ctaRule} Keep text minimal — only replace existing text, don't add more. Never invent fake prices or claims.${storyRule} ${langRule}`;
+      visualPrompt = `Recreate this ad for "${brandAnalysis.brandName}" selling "${product.name}". Keep the EXACT same layout, composition, number of text elements, and visual structure as the reference. Replace: the brand → "${brandAnalysis.brandName}", the product → use the provided product photo. ${productRule} ${brandRule} ${ctaRule} Keep text minimal — only replace existing text, don't add more. Never invent fake prices or claims.${storyRule} ${langRule}`;
 
     } else if (template) {
-      visualPrompt = `Recreate this ad template for "${brandAnalysis.brandName}" selling "${product.name}". CRITICAL: Keep the EXACT same layout — same number of text blocks, same text positions, same composition, same visual balance. Simply SWAP: the brand name → "${brandAnalysis.brandName}", the product → use the provided product photo, the headline → something about "${product.name}" (2-5 words max). ${productRule} ${logoRule} ${ctaRule} Do NOT add extra text, prices, or elements that aren't in the template. Do NOT add decorative elements. Keep it clean and faithful to the template's structure.${storyRule} ${langRule}`;
+      visualPrompt = `Recreate this ad template for "${brandAnalysis.brandName}" selling "${product.name}". CRITICAL: Keep the EXACT same layout — same number of text blocks, same text positions, same composition, same visual balance. Simply SWAP: the brand name → "${brandAnalysis.brandName}", the product → use the provided product photo, the headline → something about "${product.name}" (2-5 words max). ${productRule} ${brandRule} ${ctaRule} Do NOT add extra text, prices, or elements that aren't in the template. Do NOT add decorative elements. Keep it clean and faithful to the template's structure.${storyRule} ${langRule}`;
 
     } else {
-      visualPrompt = `Create a clean, professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}". ${productRule} ${logoRule} Short headline (2-5 words). ${ctaRule} Minimal, modern design.${storyRule} ${langRule}`;
+      visualPrompt = `Create a clean, professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}". ${productRule} ${brandRule} Short headline (2-5 words). ${ctaRule} Minimal, modern design.${storyRule} ${langRule}`;
     }
 
     // ── IMAGE ONLY: skip Haiku copy to maximize time for Gemini ──
