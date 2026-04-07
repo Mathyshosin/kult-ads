@@ -374,10 +374,11 @@ function PromptsTab() {
 
 const PROMPT_VERSIONS = [
   {
-    date: "7 avril 2026",
+    date: "7 avril 2026 — 15:42",
     version: "v5 — Actuelle",
     badge: "active",
-    changes: "Suppression logo, ajout détourage produit, prompts ultra-courts",
+    commit: "9dd840e → e7da168",
+    changes: "Suppression logo des images de référence, ajout API détourage produit, réécriture complète des prompts (71 lignes supprimées, 12 ajoutées), approche 'Recreate' au lieu de 'Create inspired by'",
     prompts: {
       modification: `Edit this ad: "{instruction}". Keep EVERYTHING else identical — same layout, colors, text, composition. Only apply the requested change. ALL text MUST be in French.`,
       reference: `Recreate this ad for "{brandName}" selling "{productName}". Keep the EXACT same layout, composition, number of text elements, and visual structure as the reference. Replace: the brand → "{brandName}", the product → use the provided product photo. Copy the product photo EXACTLY as-is — same shape, colors, packaging. Never redesign it. Write "{brandName}" in clean typography where the template has a brand name. Do NOT add any CTA button or call-to-action. Keep text minimal — only replace existing text, don't add more. Never invent fake prices or claims. ALL text MUST be in French.`,
@@ -386,10 +387,11 @@ const PROMPT_VERSIONS = [
     },
   },
   {
-    date: "6 avril 2026",
+    date: "6 avril 2026 — 19:15",
     version: "v4 — Fidélité + Couleurs marque",
     badge: "",
-    changes: "Ajout règles de fidélité produit, adaptation couleurs de la marque, texte FR obligatoire",
+    commit: "0e970c1 → a52c91c",
+    changes: "Ajout 4 règles de fidélité produit (copie exacte, infos réelles, nom exact, zéro hallucination), adaptation couleurs de la marque via brandColorInstruction, texte FR obligatoire sur toutes les ads",
     prompts: {
       modification: `You are an image editor. The provided image is an existing advertisement. Your job is to make ONE specific edit to it: "{modificationPrompt}". CRITICAL: Keep everything else EXACTLY the same. ALL text MUST be in French.`,
       reference: `Create a professional Instagram ad for "{brandName}" selling "{productName}". Use the reference image as creative direction — match its overall style, mood, and marketing approach. Feature the product from the product photo — copy it exactly as-is. Use the provided logo exactly as-is. Write a short headline (2-5 words max). Do NOT add any CTA. RULES: Copy the product photo exactly as-is. Use ONLY real info. Brand name is "{brandName}" — spell it exactly. Never invent fake prices, claims, or reviews. IMPORTANT: Adapt the color palette to match the brand's identity. ALL text MUST be in French.`,
@@ -398,10 +400,11 @@ const PROMPT_VERSIONS = [
     },
   },
   {
-    date: "5 avril 2026",
-    version: "v3 — Sans Haiku + Prix injectés",
+    date: "2-4 avril 2026",
+    version: "v3 — Sans Haiku + Optimisations timeout",
     badge: "",
-    changes: "Suppression appel Claude Haiku, injection des prix dans le prompt, CTA optionnel",
+    commit: "7a93886 → 6bbf9cd → 792146f → 388d5ad",
+    changes: "Suppression appel Claude Haiku (gain 3-5s), texte FR obligatoire, skip analyse Sonnet live (gain 7s), timeout Gemini 50s, retry automatique côté client, CTA optionnel, injection prix dans le prompt",
     prompts: {
       modification: `You are an image editor. Make ONE specific edit: "{modificationPrompt}". Keep everything else EXACTLY the same — same background, layout, product placement, text style, colors, composition.`,
       reference: `Create a professional Instagram ad for "{brandName}" selling "{productName}" ({description}). Use the reference image as creative direction — match its overall style, color palette, mood, and marketing approach. Feature the product — copy it exactly. Use the provided logo exactly as-is. Write a short, punchy headline about "{headlineHint}" (2-5 words max). Do NOT add any CTA button. Replace any price with: original price "{originalPrice}" crossed out, sale price "{salePrice}" highlighted. Do NOT copy decorative elements. Do NOT invent product features or claims. ALL text MUST be in French.`,
@@ -410,10 +413,11 @@ const PROMPT_VERSIONS = [
     },
   },
   {
-    date: "Mars 2026",
-    version: "v2 — Inspiration mode",
+    date: "17-21 mars 2026",
+    version: "v2 — Inspiration mode + Modifications",
     badge: "",
-    changes: "Templates comme inspiration créative, suppression du mode copie exacte, anti-décoration",
+    commit: "4ea6e5b → 6215ab2 → 0f0bdfe → 8087eee",
+    changes: "Réécriture prompt : template comme inspiration créative (plus copie exacte), unification ref/template, fix CTA 'Découvrir' hardcodé, anti-décoration (fleurs, coton, feuilles), zones safe story, fix codes hex visibles, modification d'ads via prompt",
     prompts: {
       modification: `You are an image editor. Make ONE specific edit. Keep everything else identical.`,
       reference: `Create a professional Instagram ad inspired by the reference. Match its style, color palette, mood, and marketing approach. Feature the product exactly as shown. Use the provided logo. Write a short headline. Do NOT copy decorative elements (flowers, leaves, cotton, props). Do NOT invent product features.`,
@@ -422,10 +426,11 @@ const PROMPT_VERSIONS = [
     },
   },
   {
-    date: "Mars 2026",
+    date: "15-16 mars 2026",
     version: "v1 — Premier prompt",
     badge: "",
-    changes: "Prompt initial — Gemini + Haiku en parallèle, mode copie exacte du template",
+    commit: "e2a3ed3 → 189e936",
+    changes: "Prompt initial — Gemini + Haiku en parallèle, ajout contexte produit (fix hallucinations), suppression text-overlay.ts/sharp (fix Vercel build), mode copie exacte du template",
     prompts: {
       modification: "(Non disponible dans cette version)",
       reference: "(Non disponible dans cette version)",
@@ -457,6 +462,7 @@ function PromptHistoryTab() {
                   )}
                 </div>
                 <p className="text-xs text-gray-400 mt-0.5">{v.date} — {v.changes}</p>
+                {"commit" in v && v.commit && <p className="text-[10px] text-gray-300 font-mono mt-0.5">Commits: {v.commit}</p>}
               </div>
               <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
             </button>
