@@ -274,83 +274,24 @@ export async function POST(request: Request) {
     let visualPrompt: string;
     const layout = metadata?.layout;
 
-    // Headline: use offer title, first USP, or product name
-    const headlineHint = brandContext.offerTitle
-      || brandContext.uniqueSellingPoints?.[0]
-      || product.name;
-
-    // Price text for templates that show prices
-    let priceText = "";
-    if (brandContext.productOriginalPrice && brandContext.productSalePrice) {
-      priceText = ` Replace any price with: original price "${brandContext.productOriginalPrice}" crossed out, sale price "${brandContext.productSalePrice}" highlighted.`;
-    } else if (brandContext.productPrice) {
-      priceText = ` Replace any price with "${brandContext.productPrice}".`;
-    }
-
-    // Language instruction: all text on the ad must be in French unless specified otherwise
-    const langInstruction = "ALL text on the image MUST be written in French (headlines, descriptions, CTA, prices). Do NOT write text in English unless the user explicitly requested another language.";
-
-    // Fidelity + template matching instruction (kept short to avoid timeout)
-    const fidelityInstruction = `RULES: Copy the product photo exactly as-is. Use ONLY real info: price "${brandContext.productSalePrice || brandContext.productPrice || ""}", offer "${brandContext.offerTitle || ""}". Brand name is "${brandAnalysis.brandName}" — spell it exactly. Never invent fake prices, claims, or reviews. Match the template's exact layout: same number of text blocks, same text placement, same composition structure.`;
+    // Core rules for all modes
+    const ctaRule = ctaText ? `Add a CTA button: "${ctaText}".` : "Do NOT add any CTA button or call-to-action.";
+    const productRule = productImageBase64 ? "Copy the product photo EXACTLY as-is — same shape, colors, packaging. Never redesign it." : "";
+    const logoRule = brandLogoBase64 ? `Use the provided logo for "${brandAnalysis.brandName}" exactly as-is.` : `Write "${brandAnalysis.brandName}" cleanly.`;
+    const storyRule = format === "story" ? " Story format (9:16): leave top 15% and bottom 20% empty." : "";
+    const langRule = "ALL text MUST be in French.";
 
     if (isModification) {
-      visualPrompt = `You are an image editor. The provided image is an existing advertisement. Your job is to make ONE specific edit to it: "${modificationPrompt}". CRITICAL: Keep everything else EXACTLY the same — same background, same layout, same product placement, same text style, same colors, same composition. The result must look like the same ad with only the requested modification applied. Do NOT redesign, recreate, or reimagine the ad. ${langInstruction}`;
+      visualPrompt = `Edit this ad: "${modificationPrompt}". Keep EVERYTHING else identical — same layout, colors, text, composition. Only apply the requested change. ${langRule}`;
 
     } else if (isReference) {
-      // Same approach as template mode — use the uploaded ad as creative direction
-      const refProductInstruction = productImageBase64
-        ? `Feature the product from the product photo — copy it exactly as-is (same colors, shape, texture), fully visible, never cropped.`
-        : "";
+      visualPrompt = `Recreate this ad for "${brandAnalysis.brandName}" selling "${product.name}". Keep the EXACT same layout, composition, number of text elements, and visual structure as the reference. Replace: the brand → "${brandAnalysis.brandName}", the product → use the provided product photo. ${productRule} ${logoRule} ${ctaRule} Keep text minimal — only replace existing text, don't add more. Never invent fake prices or claims.${storyRule} ${langRule}`;
 
-      const refLogoInstruction = brandLogoBase64
-        ? `Use the provided logo for "${brandAnalysis.brandName}" exactly as-is, no modification.`
-        : `Write "${brandAnalysis.brandName}" in clean, modern typography.`;
-
-      const refCtaInstruction = ctaText
-        ? ` Add a CTA button saying "${ctaText}".`
-        : " Do NOT add any CTA button.";
-      const refSafeZoneNote = format === "story"
-        ? " IMPORTANT: This is a Story format (9:16). Leave the TOP 15% and BOTTOM 20% of the image EMPTY (no text, no important elements) — these areas are covered by platform UI. Place ALL content in the middle 65% of the image."
-        : "";
-      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). Use the reference image as creative direction — match its overall style, mood, and marketing approach. ${refProductInstruction} ${refLogoInstruction} Write a short, punchy headline about "${headlineHint}" (2-5 words max).${refCtaInstruction}${priceText} Do NOT copy decorative elements from the reference (flowers, leaves, cotton, props) — keep the background clean. All text must be sharp and readable. The result should be a polished, modern ad inspired by the reference's style. ${fidelityInstruction}${refSafeZoneNote} ${langInstruction}`;
-
-    } else if (template && layout) {
-      // TEMPLATE INSPIRATION MODE — use template as creative direction reference
-      const productInstruction = templateShowsProduct && productImageBase64 && !isTextOnly
-        ? `Feature the product from the product photo — copy it exactly as-is (same colors, shape, texture), fully visible, never cropped.${!metadata?.templateHasHumanModel ? " Do not add any person or human figure." : ""}`
-        : isTextOnly
-          ? "This is a text-focused ad style — no product photo needed."
-          : "";
-
-      const logoInstruction = brandLogoBase64
-        ? `Use the provided logo for "${brandAnalysis.brandName}" exactly as-is, no modification.`
-        : `Write "${brandAnalysis.brandName}" in clean, modern typography.`;
-
-      const ctaInstruction = ctaText
-        ? ` Add a CTA button saying "${ctaText}".`
-        : " Do NOT add any CTA button.";
-
-      const textInstruction = metadata?.textElements && metadata.textElements.length > 0
-        ? `Write a short, punchy headline about "${headlineHint}" (2-5 words max).${ctaInstruction}${priceText} Use ${layout.typographyStyle || "clean sans-serif"} typography. NEVER display hex color codes (like #000000 or #E91E7A) as visible text on the image.`
-        : `${logoInstruction}`;
-
-      const comparisonNote = metadata?.templateType === "comparison"
-        ? ` Use a comparison layout: one side shows a generic inferior alternative, the other side shows "${product.name}" looking premium and desirable.`
-        : "";
-
-      const safeZoneNote = format === "story"
-        ? " IMPORTANT: This is a Story format (9:16). Leave the TOP 15% and BOTTOM 20% of the image EMPTY (no text, no important elements) — these areas are covered by platform UI (profile bar at top, swipe-up/CTA at bottom). Place ALL content in the middle 65% of the image."
-        : "";
-
-      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). Use the template image as creative direction — match its overall style, mood, and marketing approach (${metadata?.templateType || "product-showcase"}). ${productInstruction} ${logoInstruction} ${textInstruction}${comparisonNote} Do NOT copy decorative elements from the template (flowers, leaves, cotton, props) — keep the background clean. All text must be sharp and readable. The result should be a polished, modern ad inspired by the template's style. ${fidelityInstruction}${safeZoneNote} ${langInstruction}`;
+    } else if (template) {
+      visualPrompt = `Recreate this ad template for "${brandAnalysis.brandName}" selling "${product.name}". CRITICAL: Keep the EXACT same layout — same number of text blocks, same text positions, same composition, same visual balance. Simply SWAP: the brand name → "${brandAnalysis.brandName}", the product → use the provided product photo, the headline → something about "${product.name}" (2-5 words max). ${productRule} ${logoRule} ${ctaRule} Do NOT add extra text, prices, or elements that aren't in the template. Do NOT add decorative elements. Keep it clean and faithful to the template's structure.${storyRule} ${langRule}`;
 
     } else {
-      const safeZoneNote = format === "story"
-        ? " IMPORTANT: This is a Story format (9:16). Leave the TOP 15% and BOTTOM 20% of the image EMPTY — these areas are covered by platform UI. Place ALL content in the middle 65%."
-        : "";
-      // Fallback: no template — create from scratch
-      const fallbackCta = ctaText ? ` Add a CTA button saying "${ctaText}".` : "";
-      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}" (${brandContext.productDescription || ""}). ${productImageBase64 ? "Feature the product exactly as shown in the product photo — same shape, colors, details, fully visible." : ""} ${brandLogoBase64 ? `Place the logo provided for "${brandAnalysis.brandName}" as-is.` : `Write "${brandAnalysis.brandName}" in clean typography.`} Write a short headline about "${headlineHint}".${fallbackCta} Premium, minimalist, Instagram-ready. ${fidelityInstruction}${safeZoneNote} ${langInstruction}`;
+      visualPrompt = `Create a clean, professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}". ${productRule} ${logoRule} Short headline (2-5 words). ${ctaRule} Minimal, modern design.${storyRule} ${langRule}`;
     }
 
     // ── IMAGE ONLY: skip Haiku copy to maximize time for Gemini ──
