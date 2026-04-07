@@ -185,14 +185,16 @@ export default function GeneratePage() {
       // Compress images before sending to reduce upload time (~2MB → ~200KB)
       const { compressBase64 } = await import("@/lib/image-utils");
 
+      // Product: 1024px (needs detail for faithful reproduction)
+      // Reference/template: 768px (just needs layout understanding)
       let compressedProduct: { base64: string; mimeType: string } | undefined;
       if (image?.base64) {
-        compressedProduct = await compressBase64(image.base64, image.mimeType);
+        compressedProduct = await compressBase64(image.base64, image.mimeType, 1024);
       }
 
       let compressedRef: { base64: string; mimeType: string } | undefined;
       if (generationMode === "reference" && referenceAd?.base64) {
-        compressedRef = await compressBase64(referenceAd.base64, referenceAd.mimeType);
+        compressedRef = await compressBase64(referenceAd.base64, referenceAd.mimeType, 768);
       }
 
       // Send only essential data — no logo, no full brandAnalysis bloat
