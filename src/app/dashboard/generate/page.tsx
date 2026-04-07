@@ -181,22 +181,44 @@ export default function GeneratePage() {
         }
       }
 
+      if (!brandAnalysis) return;
+      // Compress images before sending to reduce upload time (~2MB → ~200KB)
+      const { compressBase64 } = await import("@/lib/image-utils");
+
+      let compressedProduct: { base64: string; mimeType: string } | undefined;
+      if (image?.base64) {
+        compressedProduct = await compressBase64(image.base64, image.mimeType);
+      }
+
+      let compressedRef: { base64: string; mimeType: string } | undefined;
+      if (generationMode === "reference" && referenceAd?.base64) {
+        compressedRef = await compressBase64(referenceAd.base64, referenceAd.mimeType);
+      }
+
+      // Send only essential data — no logo, no full brandAnalysis bloat
       const genBody = JSON.stringify({
-        brandAnalysis,
+        brandAnalysis: {
+          brandName: brandAnalysis.brandName,
+          brandDescription: brandAnalysis.brandDescription,
+          tone: brandAnalysis.tone,
+          colors: brandAnalysis.colors,
+          targetAudience: brandAnalysis.targetAudience,
+          uniqueSellingPoints: brandAnalysis.uniqueSellingPoints,
+          products: brandAnalysis.products,
+          offers: brandAnalysis.offers,
+        },
         product,
         offer,
-        productImageBase64: image?.base64,
-        productImageMimeType: image?.mimeType,
-        brandLogoBase64: brandLogo?.base64,
-        brandLogoMimeType: brandLogo?.mimeType,
+        productImageBase64: compressedProduct?.base64,
+        productImageMimeType: compressedProduct?.mimeType,
         format: selectedFormat,
         templateId: generationMode === "library" ? selectedTemplateId : templateId,
         customPrompt: generationMode === "custom" ? customPrompt.trim() || undefined : undefined,
-        referenceAdBase64: generationMode === "reference" ? referenceAd?.base64 : undefined,
-        referenceAdMimeType: generationMode === "reference" ? referenceAd?.mimeType : undefined,
+        referenceAdBase64: compressedRef?.base64,
+        referenceAdMimeType: compressedRef?.mimeType,
         referenceInstruction:
           generationMode === "reference"
-            ? customPrompt.trim() || "Réalise cette ads pour ma marque en retirant tous les éléments visuels de l'autre marque"
+            ? customPrompt.trim() || undefined
             : undefined,
         ctaText: ctaEnabled && ctaText.trim() ? ctaText.trim() : undefined,
       });
