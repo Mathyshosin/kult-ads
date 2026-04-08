@@ -63,14 +63,9 @@ export async function POST(req: Request) {
 
   const substitutedPrompt = substitutePromptVariables(promptText, ctx);
 
-  // Build reference images
-  const referenceImages: { base64: string; mimeType: string; label: string }[] = [
-    {
-      base64: template.imageBase64,
-      mimeType: template.mimeType,
-      label: "Creative direction reference — use this ad's style, layout, and marketing approach as inspiration.",
-    },
-  ];
+  // Build reference images — only product photo, no template image
+  // The prompt itself must fully describe the ad; template image is NOT sent
+  const referenceImages: { base64: string; mimeType: string; label: string }[] = [];
 
   if (productImage?.base64) {
     referenceImages.push({
