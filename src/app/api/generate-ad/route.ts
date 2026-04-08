@@ -258,7 +258,9 @@ export async function POST(request: Request) {
 
     // Simple rules
     const ctaRule = ctaText ? `Add a CTA: "${ctaText}".` : "";
-    const storyRule = format === "story" ? " Leave top 15% and bottom 20% empty (Story format)." : "";
+    const storyRule = format === "story"
+      ? " STORY FORMAT: The canvas is taller (9:16). Do NOT add any new content, text, icons, or decorative elements. Keep EXACTLY the same elements as the square version — only extend the background and decorative areas vertically to fill the extra space. Leave top 15% and bottom 20% empty for story UI overlays."
+      : "";
 
     if (isModification) {
       visualPrompt = `Edit this ad: "${modificationPrompt}". Change ONLY what is requested. Keep everything else identical. Text in French.`;
