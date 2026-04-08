@@ -277,13 +277,15 @@ export async function POST(request: Request) {
 
       visualPrompt = `You are a creative strategist. Transpose this winning ad for the brand below.
 
-COMPOSITION RULE: Adopt the same layout concept — the general visual structure, number of zones, and spatial balance. Do NOT reproduce literal objects or shapes from the template. If the template features a jar, a bottle, or any specific container, do not invent a similar container for this product. Use only the product as it appears in the product photo.
+ELEMENT COUNT RULE — HIGHEST PRIORITY: Count every visible element in the template (text blocks, images, icons, badges, labels). Your output must contain EXACTLY the same number of elements. Do not add anything extra. Do not remove anything. If the template has 1 text block + 1 product image, your output has exactly 1 text block + 1 product image. Simplicity is intentional — do not "enrich" it.
 
-PRODUCT INTEGRITY RULE: The product must appear exactly as it looks in the provided product photo — same real shape, same real packaging, same real appearance. The product photo may show a model, mannequin, or accessories (jewelry, clothing, props): extract and use ONLY the core product itself — "${product.name}" as it relates to the brand "${brandContext.brandName}". Never invent, alter, reshape, or substitute the product with a different object.
+COMPOSITION RULE: Reproduce the same spatial layout — positions, sizes, and visual balance of each zone. Do NOT copy literal object shapes: if the template shows a jar or bottle, use the actual product photo instead of inventing a similar container.
 
-ZERO POLLUTION RULE: Rewrite every text element from scratch for "${product.name}". Extract the INTENT of each text block, never its literal content. If the template shows ingredient labels, replace with real product features of "${product.name}". Never copy claims, benefits, or adjectives that don't genuinely apply to "${product.name}".
+PRODUCT INTEGRITY RULE: The product must appear exactly as it looks in the provided product photo. The photo may show a model, mannequin, or accessories (jewelry, clothing, props): extract and use ONLY the core product — "${product.name}" as it relates to the brand "${brandContext.brandName}". Never invent, alter, or reshape it. No logo.
 
-NO INVENTED DATA: Never invent prices, percentages, discounts, reviews, or statistics. Only use data explicitly listed in the brand context below. If the template shows a price but no price is provided in the brand context — omit the price entirely.
+ZERO POLLUTION RULE: Rewrite every text element from scratch for "${product.name}". Transpose the INTENT, never the literal content. Never copy claims or benefits from the template that don't genuinely apply to "${product.name}".
+
+NO INVENTED DATA: Never invent prices, percentages, discounts, reviews, or statistics. Use only data explicitly listed in the brand context. If the template shows a price but none is provided below — omit it entirely.
 
 BRAND CONTEXT:
 ${brandLines}
@@ -295,13 +297,14 @@ All text in French.${ctaRule ? ` ${ctaRule}` : ""}${storyRule}`;
       visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}".
 Use the reference image as creative direction — match its overall style, mood, and marketing approach.
 
-PRODUCT EXTRACTION RULE: The product photo may include a model, mannequin, jewelry, clothing accessories, or other props. Extract and feature ONLY the core product itself — "${product.name}" — as it relates to the brand "${brandAnalysis.brandName}". Never include surrounding elements. Copy the product exactly as photographed: no modifications, no text overlaid on it, no added decorations of any kind.
+ELEMENT COUNT RULE: Count every visible element in the reference (text blocks, images, icons). Your output must have EXACTLY the same number of elements — no more. If the reference is minimal, stay minimal.
 
-Use the provided logo exactly as-is.
-Write a short headline (2–5 words max).${ctaRule ? ` ${ctaRule}` : " Do NOT add any CTA."}
+PRODUCT EXTRACTION RULE: The product photo may include a model, mannequin, jewelry, clothing accessories, or other props. Extract and feature ONLY the core product itself — "${product.name}" — as it relates to the brand "${brandAnalysis.brandName}". Never include surrounding elements. Copy the product exactly as photographed: no modifications, no text overlaid on it, no added decorations.
+
+Write a short headline (2–5 words max).${ctaRule ? ` ${ctaRule}` : " Do NOT add any CTA."} No logo.
 
 STRICT RULES:
-- Use ONLY real information provided. Never invent prices, claims, discount percentages, or reviews.
+- Use ONLY real information provided. Never invent prices, claims, percentages, or reviews.
 - Brand name is "${brandAnalysis.brandName}" — exact spelling.
 - ALL text in French.${storyRule}`;
     }
