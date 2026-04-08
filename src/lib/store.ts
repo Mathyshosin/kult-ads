@@ -331,15 +331,27 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
 
         // Phase 2a: last 10 ads with signed URLs — fast (small batch)
         const firstAds = await loadGeneratedAds(userId, result.id, { limit: 10 });
-        set({ generatedAds: firstAds, adsLoaded: true });
+        // Keep any in-progress/failed generations that were started before hydration completed
+        set((state) => {
+          const liveGenerations = state.generatedAds.filter(
+            (ad) => ad.status === "generating" || ad.status === "failed"
+          );
+          return { generatedAds: [...liveGenerations, ...firstAds], adsLoaded: true };
+        });
 
         // Phase 2b: remaining ads in background — append silently when ready
         loadGeneratedAds(userId, result.id, { offset: 10 })
           .then((remaining) => {
             if (remaining.length > 0) {
-              set((state) => ({
-                generatedAds: [...state.generatedAds, ...remaining],
-              }));
+              set((state) => {
+                const liveGenerations = state.generatedAds.filter(
+                  (ad) => ad.status === "generating" || ad.status === "failed"
+                );
+                const loaded = state.generatedAds.filter(
+                  (ad) => ad.status !== "generating" && ad.status !== "failed"
+                );
+                return { generatedAds: [...liveGenerations, ...loaded, ...remaining] };
+              });
             }
           })
           .catch((err) => console.error("[sync] Error loading remaining ads:", err));
