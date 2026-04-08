@@ -440,16 +440,22 @@ export async function updateGeneratedAdImage(
 
 export async function loadGeneratedAds(
   userId: string,
-  brandAnalysisId: string
+  brandAnalysisId: string,
+  options?: { limit?: number; offset?: number }
 ): Promise<GeneratedAd[]> {
   const sb = supabase();
 
-  const { data: rows } = await sb
+  let query = sb
     .from("generated_ads")
     .select("*")
     .eq("user_id", userId)
     .eq("brand_analysis_id", brandAnalysisId)
     .order("created_at", { ascending: false });
+
+  if (options?.limit) query = query.limit(options.limit);
+  if (options?.offset) query = query.range(options.offset, options.offset + (options.limit ?? 999) - 1);
+
+  const { data: rows } = await query;
 
   if (!rows || rows.length === 0) return [];
 

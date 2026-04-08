@@ -319,12 +319,8 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
     try {
       const result = await loadLatestBrandAnalysis(userId);
       if (result) {
-        // Start both in parallel immediately
-        const imagesPromise = loadUploadedImages(userId, result.id);
-        const adsPromise = loadGeneratedAds(userId, result.id);
-
-        // Phase 1: images load fast — set isHydrated so other pages (generate, brand) can render
-        const { images, logo } = await imagesPromise;
+        // Phase 1: images only (fast) — lets other pages render immediately
+        const { images, logo } = await loadUploadedImages(userId, result.id);
         set({
           brandAnalysis: result.analysis,
           brandAnalysisId: result.id,
@@ -333,9 +329,20 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
           isHydrated: true,
         });
 
-        // Phase 2: ads load slower (signed URL generation) — set adsLoaded when ready
-        const ads = await adsPromise;
-        set({ generatedAds: ads, adsLoaded: true });
+        // Phase 2a: last 10 ads with signed URLs — fast (small batch)
+        const firstAds = await loadGeneratedAds(userId, result.id, { limit: 10 });
+        set({ generatedAds: firstAds, adsLoaded: true });
+
+        // Phase 2b: remaining ads in background — append silently when ready
+        loadGeneratedAds(userId, result.id, { offset: 10 })
+          .then((remaining) => {
+            if (remaining.length > 0) {
+              set((state) => ({
+                generatedAds: [...state.generatedAds, ...remaining],
+              }));
+            }
+          })
+          .catch((err) => console.error("[sync] Error loading remaining ads:", err));
       } else {
         set({ isHydrated: true, adsLoaded: true });
       }
