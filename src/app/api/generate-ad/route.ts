@@ -47,6 +47,7 @@ export async function POST(request: Request) {
       previousAdBase64: rawPreviousAdBase64,
       previousAdMimeType: rawPreviousAdMimeType,
       previousAdId,
+      isStoryConversion,
       ctaText: rawCtaText,
       skipCreditCheck,
     } = body;
@@ -201,10 +202,13 @@ export async function POST(request: Request) {
 
     // MODIFICATION MODE: send ONLY the previous ad — no other images
     if (isModification && previousAdBase64) {
+      const imageLabel = isStoryConversion
+        ? `This is the square ad to convert to 9:16 story format. Your ONLY task: extend the background and decorative areas upward and downward. The content area must be pixel-perfect identical to this image. Do not add, remove, move, or resize any element.`
+        : `This is the existing ad to edit. Apply ONLY this modification: "${modificationPrompt}". Keep absolutely everything else identical — same layout, colors, text placement, images, composition. The output must be visually identical except for the requested change.`;
       referenceImages.push({
         base64: previousAdBase64,
         mimeType: detectMimeType(previousAdBase64, previousAdMimeType || "image/jpeg"),
-        label: `This is the existing ad to edit. Apply ONLY this modification: "${modificationPrompt}". Keep absolutely everything else identical — same layout, colors, text placement, images, composition. The output must be visually identical except for the requested change.`,
+        label: imageLabel,
       });
     } else if (template) {
       // TEMPLATE MODE: template as creative direction reference
@@ -262,7 +266,21 @@ export async function POST(request: Request) {
       ? " STORY FORMAT: The canvas is taller (9:16). Do NOT add any new content, text, icons, or decorative elements. Keep EXACTLY the same elements as the square version — only extend the background and decorative areas vertically to fill the extra space. Leave top 15% and bottom 20% empty for story UI overlays."
       : "";
 
-    if (isModification) {
+    if (isModification && isStoryConversion) {
+      visualPrompt = `STORY CANVAS CONVERSION — 9:16 vertical format.
+
+YOUR ONLY TASK: Take the square ad and extend its canvas vertically.
+- Extend the background colors and decorative elements above and below the content zone.
+- Keep the content zone pixel-perfect identical: every text, every image, every icon, every color, every position, every size — unchanged.
+- Leave top 15% and bottom 20% empty as safe zones for story UI.
+
+ABSOLUTELY FORBIDDEN:
+- Adding any new element (text, icon, badge, image, shape, overlay, pattern)
+- Removing any existing element
+- Moving or resizing any existing element
+- Changing any text content or color`;
+
+    } else if (isModification) {
       visualPrompt = `Edit this ad: "${modificationPrompt}". Change ONLY what is requested. Keep everything else identical. Text in French.`;
 
     } else if (isReference || template) {

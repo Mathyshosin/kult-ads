@@ -591,12 +591,14 @@ export default function AdsGalleryPage() {
 
     try {
       // If ad has base64 (just generated), compress and send. Otherwise use server-side download via ID.
+      const isStoryConversion = formatOverride === "story" && ad.format !== "story";
       let modBody: Record<string, unknown> = {
         brandAnalysis,
         product,
         format: targetFormat,
         modificationPrompt: prompt,
         previousAdId: ad.id,
+        isStoryConversion,
       };
       if (ad.imageBase64) {
         const compressed = await compressBase64(ad.imageBase64, ad.mimeType);
