@@ -15,63 +15,82 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 
-  const { promptText, templateId, format } = await req.json();
+  const { promptText, templateId, format, testBrand } = await req.json();
   if (!promptText || !templateId) {
     return NextResponse.json({ error: "promptText and templateId required" }, { status: 400 });
   }
 
-  // Load admin's brand data
-  const brandResult = await loadLatestBrandAnalysis(user.id);
-  if (!brandResult) {
-    return NextResponse.json({ error: "Aucune marque configurée. Configurez votre marque d'abord." }, { status: 400 });
+  // Build variable context — from manual testBrand override or from Supabase
+  let ctx: PromptVariableContext;
+  let productImageBase64: string | undefined;
+  let productImageMimeType: string | undefined;
+
+  if (testBrand?.brandName && testBrand?.productName) {
+    // Manual test brand from prompt editor
+    ctx = {
+      brandName: testBrand.brandName,
+      productName: testBrand.productName,
+      productDescription: testBrand.productDescription || "",
+      offerTitle: testBrand.offer || "",
+      productPrice: testBrand.price || "",
+      productOriginalPrice: testBrand.originalPrice || "",
+      productSalePrice: testBrand.salePrice || "",
+    };
+    productImageBase64 = testBrand.productImageBase64;
+    productImageMimeType = testBrand.productImageMimeType;
+  } else {
+    // Load from Supabase (existing brand)
+    const brandResult = await loadLatestBrandAnalysis(user.id);
+    if (!brandResult) {
+      return NextResponse.json({ error: "Aucune marque configurée et aucune marque test fournie." }, { status: 400 });
+    }
+
+    const analysis = brandResult.analysis;
+    const product = analysis.products[0];
+    const offer = analysis.offers?.[0];
+
+    if (!product) {
+      return NextResponse.json({ error: "Aucun produit trouvé." }, { status: 400 });
+    }
+
+    const { images } = await loadUploadedImages(user.id, brandResult.id);
+    const productImage = images.find((img) => img.productId === product.id) || images[0];
+
+    ctx = {
+      brandName: analysis.brandName,
+      brandDescription: analysis.brandDescription,
+      tone: analysis.tone,
+      targetAudience: analysis.targetAudience,
+      productName: product.name,
+      productDescription: product.description,
+      uniqueSellingPoints: analysis.uniqueSellingPoints,
+      competitorProducts: analysis.competitorProducts,
+      offerTitle: offer?.title,
+      offerDescription: offer?.description,
+      productPrice: product.price,
+      productOriginalPrice: offer?.originalPrice || product.originalPrice,
+      productSalePrice: offer?.salePrice || product.salePrice,
+    };
+    productImageBase64 = productImage?.base64;
+    productImageMimeType = productImage?.mimeType;
   }
 
-  const analysis = brandResult.analysis;
-  const product = analysis.products[0];
-  const offer = analysis.offers?.[0];
-
-  if (!product) {
-    return NextResponse.json({ error: "Aucun produit trouvé dans votre marque." }, { status: 400 });
-  }
-
-  // Load product image
-  const { images } = await loadUploadedImages(user.id, brandResult.id);
-  const productImage = images.find((img) => img.productId === product.id) || images[0];
-
-  // Load template image
+  // Load template image (still needed for ID validation)
   const template = await getTemplateByIdWithImage(templateId);
   if (!template) {
     return NextResponse.json({ error: "Template introuvable" }, { status: 404 });
   }
 
-  // Build variable context
-  const ctx: PromptVariableContext = {
-    brandName: analysis.brandName,
-    brandDescription: analysis.brandDescription,
-    tone: analysis.tone,
-    targetAudience: analysis.targetAudience,
-    productName: product.name,
-    productDescription: product.description,
-    uniqueSellingPoints: analysis.uniqueSellingPoints,
-    competitorProducts: analysis.competitorProducts,
-    offerTitle: offer?.title,
-    offerDescription: offer?.description,
-    productPrice: product.price,
-    productOriginalPrice: offer?.originalPrice || product.originalPrice,
-    productSalePrice: offer?.salePrice || product.salePrice,
-  };
-
   const substitutedPrompt = substitutePromptVariables(promptText, ctx);
 
-  // Build reference images — only product photo, no template image
-  // The prompt itself must fully describe the ad; template image is NOT sent
+  // Build reference images — only product photo
   const referenceImages: { base64: string; mimeType: string; label: string }[] = [];
 
-  if (productImage?.base64) {
+  if (productImageBase64) {
     referenceImages.push({
-      base64: productImage.base64,
-      mimeType: productImage.mimeType || "image/jpeg",
-      label: `Product photo for "${product.name}" — use exactly as provided, no modifications.`,
+      base64: productImageBase64,
+      mimeType: productImageMimeType || "image/jpeg",
+      label: `Product photo for "${ctx.productName}" — use exactly as provided, no modifications.`,
     });
   }
 

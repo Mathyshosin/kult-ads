@@ -60,6 +60,12 @@ export default function PromptEditorPage() {
   } | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // Test brand config
+  const [testBrandName, setTestBrandName] = useState("");
+  const [testProductName, setTestProductName] = useState("");
+  const [testOffer, setTestOffer] = useState("");
+  const [testPrice, setTestPrice] = useState("");
+  const [testProductImage, setTestProductImage] = useState<{ base64: string; mimeType: string } | null>(null);
   const [copiedVar, setCopiedVar] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -133,6 +139,15 @@ export default function PromptEditorPage() {
     setTestError(null);
     try {
       const selected = templates.find((t) => t.id === selectedId);
+      const testBrand = testBrandName.trim() ? {
+        brandName: testBrandName.trim(),
+        productName: testProductName.trim() || "Produit",
+        offer: testOffer.trim() || undefined,
+        price: testPrice.trim() || undefined,
+        productImageBase64: testProductImage?.base64,
+        productImageMimeType: testProductImage?.mimeType,
+      } : undefined;
+
       const res = await fetch("/api/admin/test-prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -140,6 +155,7 @@ export default function PromptEditorPage() {
           promptText,
           templateId: selectedId,
           format: selected?.format || "square",
+          testBrand,
         }),
       });
       const data = await res.json();
@@ -482,6 +498,103 @@ export default function PromptEditorPage() {
                     Non sauvegarde
                   </span>
                 )}
+              </div>
+
+              {/* Test Brand Config */}
+              <div className="px-4 pt-4">
+                <details className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+                  <summary className="px-4 py-3 text-xs font-semibold text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors flex items-center gap-2">
+                    <span>Marque test</span>
+                    {testBrandName && (
+                      <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-medium">{testBrandName}</span>
+                    )}
+                  </summary>
+                  <div className="px-4 pb-4 pt-2 grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-medium text-gray-500 mb-1 block">Nom de la marque *</label>
+                      <input
+                        type="text"
+                        value={testBrandName}
+                        onChange={(e) => setTestBrandName(e.target.value)}
+                        placeholder="Ex: EVE AND CO"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-gray-500 mb-1 block">Nom du produit *</label>
+                      <input
+                        type="text"
+                        value={testProductName}
+                        onChange={(e) => setTestProductName(e.target.value)}
+                        placeholder="Ex: La Culotte Menstruelle"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-gray-500 mb-1 block">Offre</label>
+                      <input
+                        type="text"
+                        value={testOffer}
+                        onChange={(e) => setTestOffer(e.target.value)}
+                        placeholder="Ex: Vente Privee -60%"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-gray-500 mb-1 block">Prix</label>
+                      <input
+                        type="text"
+                        value={testPrice}
+                        onChange={(e) => setTestPrice(e.target.value)}
+                        placeholder="Ex: 29.90"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-[10px] font-medium text-gray-500 mb-1 block">Photo produit</label>
+                      <div className="flex items-center gap-3">
+                        <label className="cursor-pointer bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                          {testProductImage ? "Changer" : "Ajouter une photo"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = () => {
+                                const result = reader.result as string;
+                                const base64 = result.split(",")[1];
+                                setTestProductImage({ base64, mimeType: file.type });
+                              };
+                              reader.readAsDataURL(file);
+                            }}
+                          />
+                        </label>
+                        {testProductImage && (
+                          <div className="flex items-center gap-2">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={`data:${testProductImage.mimeType};base64,${testProductImage.base64}`}
+                              alt="Product"
+                              className="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                            />
+                            <button
+                              onClick={() => setTestProductImage(null)}
+                              className="text-xs text-red-500 hover:text-red-700"
+                            >
+                              Retirer
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <p className="col-span-2 text-[10px] text-gray-400">
+                      Laissez vide pour utiliser votre marque du dashboard. Remplissez pour tester avec une marque custom.
+                    </p>
+                  </div>
+                </details>
               </div>
 
               {/* Textarea */}
