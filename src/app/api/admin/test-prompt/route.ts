@@ -100,7 +100,8 @@ export async function POST(req: Request) {
     console.log(`[test-prompt] Calling Gemini with ${referenceImages.length} ref images, format=${format}, prompt length=${substitutedPrompt.length}, hasProductImage=${!!productImageBase64}`);
     const result = await generateImage(substitutedPrompt, aspectRatio, referenceImages, 1);
     if (!result) {
-      return NextResponse.json({ error: "Gemini n'a pas genere d'image. Verifiez que le prompt est valide et qu'une photo produit est fournie." }, { status: 500 });
+      const detail = (generateImage as { lastError?: string }).lastError || "";
+      return NextResponse.json({ error: `Gemini echec: ${detail || "aucune image generee"}` }, { status: 500 });
     }
     return NextResponse.json({
       imageBase64: result.imageBase64,

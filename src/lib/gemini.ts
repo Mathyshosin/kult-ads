@@ -61,6 +61,7 @@ export async function generateImage(
   // Main prompt LAST
   contents.push({ text: prompt });
 
+  let lastError = "";
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`[gemini] Attempt ${attempt}/${maxRetries}...`);
@@ -94,13 +95,14 @@ export async function generateImage(
         }
       }
 
-      // No image in response — log and retry
-      console.warn(
-        `[gemini] Attempt ${attempt}: No image in response. finishReason:`,
-        response.candidates?.[0]?.finishReason || "unknown"
-      );
+      // No image in response — log reason and retry
+      const finishReason = response.candidates?.[0]?.finishReason || "unknown";
+      const textParts = parts.filter((p: { text?: string }) => p.text).map((p: { text?: string }) => p.text).join(" ").slice(0, 200);
+      lastError = `No image generated (finishReason: ${finishReason}${textParts ? `, response: "${textParts}"` : ""})`;
+      console.warn(`[gemini] Attempt ${attempt}: ${lastError}`);
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
+      lastError = errMsg;
       console.error(`[gemini] Attempt ${attempt} error:`, errMsg);
 
       // If rate-limited (429), wait longer before retry
@@ -119,6 +121,8 @@ export async function generateImage(
     }
   }
 
-  console.error(`[gemini] All ${maxRetries} attempts failed`);
+  console.error(`[gemini] All ${maxRetries} attempts failed: ${lastError}`);
+  // Expose the last error for callers that need diagnostic info
+  (generateImage as { lastError?: string }).lastError = lastError;
   return null;
 }
