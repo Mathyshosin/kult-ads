@@ -277,17 +277,19 @@ export async function POST(request: Request) {
 
       visualPrompt = `You are a creative strategist. Transpose this winning ad for the brand below.
 
-STRUCTURE RULE: Reproduce the exact same visual composition — same number of blocks, same positions, same balance. Zero structural changes.
+COMPOSITION RULE: Adopt the same layout concept — the general visual structure, number of zones, and spatial balance. Do NOT reproduce literal objects or shapes from the template. If the template features a jar, a bottle, or any specific container, do not invent a similar container for this product. Use only the product as it appears in the product photo.
 
-ZERO POLLUTION RULE: Extract the INTENT of each element, never its content. If the template shows "Cruelty-free", find the equivalent strong claim for "${product.name}" and use that instead. Never copy adjectives, claims, or benefits from the template that don't apply to "${product.name}".
+PRODUCT INTEGRITY RULE: The product must appear exactly as it looks in the provided product photo — same real shape, same real packaging, same real appearance. The product photo may show a model, mannequin, or accessories (jewelry, clothing, props): extract and use ONLY the core product itself — "${product.name}" as it relates to the brand "${brandContext.brandName}". Never invent, alter, reshape, or substitute the product with a different object.
 
-PRODUCT EXTRACTION RULE: The product photo may show a model, mannequin, or accessories (jewelry, clothing, props). Extract and feature ONLY the core product — "${product.name}" — as it relates to the brand. Ignore every other element in the photo. Copy the product exactly as photographed: no modifications, no text overlaid on it, no added decorations of any kind.
+ZERO POLLUTION RULE: Rewrite every text element from scratch for "${product.name}". Extract the INTENT of each text block, never its literal content. If the template shows ingredient labels, replace with real product features of "${product.name}". Never copy claims, benefits, or adjectives that don't genuinely apply to "${product.name}".
+
+NO INVENTED DATA: Never invent prices, percentages, discounts, reviews, or statistics. Only use data explicitly listed in the brand context below. If the template shows a price but no price is provided in the brand context — omit the price entirely.
 
 BRAND CONTEXT:
 ${brandLines}
 Product: "${product.name}"${brandContext.productDescription ? ` — ${brandContext.productDescription}` : ""}
 
-All text in French. Use the product photo exactly as provided.${ctaRule ? ` ${ctaRule}` : ""}${storyRule}`;
+All text in French.${ctaRule ? ` ${ctaRule}` : ""}${storyRule}`;
 
     } else {
       visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}".
