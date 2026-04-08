@@ -620,7 +620,7 @@ export async function generateTemplatePrompt(
   templateMimeType: string,
 ): Promise<string> {
   const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-opus-4-20250514",
     max_tokens: 2000,
     messages: [
       {
