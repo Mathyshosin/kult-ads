@@ -209,7 +209,15 @@ export default function DashboardHeader() {
                       className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       <Sparkles className="w-4 h-4 text-gray-400" />
-                      Prompt Editor
+                      Templates
+                    </Link>
+                    <Link
+                      href="/admin/prompt-test"
+                      onClick={() => setShowProfile(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Sparkles className="w-4 h-4 text-gray-400" />
+                      Prompt Test
                     </Link>
                   </>
                 )}
