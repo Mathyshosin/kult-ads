@@ -158,17 +158,21 @@ export default function PromptEditorPage() {
           testBrand,
         }),
       });
-      const data = await res.json();
-      if (res.ok && data.imageBase64) {
-        setTestResult({
-          imageBase64: data.imageBase64,
-          mimeType: data.mimeType,
-        });
+      if (!res.ok) {
+        const text = await res.text();
+        let errMsg = `Erreur ${res.status}`;
+        try { errMsg = JSON.parse(text).error || errMsg; } catch { errMsg = text.slice(0, 200) || errMsg; }
+        setTestError(errMsg);
       } else {
-        setTestError(data.error || `Erreur ${res.status}`);
+        const data = await res.json();
+        if (data.imageBase64) {
+          setTestResult({ imageBase64: data.imageBase64, mimeType: data.mimeType });
+        } else {
+          setTestError(data.error || "Pas d'image dans la reponse");
+        }
       }
     } catch (err) {
-      setTestError(err instanceof Error ? err.message : "Erreur reseau");
+      setTestError(err instanceof Error ? err.message : "Erreur reseau / timeout Vercel");
     }
     setTesting(false);
   };

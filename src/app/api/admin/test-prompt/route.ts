@@ -97,7 +97,7 @@ export async function POST(req: Request) {
   const aspectRatio = format === "story" ? "9:16" : "1:1";
 
   try {
-    console.log(`[test-prompt] Calling Gemini with ${referenceImages.length} ref images, format=${format}, prompt length=${substitutedPrompt.length}`);
+    console.log(`[test-prompt] Calling Gemini with ${referenceImages.length} ref images, format=${format}, prompt length=${substitutedPrompt.length}, hasProductImage=${!!productImageBase64}`);
     const result = await generateImage(substitutedPrompt, aspectRatio, referenceImages, 2);
     if (!result) {
       return NextResponse.json({ error: "Gemini n'a pas genere d'image. Verifiez que le prompt est valide et qu'une photo produit est fournie." }, { status: 500 });
