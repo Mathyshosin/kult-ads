@@ -26,6 +26,7 @@ import { toPng } from "html-to-image";
 import { FunFact } from "@/components/fun-facts";
 
 import { compressBase64 } from "@/lib/image-utils";
+import { isAdmin as checkIsAdmin } from "@/lib/admin";
 
 // Helper: use public URL when available, fallback to base64
 function adImageSrc(ad: GeneratedAd): string {
@@ -55,6 +56,25 @@ function AdsLoadingState() {
         </p>
       </div>
       <FunFact />
+    </div>
+  );
+}
+
+// ── Skeleton card shown while ads load from Supabase ──
+function SkeletonCard() {
+  return (
+    <div className="space-y-2 break-inside-avoid">
+      <div className="aspect-square rounded-2xl bg-gray-100 overflow-hidden relative">
+        <div className="absolute inset-0 -translate-x-full animate-[sweep_1.5s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+      </div>
+      <div className="flex gap-1.5">
+        <div className="flex-1 h-8 rounded-lg bg-gray-100 overflow-hidden relative">
+          <div className="absolute inset-0 -translate-x-full animate-[sweep_1.5s_infinite_0.1s] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+        </div>
+        <div className="flex-1 h-8 rounded-lg bg-gray-100 overflow-hidden relative">
+          <div className="absolute inset-0 -translate-x-full animate-[sweep_1.5s_infinite_0.2s] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -149,6 +169,8 @@ function CompletedCard({ ad, onClick, onToggleFavorite, onModify, onDownload, on
   onDownload: (ad: GeneratedAd) => void;
   onOpenModify: () => void;
 }) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleFavorite();
@@ -165,10 +187,17 @@ function CompletedCard({ ad, onClick, onToggleFavorite, onModify, onDownload, on
           ad.format === "story" ? "aspect-[9/16]" : "aspect-square"
         } rounded-2xl overflow-hidden bg-gray-100 cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-0.5 active:scale-[0.98]`}
       >
+        {/* Shimmer placeholder while image loads */}
+        {!imgLoaded && (
+          <div className="absolute inset-0 bg-gray-100 overflow-hidden">
+            <div className="absolute inset-0 -translate-x-full animate-[sweep_1.5s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+          </div>
+        )}
         <img
           src={adImageSrc(ad)}
           alt="Ad"
-          className="absolute inset-0 w-full h-full object-cover"
+          onLoad={() => setImgLoaded(true)}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
           loading="lazy"
         />
         {/* Gift badge */}
@@ -473,7 +502,7 @@ export default function AdsGalleryPage() {
   const isHydrated = useWizardStore((s) => s.isHydrated);
   const adsLoaded = useWizardStore((s) => s.adsLoaded);
   const currentUser = useAuthStore((s) => s.currentUser);
-  const isAdmin = currentUser?.email === "mathys.hosin@gmail.com";
+  const isAdmin = checkIsAdmin(currentUser?.email);
 
   const [filter, setFilter] = useState<"all" | "square" | "story" | "favorites">("all");
   const [selectedAd, setSelectedAd] = useState<GeneratedAd | null>(null);
@@ -619,7 +648,7 @@ export default function AdsGalleryPage() {
     }
   };
 
-  // Only show loading if no ads in memory yet and still loading
+  // Full spinner only while brand analysis loads (fast, ~200ms)
   if (!isHydrated) {
     return (
       <div className="max-w-7xl mx-auto px-5">
@@ -676,7 +705,11 @@ export default function AdsGalleryPage() {
       </div>
 
       {/* Grid */}
-      {filtered.length === 0 ? (
+      {!adsLoaded ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }, (_, i) => <SkeletonCard key={i} />)}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-28 gap-5 animate-fade-in">
           <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
             {filter === "favorites" ? (

@@ -319,20 +319,23 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
     try {
       const result = await loadLatestBrandAnalysis(userId);
       if (result) {
-        // Load brand + images + ads all in parallel
-        const [{ images, logo }, ads] = await Promise.all([
-          loadUploadedImages(userId, result.id),
-          loadGeneratedAds(userId, result.id),
-        ]);
+        // Start both in parallel immediately
+        const imagesPromise = loadUploadedImages(userId, result.id);
+        const adsPromise = loadGeneratedAds(userId, result.id);
+
+        // Phase 1: images load fast — set isHydrated so other pages (generate, brand) can render
+        const { images, logo } = await imagesPromise;
         set({
           brandAnalysis: result.analysis,
           brandAnalysisId: result.id,
           uploadedImages: images,
           brandLogo: logo,
-          generatedAds: ads,
           isHydrated: true,
-          adsLoaded: true,
         });
+
+        // Phase 2: ads load slower (signed URL generation) — set adsLoaded when ready
+        const ads = await adsPromise;
+        set({ generatedAds: ads, adsLoaded: true });
       } else {
         set({ isHydrated: true, adsLoaded: true });
       }
