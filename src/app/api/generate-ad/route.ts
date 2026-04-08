@@ -281,6 +281,8 @@ STRUCTURE RULE: Reproduce the exact same visual composition — same number of b
 
 ZERO POLLUTION RULE: Extract the INTENT of each element, never its content. If the template shows "Cruelty-free", find the equivalent strong claim for "${product.name}" and use that instead. Never copy adjectives, claims, or benefits from the template that don't apply to "${product.name}".
 
+PRODUCT EXTRACTION RULE: The product photo may show a model, mannequin, or accessories (jewelry, clothing, props). Extract and feature ONLY the core product — "${product.name}" — as it relates to the brand. Ignore every other element in the photo. Copy the product exactly as photographed: no modifications, no text overlaid on it, no added decorations of any kind.
+
 BRAND CONTEXT:
 ${brandLines}
 Product: "${product.name}"${brandContext.productDescription ? ` — ${brandContext.productDescription}` : ""}
@@ -288,7 +290,18 @@ Product: "${product.name}"${brandContext.productDescription ? ` — ${brandConte
 All text in French. Use the product photo exactly as provided.${ctaRule ? ` ${ctaRule}` : ""}${storyRule}`;
 
     } else {
-      visualPrompt = `You are a creative strategist. Create a stunning Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}". Use the product photo provided. Clean, professional, eye-catching. ${ctaRule}${storyRule} Text in French.`;
+      visualPrompt = `Create a professional Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}".
+Use the reference image as creative direction — match its overall style, mood, and marketing approach.
+
+PRODUCT EXTRACTION RULE: The product photo may include a model, mannequin, jewelry, clothing accessories, or other props. Extract and feature ONLY the core product itself — "${product.name}" — as it relates to the brand "${brandAnalysis.brandName}". Never include surrounding elements. Copy the product exactly as photographed: no modifications, no text overlaid on it, no added decorations of any kind.
+
+Use the provided logo exactly as-is.
+Write a short headline (2–5 words max).${ctaRule ? ` ${ctaRule}` : " Do NOT add any CTA."}
+
+STRICT RULES:
+- Use ONLY real information provided. Never invent prices, claims, discount percentages, or reviews.
+- Brand name is "${brandAnalysis.brandName}" — exact spelling.
+- ALL text in French.${storyRule}`;
     }
 
     // ── IMAGE ONLY: skip Haiku copy to maximize time for Gemini ──
