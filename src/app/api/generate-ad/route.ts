@@ -283,6 +283,27 @@ ABSOLUTELY FORBIDDEN:
     } else if (isModification) {
       visualPrompt = `Edit this ad: "${modificationPrompt}". Change ONLY what is requested. Keep everything else identical. Text in French.`;
 
+    } else if (template?.generationPrompt) {
+      // ── Custom per-template prompt with variable substitution ──
+      const { substitutePromptVariables } = await import("@/lib/prompt-variables");
+      visualPrompt = substitutePromptVariables(template.generationPrompt, {
+        brandName: brandContext.brandName,
+        brandDescription: brandContext.brandDescription,
+        tone: brandContext.tone,
+        targetAudience: brandContext.targetAudience,
+        productName: product.name,
+        productDescription: brandContext.productDescription,
+        uniqueSellingPoints: brandContext.uniqueSellingPoints,
+        competitorProducts: brandContext.competitorProducts,
+        offerTitle: brandContext.offerTitle,
+        offerDescription: brandContext.offerDescription,
+        productPrice: brandContext.productPrice,
+        productOriginalPrice: brandContext.productOriginalPrice,
+        productSalePrice: brandContext.productSalePrice,
+      });
+      if (ctaRule) visualPrompt += `\n${ctaRule}`;
+      if (storyRule) visualPrompt += storyRule;
+
     } else if (isReference || template) {
       // Build brand context lines (only non-empty fields)
       const brandLines = [

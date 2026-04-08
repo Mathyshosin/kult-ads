@@ -13,6 +13,7 @@ export interface TemplateRow {
     adType: string[];
     productType: string[];
   };
+  generation_prompt: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -174,6 +175,39 @@ export async function uploadTemplateImage(
     .getPublicUrl(filename);
 
   return data.publicUrl;
+}
+
+// ── Update template generation prompt ──
+export async function updateTemplatePrompt(
+  id: string,
+  prompt: string | null
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("templates")
+    .update({ generation_prompt: prompt, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    console.error("[supabase/templates] Prompt update error:", error);
+    return false;
+  }
+  return true;
+}
+
+// ── Get all template prompts (lightweight) ──
+export async function getAllTemplatePrompts(): Promise<Record<string, string | null>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("templates")
+    .select("id, generation_prompt");
+
+  if (error || !data) return {};
+  const map: Record<string, string | null> = {};
+  for (const row of data) {
+    map[row.id] = row.generation_prompt || null;
+  }
+  return map;
 }
 
 // ── Get image from Supabase Storage as base64 ──

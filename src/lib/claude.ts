@@ -613,3 +613,65 @@ DIRECTION CRÉATIVE : ${conversionAngle || "Mets en avant le bénéfice le plus 
   const textBlock = message.content.find((block) => block.type === "text");
   return textBlock ? textBlock.text : "";
 }
+
+// ── Analyze template and generate a tailored Gemini prompt ──
+export async function generateTemplatePrompt(
+  templateBase64: string,
+  templateMimeType: string,
+): Promise<string> {
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 2000,
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image",
+            source: { type: "base64", media_type: templateMimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp", data: templateBase64 },
+          },
+          {
+            type: "text",
+            text: `You are a creative director writing a Gemini image generation prompt.
+
+Analyze this ad template and write a PRECISE Gemini prompt that would reproduce an ad with the exact same visual structure, layout, and marketing technique — but for a completely different brand.
+
+YOUR TASK:
+1. Identify the marketing technique (comparison, social proof, discount, benefit showcase, etc.)
+2. Describe the EXACT layout: positions, sizes, zones, background style, typography hierarchy
+3. Write a complete Gemini prompt using {{variable}} placeholders for brand-specific data
+
+AVAILABLE VARIABLES:
+- {{brandName}}: Brand name (exact spelling)
+- {{productName}}: Product name
+- {{productDescription}}: Product description
+- {{offer}}: Offer title (e.g. "Vente Privee -60%")
+- {{offerDescription}}: Offer details
+- {{price}}: Product price
+- {{originalPrice}}: Original price (crossed out)
+- {{salePrice}}: Sale price
+- {{usp}}: Key selling points separated by " | "
+- {{targetAudience}}: Target audience
+- {{tone}}: Communication tone
+- {{competitorProducts}}: Competitor products
+
+RULES FOR THE PROMPT:
+- Be extremely specific about positions (top, center, bottom, left, right, percentages)
+- Describe colors, typography sizes, and visual hierarchy precisely
+- Include "Use the product photo exactly as provided — no modifications"
+- Include "All text in French"
+- Include "No logo"
+- If the template shows prices, use {{price}} / {{originalPrice}} / {{salePrice}} — but add: "Only show price if a value is provided, otherwise omit it"
+- NEVER reference the original brand or product in the template
+- The prompt must work for ANY brand/product
+
+OUTPUT: Return ONLY the Gemini prompt text. No explanations, no markdown, no code blocks.`,
+          },
+        ],
+      },
+    ],
+  });
+
+  const textBlock = message.content.find((block) => block.type === "text");
+  return textBlock?.text || "";
+}

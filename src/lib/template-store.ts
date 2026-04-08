@@ -119,27 +119,27 @@ export async function getTemplates(): Promise<(TemplateMeta & { previewUrl: stri
 // ── Public: get a specific template by ID with base64 image ──
 export async function getTemplateByIdWithImage(
   id: string
-): Promise<{ id: string; imageBase64: string; mimeType: string } | null> {
+): Promise<{ id: string; imageBase64: string; mimeType: string; generationPrompt: string | null } | null> {
   const row = await getTemplateFromDb(id);
   if (!row) return null;
 
   if (row.image_source === "local") {
     const img = await readLocalImage(row.filename);
     if (!img) return null;
-    return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType };
+    return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType, generationPrompt: row.generation_prompt };
   }
 
   // Supabase Storage
   const img = await getTemplateImageFromStorage(row.filename);
   if (!img) return null;
-  return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType };
+  return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType, generationPrompt: row.generation_prompt };
 }
 
 // ── Public: get random template with base64 image ──
 export async function getRandomTemplateWithImage(
   format: "square" | "story",
   userId?: string
-): Promise<{ id: string; imageBase64: string; mimeType: string } | null> {
+): Promise<{ id: string; imageBase64: string; mimeType: string; generationPrompt: string | null } | null> {
   const rows = await getTemplatesFromDb();
   const matching = rows.filter((r) => r.format === format);
   if (matching.length === 0) return null;
@@ -158,12 +158,12 @@ export async function getRandomTemplateWithImage(
   if (row.image_source === "local") {
     const img = await readLocalImage(row.filename);
     if (!img) return null;
-    return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType };
+    return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType, generationPrompt: row.generation_prompt };
   }
 
   const img = await getTemplateImageFromStorage(row.filename);
   if (!img) return null;
-  return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType };
+  return { id: row.id, imageBase64: img.imageBase64, mimeType: img.mimeType, generationPrompt: row.generation_prompt };
 }
 
 // ── Public: add a new template ──

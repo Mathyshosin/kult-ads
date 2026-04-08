@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useLayoutEffect, useTransition, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Zap, Images, Building2, Settings, ChevronDown } from "lucide-react";
+import { LogOut, Zap, Images, Building2, Settings, ChevronDown, Sparkles } from "lucide-react";
 import { AdlyLogoFull } from "./adly-logo";
 import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
@@ -194,14 +194,24 @@ export default function DashboardHeader() {
                   Mon abonnement
                 </Link>
                 {isAdmin && (
-                  <Link
-                    href="/dashboard/templates"
-                    onClick={() => setShowProfile(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <Settings className="w-4 h-4 text-gray-400" />
-                    Catalogue
-                  </Link>
+                  <>
+                    <Link
+                      href="/dashboard/templates"
+                      onClick={() => setShowProfile(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Settings className="w-4 h-4 text-gray-400" />
+                      Catalogue
+                    </Link>
+                    <Link
+                      href="/admin/prompt-editor"
+                      onClick={() => setShowProfile(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Sparkles className="w-4 h-4 text-gray-400" />
+                      Prompt Editor
+                    </Link>
+                  </>
                 )}
                 <div className="border-t border-gray-100 mt-1 pt-1">
                   <button
