@@ -97,9 +97,10 @@ export async function POST(req: Request) {
   const aspectRatio = format === "story" ? "9:16" : "1:1";
 
   try {
-    const result = await generateImage(substitutedPrompt, aspectRatio, referenceImages, 1);
+    console.log(`[test-prompt] Calling Gemini with ${referenceImages.length} ref images, format=${format}, prompt length=${substitutedPrompt.length}`);
+    const result = await generateImage(substitutedPrompt, aspectRatio, referenceImages, 2);
     if (!result) {
-      return NextResponse.json({ error: "Gemini n'a pas réussi à générer l'image" }, { status: 500 });
+      return NextResponse.json({ error: "Gemini n'a pas genere d'image. Verifiez que le prompt est valide et qu'une photo produit est fournie." }, { status: 500 });
     }
     return NextResponse.json({
       imageBase64: result.imageBase64,
@@ -107,7 +108,8 @@ export async function POST(req: Request) {
       substitutedPrompt,
     });
   } catch (err) {
-    console.error("[test-prompt] Error:", err);
-    return NextResponse.json({ error: "Erreur génération Gemini" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[test-prompt] Error:", msg);
+    return NextResponse.json({ error: `Erreur Gemini: ${msg}` }, { status: 500 });
   }
 }
