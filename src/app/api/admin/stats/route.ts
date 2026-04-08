@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createBrowserClient } from "@supabase/supabase-js";
-
-const ADMIN_EMAIL = "mathys.hosin@gmail.com";
+import { isAdmin } from "@/lib/admin";
 
 // Service role client for admin queries (bypasses RLS)
 function adminClient() {
@@ -18,7 +17,7 @@ export async function GET() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user || user.email !== ADMIN_EMAIL) {
+  if (!user || !isAdmin(user.email)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 

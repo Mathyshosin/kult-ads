@@ -85,7 +85,7 @@ async function readLocalImage(filename: string): Promise<{ imageBase64: string; 
         : "http://localhost:3000";
     const url = `${baseUrl}/templates/${filename}`;
     console.log(`[template-store] HTTP fallback for ${filename}: ${url}`);
-    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
     if (!res.ok) {
       console.error(`[template-store] HTTP fallback failed: ${res.status} for ${url}`);
       return null;

@@ -1,6 +1,5 @@
 import { createClient } from "./server";
-
-const ADMIN_EMAIL = "mathys.hosin@gmail.com";
+import { ADMIN_EMAIL } from "@/lib/admin";
 
 export interface UserSubscription {
   id: string;
@@ -75,7 +74,7 @@ export async function getOrCreateSubscription(userId: string, userEmail?: string
   return newSub as UserSubscription;
 }
 
-export async function deductCredit(userId: string): Promise<boolean> {
+export async function deductCredit(userId: string): Promise<{ success: boolean; cost: number }> {
   const supabase = await createClient();
 
   const { data } = await supabase
@@ -84,10 +83,13 @@ export async function deductCredit(userId: string): Promise<boolean> {
     .eq("user_id", userId)
     .single();
 
-  if (!data || data.credits_remaining <= 0) return false;
+  if (!data) return { success: false, cost: 0 };
 
   // Free plan: 1 credit per action, Paid plans: 10 credits per action
   const cost = data.plan === "free" ? 1 : 10;
+
+  if (data.credits_remaining < cost) return { success: false, cost: 0 };
+
   const newCredits = Math.max(0, data.credits_remaining - cost);
 
   const { error } = await supabase
@@ -95,7 +97,7 @@ export async function deductCredit(userId: string): Promise<boolean> {
     .update({ credits_remaining: newCredits })
     .eq("user_id", userId);
 
-  return !error;
+  return { success: !error, cost: error ? 0 : cost };
 }
 
 export async function addCredits(userId: string, amount: number): Promise<void> {

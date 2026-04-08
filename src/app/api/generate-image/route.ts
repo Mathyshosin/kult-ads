@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { generateImage } from "@/lib/gemini";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin";
 
-export const maxDuration = 120;
+// Vercel Hobby hard limit = 60s. Gemini timeout set to 50s in gemini.ts (10s headroom).
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
@@ -22,16 +24,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Credit check (admin bypasses)
-    if (user.email !== "mathys.hosin@gmail.com") {
-      const { getOrCreateSubscription } = await import("@/lib/supabase/subscriptions");
-      const subscription = await getOrCreateSubscription(user.id, user.email || undefined);
-      if (subscription.credits_remaining <= 0) {
+    // Deduct credit before generation (prevents race conditions; refund on failure)
+    let creditCost = 0;
+    if (!isAdmin(user.email)) {
+      const { deductCredit } = await import("@/lib/supabase/subscriptions");
+      const result = await deductCredit(user.id);
+      if (!result.success) {
         return NextResponse.json(
           { error: "Plus de crédits disponibles.", code: "NO_CREDITS" },
           { status: 402 }
         );
       }
+      creditCost = result.cost;
     }
 
     const refImages = referenceImageBase64
@@ -45,16 +49,15 @@ export async function POST(request: Request) {
     );
 
     if (!result) {
+      // Refund the credit since generation failed
+      if (creditCost > 0) {
+        const { addCredits } = await import("@/lib/supabase/subscriptions");
+        await addCredits(user.id, creditCost);
+      }
       return NextResponse.json(
         { error: "Aucune image générée. Essayez un autre prompt." },
         { status: 500 }
       );
-    }
-
-    // Deduct credit after success (admin bypasses)
-    if (user.email !== "mathys.hosin@gmail.com") {
-      const { deductCredit } = await import("@/lib/supabase/subscriptions");
-      await deductCredit(user.id);
     }
 
     return NextResponse.json(result);

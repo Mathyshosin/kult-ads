@@ -7,13 +7,12 @@ import {
   deletePendingImage,
 } from "@/lib/supabase/pending-templates";
 import { addTemplate, updateTemplate } from "@/lib/template-store";
-
-const ADMIN_EMAIL = "mathys.hosin@gmail.com";
+import { isAdmin } from "@/lib/admin";
 
 async function checkAdmin() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.email !== ADMIN_EMAIL) return null;
+  if (!user || !isAdmin(user.email)) return null;
   return user;
 }
 

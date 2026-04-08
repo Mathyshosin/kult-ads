@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
+import { isAdmin } from "@/lib/admin";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.email !== "mathys.hosin@gmail.com") {
+  if (!user || !isAdmin(user.email)) {
     return NextResponse.json({ error: "Admin only" }, { status: 403 });
   }
 

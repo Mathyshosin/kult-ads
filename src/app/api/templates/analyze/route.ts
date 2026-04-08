@@ -7,7 +7,8 @@ import {
   getAnalyzedTemplateIds,
 } from "@/lib/supabase/template-analysis";
 
-export const maxDuration = 120;
+// Vercel Hobby = 60s max. With parallelization (3 concurrent), 15 templates ≈ 5 rounds × 10s = 50s.
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
@@ -52,22 +53,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ analyzed: 0, message: "Tous les templates sont déjà analysés" });
     }
 
-    console.log(`[analyze] ${templatesToAnalyze.length} templates to analyze...`);
+    console.log(`[analyze] ${templatesToAnalyze.length} templates to analyze (3 concurrent)...`);
     const results: Array<{ id: string; name: string; analysis: unknown }> = [];
 
-    for (const t of templatesToAnalyze) {
-      try {
-        const template = await getTemplateByIdWithImage(t.id);
-        if (!template) continue;
+    // Process in batches of 3 concurrent Claude calls (avoids timeout + rate limits)
+    const CONCURRENCY = 3;
+    for (let i = 0; i < templatesToAnalyze.length; i += CONCURRENCY) {
+      const batch = templatesToAnalyze.slice(i, i + CONCURRENCY);
+      const batchResults = await Promise.allSettled(
+        batch.map(async (t) => {
+          const template = await getTemplateByIdWithImage(t.id);
+          if (!template) throw new Error(`Template image not found: ${t.id}`);
 
-        console.log(`[analyze] Analyzing ${t.id} (${t.name})...`);
-        const analysis = await analyzeTemplateMetadata(template.imageBase64, template.mimeType);
-        await saveTemplateAnalysisToDb(t.id, analysis);
-        results.push({ id: t.id, name: t.name, analysis });
-        console.log(`[analyze] ✅ ${t.id} saved to Supabase`);
-      } catch (err) {
-        console.error(`[analyze] ❌ Failed for ${t.id}:`, err);
-        results.push({ id: t.id, name: t.name, analysis: { error: String(err) } });
+          console.log(`[analyze] Analyzing ${t.id} (${t.name})...`);
+          const analysis = await analyzeTemplateMetadata(template.imageBase64, template.mimeType);
+          await saveTemplateAnalysisToDb(t.id, analysis);
+          console.log(`[analyze] ✅ ${t.id} saved`);
+          return { id: t.id, name: t.name, analysis };
+        })
+      );
+
+      for (let j = 0; j < batchResults.length; j++) {
+        const r = batchResults[j];
+        if (r.status === "fulfilled") {
+          results.push(r.value);
+        } else {
+          const t = batch[j];
+          console.error(`[analyze] ❌ Failed for ${t.id}:`, r.reason);
+          results.push({ id: t.id, name: t.name, analysis: { error: String(r.reason) } });
+        }
       }
     }
 

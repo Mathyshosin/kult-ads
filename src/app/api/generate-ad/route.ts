@@ -7,8 +7,8 @@ import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 import { getTemplateAnalysisFromDb, saveTemplateAnalysisToDb } from "@/lib/supabase/template-analysis";
 import { analyzeTemplateMetadata } from "@/lib/claude";
 
-// Allow up to 120s for Claude + Gemini + Satori chain
-export const maxDuration = 120;
+// Vercel Hobby hard limit = 60s. Gemini timeout set to 50s in gemini.ts (10s headroom).
+export const maxDuration = 60;
 
 /** Detect actual MIME type from base64 magic bytes */
 function detectMimeType(base64: string, fallback: string = "image/png"): string {
@@ -51,16 +51,19 @@ export async function POST(request: Request) {
       skipCreditCheck,
     } = body;
 
-    // Credit check (skip for gift generations)
+    // Credit check + immediate deduction (prevents race condition with concurrent generations)
+    // Credit is refunded below if Gemini fails.
+    let creditCost = 0;
     if (!skipCreditCheck) {
-      const { getOrCreateSubscription } = await import("@/lib/supabase/subscriptions");
-      const subscription = await getOrCreateSubscription(user.id, user.email || undefined);
-      if (subscription.credits_remaining <= 0) {
+      const { deductCredit } = await import("@/lib/supabase/subscriptions");
+      const result = await deductCredit(user.id);
+      if (!result.success) {
         return NextResponse.json(
           { error: "Plus de crédits disponibles. Passez à un plan supérieur pour continuer.", code: "NO_CREDITS" },
           { status: 402 }
         );
       }
+      creditCost = result.cost;
     }
 
     const ctaText = rawCtaText?.trim() || null;
@@ -166,7 +169,7 @@ export async function POST(request: Request) {
         // Fire-and-forget: cache analysis for next time (won't block this request)
         analyzeTemplateMetadata(template.imageBase64, template.mimeType)
           .then((analysis) => saveTemplateAnalysisToDb(template.id, analysis))
-          .catch(() => {});
+          .catch((err) => console.error(`[generate-ad] Failed to cache template analysis for ${template.id}:`, err));
       } else {
         console.log(`[generate-ad] Using cached metadata from Supabase for ${template.id}`);
       }
@@ -275,6 +278,11 @@ export async function POST(request: Request) {
 
     if (!visualResult) {
       console.error("[generate-ad] Gemini returned null — image generation failed after all retries");
+      // Refund the credit since generation failed
+      if (!skipCreditCheck && creditCost > 0) {
+        const { addCredits } = await import("@/lib/supabase/subscriptions");
+        await addCredits(user.id, creditCost);
+      }
       return NextResponse.json(
         { error: "Échec de la génération de l'image" },
         { status: 500 }
@@ -304,12 +312,6 @@ export async function POST(request: Request) {
       } catch (err) {
         console.error("[generate-ad] Pending template save failed:", err);
       }
-    }
-
-    // Deduct credit after successful generation (skip for gifts)
-    if (!skipCreditCheck) {
-      const { deductCredit } = await import("@/lib/supabase/subscriptions");
-      await deductCredit(user.id);
     }
 
     return NextResponse.json({

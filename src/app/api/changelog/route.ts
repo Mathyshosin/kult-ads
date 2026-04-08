@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin";
 
 // GET — public, fetch all changelog entries
 export async function GET() {
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user || user.email !== "mathys.hosin@gmail.com") {
+    if (!user || !isAdmin(user.email)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
     }
 
@@ -62,7 +63,7 @@ export async function DELETE(req: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user || user.email !== "mathys.hosin@gmail.com") {
+    if (!user || !isAdmin(user.email)) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
     }
 
