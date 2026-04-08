@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp-image-generation",
+      model: "gemini-3.1-flash-image-preview",
       contents: promptText,
       config: {
         responseModalities: ["IMAGE", "TEXT"],
