@@ -58,6 +58,7 @@ export default function PromptEditorPage() {
     imageBase64: string;
     mimeType: string;
   } | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [copiedVar, setCopiedVar] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -129,6 +130,7 @@ export default function PromptEditorPage() {
     if (!selectedId || !promptText.trim()) return;
     setTesting(true);
     setTestResult(null);
+    setTestError(null);
     try {
       const selected = templates.find((t) => t.id === selectedId);
       const res = await fetch("/api/admin/test-prompt", {
@@ -140,15 +142,17 @@ export default function PromptEditorPage() {
           format: selected?.format || "square",
         }),
       });
-      if (res.ok) {
-        const data = await res.json();
+      const data = await res.json();
+      if (res.ok && data.imageBase64) {
         setTestResult({
           imageBase64: data.imageBase64,
           mimeType: data.mimeType,
         });
+      } else {
+        setTestError(data.error || `Erreur ${res.status}`);
       }
-    } catch {
-      /* ignore */
+    } catch (err) {
+      setTestError(err instanceof Error ? err.message : "Erreur reseau");
     }
     setTesting(false);
   };
@@ -411,6 +415,10 @@ export default function PromptEditorPage() {
                       alt="Test result"
                       className="w-full rounded-xl object-contain"
                     />
+                  ) : testError ? (
+                    <div className="aspect-square bg-red-50 rounded-xl flex items-center justify-center text-red-500 text-sm text-center px-6">
+                      {testError}
+                    </div>
                   ) : (
                     <div className="aspect-square bg-gray-100 rounded-xl flex items-center justify-center text-gray-300 text-xs text-center px-4">
                       Cliquez Tester pour voir le resultat
