@@ -55,11 +55,11 @@ export default function PromptEditorPage() {
   useEffect(() => {
     Promise.all([
       fetch("/api/templates").then((r) => r.json()),
-      fetch("/api/admin/template-prompts").then((r) => r.json()),
+      fetch("/api/admin/template-prompts").then((r) => r.json().catch(() => ({ prompts: {} }))),
     ])
       .then(([templatesData, promptsData]) => {
-        setTemplates(templatesData);
-        setPrompts(promptsData.prompts || {});
+        setTemplates(templatesData?.templates || templatesData || []);
+        setPrompts(promptsData?.prompts || {});
         setLoading(false);
       })
       .catch(() => setLoading(false));
