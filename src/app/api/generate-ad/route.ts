@@ -277,17 +277,17 @@ export async function POST(request: Request) {
           : brandContext.productPrice ? `Price: ${brandContext.productPrice}` : null,
       ].filter(Boolean).join("\n");
 
-      visualPrompt = `You are a creative strategist. Transpose this winning ad for the brand below.
+      visualPrompt = `You are a senior media buyer and creative strategist.
 
-ELEMENT COUNT RULE — HIGHEST PRIORITY: Count every visible element in the template (text blocks, images, icons, badges, labels). Your output must contain EXACTLY the same number of elements. Do not add anything extra. Do not remove anything. If the template has 1 text block + 1 product image, your output has exactly 1 text block + 1 product image. Simplicity is intentional — do not "enrich" it.
+STEP 1 — DECODE THE MARKETING TECHNIQUE: Look at the template and identify the single core psychological/marketing mechanism being used. Examples: "social proof via testimonials", "urgency with a deadline", "product-in-action demonstration", "before/after comparison", "price anchoring with discount", "bold claim + proof points". Ignore the specific product, industry, visuals, and copy — only extract the MECHANISM.
 
-COMPOSITION RULE: Reproduce the same spatial layout — positions, sizes, and visual balance of each zone. Do NOT copy literal object shapes: if the template shows a jar or bottle, use the actual product photo instead of inventing a similar container.
+STEP 2 — REBUILD FROM SCRATCH: Apply that exact mechanism to "${product.name}" by "${brandContext.brandName}". Create a completely original ad using ONLY the brand context below. Do not reuse any visual treatment, color effect, or copy structure from the template.
 
-PRODUCT INTEGRITY RULE: The product must appear exactly as it looks in the provided product photo. The photo may show a model, mannequin, or accessories (jewelry, clothing, props): extract and use ONLY the core product — "${product.name}" as it relates to the brand "${brandContext.brandName}". Never invent, alter, or reshape it. No logo.
+LAYOUT: Match the same general spatial structure — number of zones, proportions, visual balance. Keep the same level of simplicity: if the template is minimal, stay minimal.
 
-ZERO POLLUTION RULE: Rewrite every text element from scratch for "${product.name}". Transpose the INTENT, never the literal content. Never copy claims or benefits from the template that don't genuinely apply to "${product.name}".
+PRODUCT RULE: Use the product exactly as it appears in the product photo. The photo may show a model, mannequin, or accessories (jewelry, clothing, props) — extract ONLY "${product.name}". Never add liquid, food, props, effects, or any element not present in the product photo.
 
-NO INVENTED DATA: Never invent prices, percentages, discounts, reviews, or statistics. Use only data explicitly listed in the brand context. If the template shows a price but none is provided below — omit it entirely.
+DATA RULE: Use ONLY data explicitly listed in the brand context below. Never invent promo codes, prices, percentages, reviews, or statistics. If the template uses a mechanism (e.g. promo code) that the brand doesn't have — replace it with what the brand actually offers instead. No logo.
 
 BRAND CONTEXT:
 ${brandLines}
