@@ -61,11 +61,42 @@ export default function PromptEditorPage() {
   const [testError, setTestError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   // Test brand config
-  const [testBrandName, setTestBrandName] = useState("");
-  const [testProductName, setTestProductName] = useState("");
-  const [testOffer, setTestOffer] = useState("");
-  const [testPrice, setTestPrice] = useState("");
-  const [testProductImage, setTestProductImage] = useState<{ base64: string; mimeType: string } | null>(null);
+  const [testBrandName, setTestBrandName] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("pe_brandName") || "";
+  });
+  const [testProductName, setTestProductName] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("pe_productName") || "";
+  });
+  const [testOffer, setTestOffer] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("pe_offer") || "";
+  });
+  const [testPrice, setTestPrice] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("pe_price") || "";
+  });
+  const [testProductImage, setTestProductImage] = useState<{ base64: string; mimeType: string } | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const saved = localStorage.getItem("pe_productImage");
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+
+  // Persist test brand to localStorage
+  useEffect(() => {
+    localStorage.setItem("pe_brandName", testBrandName);
+    localStorage.setItem("pe_productName", testProductName);
+    localStorage.setItem("pe_offer", testOffer);
+    localStorage.setItem("pe_price", testPrice);
+    if (testProductImage) {
+      localStorage.setItem("pe_productImage", JSON.stringify(testProductImage));
+    } else {
+      localStorage.removeItem("pe_productImage");
+    }
+  }, [testBrandName, testProductName, testOffer, testPrice, testProductImage]);
   const [copiedVar, setCopiedVar] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
