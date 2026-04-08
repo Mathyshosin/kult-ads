@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "@/lib/auth-store";
 import { AVAILABLE_VARIABLES } from "@/lib/prompt-variables";
 import Link from "next/link";
@@ -31,6 +31,18 @@ interface Template {
 
 export default function PromptEditorPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const initialize = useAuthStore((s) => s.initialize);
+  const initRef = useRef(false);
+
+  useEffect(() => {
+    if (!initRef.current) {
+      initRef.current = true;
+      const unsub = initialize();
+      return unsub;
+    }
+  }, [initialize]);
+
   const isAdminUser = currentUser?.email === "mathys.hosin@gmail.com";
 
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -179,6 +191,14 @@ export default function PromptEditorPage() {
   };
 
   // ── Auth guard ────────────────────────────
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   if (!isAdminUser) {
     return (
