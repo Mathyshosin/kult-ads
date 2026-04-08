@@ -264,8 +264,28 @@ export async function POST(request: Request) {
       visualPrompt = `Edit this ad: "${modificationPrompt}". Change ONLY what is requested. Keep everything else identical. Text in French.`;
 
     } else if (isReference || template) {
-      // Same prompt for both reference (user upload) and template (library)
-      visualPrompt = `You are a creative strategist. Here is an ad we love and want to adapt for our brand "${brandAnalysis.brandName}" selling "${product.name}". Analyze the ad's concept, layout, and marketing angle — then recreate it for us using our product photo. Keep the same creative idea but make it ours. ${ctaRule}${storyRule} Text in French.`;
+      // Build brand context lines (only non-empty fields)
+      const brandLines = [
+        `Brand: "${brandContext.brandName}"${brandContext.brandDescription ? ` — ${brandContext.brandDescription}` : ""}`,
+        brandContext.tone ? `Tone: ${brandContext.tone}` : null,
+        brandContext.uniqueSellingPoints?.length ? `Key selling points: ${brandContext.uniqueSellingPoints.slice(0, 3).join(" | ")}` : null,
+        brandContext.offerTitle ? `Current offer: ${brandContext.offerTitle}${brandContext.offerDescription ? ` — ${brandContext.offerDescription}` : ""}` : null,
+        brandContext.productOriginalPrice && brandContext.productSalePrice
+          ? `Price: ${brandContext.productOriginalPrice} → ${brandContext.productSalePrice}`
+          : brandContext.productPrice ? `Price: ${brandContext.productPrice}` : null,
+      ].filter(Boolean).join("\n");
+
+      visualPrompt = `You are a creative strategist. Transpose this winning ad for the brand below.
+
+STRUCTURE RULE: Reproduce the exact same visual composition — same number of blocks, same positions, same balance. Zero structural changes.
+
+ZERO POLLUTION RULE: Extract the INTENT of each element, never its content. If the template shows "Cruelty-free", find the equivalent strong claim for "${product.name}" and use that instead. Never copy adjectives, claims, or benefits from the template that don't apply to "${product.name}".
+
+BRAND CONTEXT:
+${brandLines}
+Product: "${product.name}"${brandContext.productDescription ? ` — ${brandContext.productDescription}` : ""}
+
+All text in French. Use the product photo exactly as provided.${ctaRule ? ` ${ctaRule}` : ""}${storyRule}`;
 
     } else {
       visualPrompt = `You are a creative strategist. Create a stunning Instagram ad for "${brandAnalysis.brandName}" selling "${product.name}". Use the product photo provided. Clean, professional, eye-catching. ${ctaRule}${storyRule} Text in French.`;
