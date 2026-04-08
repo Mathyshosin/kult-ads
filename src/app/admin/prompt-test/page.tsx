@@ -10,6 +10,39 @@ const RATIOS = [
   { value: "9:16", label: "9:16", sub: "Story / Reel" },
 ];
 
+async function callGeminiDirect(apiKey: string, prompt: string, aspectRatio: string) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseModalities: ["IMAGE", "TEXT"],
+          imageConfig: { aspectRatio },
+        },
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.error?.message || `Erreur ${res.status}`);
+  }
+
+  const data = await res.json();
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  for (const part of parts) {
+    if (part.inlineData) {
+      return { imageBase64: part.inlineData.data, mimeType: part.inlineData.mimeType || "image/png" };
+    }
+  }
+
+  const textParts = parts.filter((p: { text?: string }) => p.text).map((p: { text?: string }) => p.text).join(" ");
+  throw new Error(textParts || "Aucune image generee");
+}
+
 export default function PromptTestPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const isLoading = useAuthStore((s) => s.isLoading);
@@ -34,39 +67,32 @@ export default function PromptTestPage() {
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<{ imageBase64: string; mimeType: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState<string | null>(null);
 
   // Persist prompt
   useEffect(() => {
     localStorage.setItem("pt_prompt", prompt);
   }, [prompt]);
 
+  // Fetch API key once
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetch("/api/admin/gemini-key")
+      .then((r) => r.json())
+      .then((data) => setApiKey(data.key || null))
+      .catch(() => {});
+  }, [isAdmin]);
+
   const handleGenerate = async () => {
-    if (!prompt.trim() || generating) return;
+    if (!prompt.trim() || generating || !apiKey) return;
     setGenerating(true);
     setResult(null);
     setError(null);
     try {
-      const format = ratio === "9:16" ? "story" : "square";
-      const res = await fetch("/api/admin/test-prompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ promptText: prompt, format }),
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        let msg = `Erreur ${res.status}`;
-        try { msg = JSON.parse(text).error || msg; } catch { msg = text.slice(0, 300) || msg; }
-        setError(msg);
-      } else {
-        const data = await res.json();
-        if (data.imageBase64) {
-          setResult({ imageBase64: data.imageBase64, mimeType: data.mimeType });
-        } else {
-          setError(data.error || "Aucune image generee");
-        }
-      }
+      const img = await callGeminiDirect(apiKey, prompt, ratio);
+      setResult(img);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur reseau");
+      setError(err instanceof Error ? err.message : "Erreur");
     }
     setGenerating(false);
   };
@@ -106,7 +132,7 @@ export default function PromptTestPage() {
           <h1 className="text-xl font-bold text-gray-900">Prompt Test</h1>
         </div>
         <p className="text-sm text-gray-500 mb-8">
-          Mode brut — ton prompt est envoye tel quel a Gemini. Aucun systeme, aucun wrapper.
+          Mode brut — ton prompt est envoye tel quel a Gemini depuis ton navigateur. Zero serveur, zero timeout.
           <Link href="/admin/prompt-editor" className="ml-3 text-blue-600 hover:text-blue-700 font-medium">
             Voir les templates →
           </Link>
@@ -161,7 +187,7 @@ export default function PromptTestPage() {
             {/* Generate button */}
             <button
               onClick={handleGenerate}
-              disabled={generating || !prompt.trim()}
+              disabled={generating || !prompt.trim() || !apiKey}
               className="w-full bg-gray-900 hover:bg-black text-white rounded-2xl py-4 text-sm font-semibold transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
             >
               {generating ? (
