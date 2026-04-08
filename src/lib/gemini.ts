@@ -1,5 +1,4 @@
 import { GoogleGenAI } from "@google/genai";
-import sharp from "sharp";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY || "" });
 
@@ -10,12 +9,13 @@ interface ReferenceImage {
 }
 
 /**
- * Compress a base64 image server-side using sharp.
+ * Compress a base64 image server-side using sharp (dynamic import).
  * Resizes to max 768px and converts to JPEG 80% — reduces 2-4MB images to ~80KB.
- * This is the key fix for Vercel Hobby (60s limit): smaller images = Gemini responds in ~15-20s.
+ * Dynamic import ensures the module loads even if sharp is unavailable (Vercel Lambda).
  */
 async function compressForGemini(base64: string): Promise<{ base64: string; mimeType: string }> {
   try {
+    const { default: sharp } = await import("sharp");
     const buffer = Buffer.from(base64, "base64");
     const compressed = await sharp(buffer)
       .resize(768, 768, { fit: "inside", withoutEnlargement: true })
@@ -23,7 +23,7 @@ async function compressForGemini(base64: string): Promise<{ base64: string; mime
       .toBuffer();
     return { base64: compressed.toString("base64"), mimeType: "image/jpeg" };
   } catch {
-    // If sharp fails (e.g. unsupported format), send original
+    // sharp unavailable or image unsupported — send original (still works, just slower)
     return { base64, mimeType: "image/jpeg" };
   }
 }
