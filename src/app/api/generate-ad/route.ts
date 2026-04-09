@@ -211,7 +211,13 @@ export async function POST(request: Request) {
         label: imageLabel,
       });
     } else if (template?.generationPrompt) {
-      // CUSTOM PROMPT MODE: no template image, only product photo + prompt
+      // CUSTOM PROMPT MODE: template image as visual reference + product photo
+      // The template image helps Gemini understand the layout faster (avoids timeout)
+      referenceImages.push({
+        base64: template.imageBase64,
+        mimeType: detectMimeType(template.imageBase64, template.mimeType),
+        label: `Visual reference for the layout style. The custom prompt below describes exactly what to create — follow the prompt, use this image only as a general visual guide.`,
+      });
       if (productImageBase64) {
         referenceImages.push({
           base64: productImageBase64,
