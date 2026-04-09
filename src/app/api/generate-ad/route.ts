@@ -419,6 +419,7 @@ STRICT RULES:
     const adId = `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
     // ── Save ad server-side to Supabase (survives client refresh) ──
+    let savedToDb = false;
     try {
       const { data: brandRow } = await supabase
         .from("brand_analyses")
@@ -434,34 +435,46 @@ STRICT RULES:
 
         // Upload image to storage
         const imageBuffer = Buffer.from(finalImage.imageBase64, "base64");
-        await supabase.storage
+        const { error: uploadErr } = await supabase.storage
           .from("generated-ads")
           .upload(storagePath, imageBuffer, { contentType: finalImage.mimeType || "image/png" });
 
-        // Save metadata
-        await supabase.from("generated_ads").insert({
-          id: adId,
-          user_id: user.id,
-          brand_analysis_id: brandRow.id,
-          format,
-          image_path: storagePath,
-          headline: copy.headline,
-          body_text: copy.bodyText,
-          call_to_action: copy.callToAction,
-          product_local_id: product.id || null,
-          offer_local_id: offer?.id || null,
-          template_id: actualTemplateId,
-          is_favorite: false,
-          debug_info: JSON.stringify({
-            geminiPrompt: visualPrompt,
-            sceneDescription,
-            templateType: metadata?.templateType || null,
-          }),
-        });
-        console.log(`[generate-ad] Ad saved server-side: ${adId}`);
+        if (uploadErr) {
+          console.error("[generate-ad] Storage upload failed:", uploadErr.message);
+        } else {
+          // Save metadata only if image uploaded successfully
+          const { error: insertErr } = await supabase.from("generated_ads").insert({
+            id: adId,
+            user_id: user.id,
+            brand_analysis_id: brandRow.id,
+            format,
+            image_path: storagePath,
+            headline: copy.headline,
+            body_text: copy.bodyText,
+            call_to_action: copy.callToAction,
+            product_local_id: product.id || null,
+            offer_local_id: offer?.id || null,
+            template_id: actualTemplateId,
+            is_favorite: false,
+            debug_info: JSON.stringify({
+              geminiPrompt: visualPrompt,
+              sceneDescription,
+              templateType: metadata?.templateType || null,
+            }),
+          });
+
+          if (insertErr) {
+            console.error("[generate-ad] DB insert failed:", insertErr.message);
+          } else {
+            savedToDb = true;
+            console.log(`[generate-ad] Ad saved server-side: ${adId}`);
+          }
+        }
+      } else {
+        console.warn("[generate-ad] No brand_analyses found for user — client will save");
       }
     } catch (saveErr) {
-      console.error("[generate-ad] Server-side save failed (ad still returned to client):", saveErr);
+      console.error("[generate-ad] Server-side save failed:", saveErr);
     }
 
     return NextResponse.json({
@@ -476,7 +489,7 @@ STRICT RULES:
       offerId: offer?.id,
       templateId: actualTemplateId,
       timestamp: Date.now(),
-      _savedToDb: true,
+      _savedToDb: savedToDb,
       _debug: {
         geminiPrompt: visualPrompt,
         sceneDescription,
