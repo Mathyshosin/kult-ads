@@ -640,7 +640,8 @@ export default function AdsGalleryPage() {
 
       // Complete the new ad placeholder (original is untouched)
       completeGeneration(targetId, { ...data, format: targetFormat });
-      if (currentUser && brandAnalysisId) {
+      // Skip client-side sync if server already saved to DB
+      if (currentUser && brandAnalysisId && !data._savedToDb) {
         syncGeneratedAd(currentUser.id, { ...data, id: targetId, format: targetFormat });
       }
       // Update credits counter in header

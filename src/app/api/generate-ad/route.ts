@@ -410,8 +410,56 @@ STRICT RULES:
       }
     }
 
+    const adId = `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+    // ── Save ad server-side to Supabase (survives client refresh) ──
+    try {
+      const { data: brandRow } = await supabase
+        .from("brand_analyses")
+        .select("id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (brandRow) {
+        const ext = finalImage.mimeType?.includes("png") ? "png" : "jpg";
+        const storagePath = `${user.id}/${brandRow.id}/${adId}.${ext}`;
+
+        // Upload image to storage
+        const imageBuffer = Buffer.from(finalImage.imageBase64, "base64");
+        await supabase.storage
+          .from("generated-ads")
+          .upload(storagePath, imageBuffer, { contentType: finalImage.mimeType || "image/png" });
+
+        // Save metadata
+        await supabase.from("generated_ads").insert({
+          id: adId,
+          user_id: user.id,
+          brand_analysis_id: brandRow.id,
+          format,
+          image_path: storagePath,
+          headline: copy.headline,
+          body_text: copy.bodyText,
+          call_to_action: copy.callToAction,
+          product_local_id: product.id || null,
+          offer_local_id: offer?.id || null,
+          template_id: actualTemplateId,
+          is_favorite: false,
+          debug_info: JSON.stringify({
+            geminiPrompt: visualPrompt,
+            sceneDescription,
+            templateType: metadata?.templateType || null,
+          }),
+        });
+        console.log(`[generate-ad] Ad saved server-side: ${adId}`);
+      }
+    } catch (saveErr) {
+      console.error("[generate-ad] Server-side save failed (ad still returned to client):", saveErr);
+    }
+
     return NextResponse.json({
-      id: `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: adId,
       format,
       imageBase64: finalImage.imageBase64,
       mimeType: finalImage.mimeType,
@@ -422,6 +470,7 @@ STRICT RULES:
       offerId: offer?.id,
       templateId: actualTemplateId,
       timestamp: Date.now(),
+      _savedToDb: true,
       _debug: {
         geminiPrompt: visualPrompt,
         sceneDescription,
