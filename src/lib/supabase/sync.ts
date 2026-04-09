@@ -467,13 +467,21 @@ export async function loadGeneratedAds(
 
   // Build a map of path → signed URL
   const urlMap = new Map<string, string>();
+  const errorPaths = new Set<string>();
   if (signedUrls) {
     for (const item of signedUrls) {
-      if (item.signedUrl) urlMap.set(item.path || "", item.signedUrl);
+      if (item.signedUrl && !item.error) {
+        urlMap.set(item.path || "", item.signedUrl);
+      } else {
+        errorPaths.add(item.path || "");
+      }
     }
   }
 
-  return rows.map((row) => {
+  // Filter out ads with broken/missing images
+  const validRows = rows.filter((r) => !errorPaths.has(r.image_path) && urlMap.has(r.image_path));
+
+  return validRows.map((row) => {
     let debugInfo: GeneratedAd["_debug"] | undefined;
     if (row.debug_info) {
       try {
