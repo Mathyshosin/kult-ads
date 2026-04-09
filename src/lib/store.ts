@@ -225,7 +225,7 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
   completeGeneration: (id, data) =>
     set((state) => ({
       generatedAds: state.generatedAds.map((ad) =>
-        ad.id === id ? { ...ad, ...data, id, status: "completed" as const, timestamp: ad.timestamp } : ad
+        ad.id === id ? { ...ad, ...data, id: data.id || id, status: "completed" as const, timestamp: ad.timestamp } : ad
       ),
     })),
 
