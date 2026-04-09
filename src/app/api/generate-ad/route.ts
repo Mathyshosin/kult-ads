@@ -210,8 +210,18 @@ export async function POST(request: Request) {
         mimeType: detectMimeType(previousAdBase64, previousAdMimeType || "image/jpeg"),
         label: imageLabel,
       });
+    } else if (template?.generationPrompt) {
+      // CUSTOM PROMPT MODE: no template image, only product photo + prompt
+      if (productImageBase64) {
+        referenceImages.push({
+          base64: productImageBase64,
+          mimeType: detectMimeType(productImageBase64, productImageMimeType || "image/jpeg"),
+          label: `Product photo for "${product.name}" — use this exact product in the ad. Copy it identically: same colors, shape, textures, proportions. Do not modify the product.`,
+        });
+      }
+
     } else if (template) {
-      // TEMPLATE MODE: template as creative direction reference
+      // GENERIC TEMPLATE MODE: template image as reference + product photo
       referenceImages.push({
         base64: template.imageBase64,
         mimeType: detectMimeType(template.imageBase64, template.mimeType),
