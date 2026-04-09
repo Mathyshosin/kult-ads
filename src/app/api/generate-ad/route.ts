@@ -311,8 +311,15 @@ ABSOLUTELY FORBIDDEN:
         productOriginalPrice: brandContext.productOriginalPrice,
         productSalePrice: brandContext.productSalePrice,
       });
+      // For story format: adapt the prompt to vertical 9:16 instead of re-converting a square
+      if (format === "story") {
+        visualPrompt = visualPrompt
+          .replace(/square format[^.]*/gi, "vertical story format (1080x1920), aspect ratio 9:16")
+          .replace(/1080\s*x\s*1080/g, "1080x1920")
+          .replace(/1:1/g, "9:16");
+        visualPrompt += "\nIMPORTANT: This is a vertical 9:16 story format. Adapt the layout vertically — stack elements top to bottom with more spacing. Leave top 15% and bottom 20% empty for story UI overlays.";
+      }
       if (ctaRule) visualPrompt += `\n${ctaRule}`;
-      if (storyRule) visualPrompt += storyRule;
 
     } else if (isReference || template) {
       // Build brand context lines (only non-empty fields)
