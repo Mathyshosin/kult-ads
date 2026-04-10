@@ -71,7 +71,7 @@ export async function generateImage(
 
       // 50s timeout — leaves 10s headroom within Vercel Hobby's 60s function limit
       const genPromise = ai.models.generateContent({
-        model: "gemini-2.5-flash-image",
+        model: "gemini-3.1-flash-image-preview",
         contents,
         config: {
           responseModalities: ["IMAGE", "TEXT"],

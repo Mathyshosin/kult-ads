@@ -211,7 +211,12 @@ export async function POST(request: Request) {
         label: imageLabel,
       });
     } else if (template?.generationPrompt) {
-      // CUSTOM PROMPT MODE: only product photo, no template image
+      // CUSTOM PROMPT MODE: template as technique reference + product photo + custom prompt
+      referenceImages.push({
+        base64: template.imageBase64,
+        mimeType: detectMimeType(template.imageBase64, template.mimeType),
+        label: `MARKETING TECHNIQUE REFERENCE ONLY. This image shows the type of marketing approach to reproduce (comparison, social proof, discount highlight, product showcase, etc.). Do NOT copy any visual element from this image — no colors, no layout, no text style, no decorative elements, no products, no fonts. Create a completely original ad following ONLY the written prompt below.`,
+      });
       if (productImageBase64) {
         referenceImages.push({
           base64: productImageBase64,
