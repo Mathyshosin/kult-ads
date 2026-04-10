@@ -296,7 +296,18 @@ ABSOLUTELY FORBIDDEN:
 - Changing any text content or color`;
 
     } else if (isModification) {
-      visualPrompt = `Edit this ad: "${modificationPrompt}". Change ONLY what is requested. Keep everything else identical. Text in French.`;
+      visualPrompt = `You are editing an existing advertisement image.
+
+MODIFICATION REQUESTED: "${modificationPrompt}"
+
+CRITICAL RULES:
+- Apply ONLY the modification described above.
+- Keep absolutely everything else identical: same layout, same colors, same text placement, same images, same composition, same background, same fonts.
+- The output must be visually identical to the original EXCEPT for the specific change requested.
+- Do NOT add any new element that wasn't requested.
+- Do NOT remove any element that wasn't mentioned.
+- Do NOT change the style, mood, or overall aesthetic.
+- All text in French.`;
 
     } else if (template?.generationPrompt) {
       // ── Custom per-template prompt with variable substitution ──
@@ -377,7 +388,8 @@ STRICT RULES:
     console.log(`[generate-ad] Calling Gemini (${referenceImages.length} refs)...`);
 
     const isCustomPrompt = !!(template?.generationPrompt);
-    const visualResult = await generateImage(visualPrompt, aspectRatio, referenceImages, 1, isCustomPrompt);
+    const retries = isModification ? 2 : 1;
+    const visualResult = await generateImage(visualPrompt, aspectRatio, referenceImages, retries, isCustomPrompt);
 
     if (!visualResult) {
       console.error("[generate-ad] Gemini returned null — image generation failed after all retries");
