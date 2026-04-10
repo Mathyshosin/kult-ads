@@ -610,8 +610,15 @@ export default function AdsGalleryPage() {
           const imgRes = await fetch(ad.imageUrl);
           if (imgRes.ok) {
             const blob = await imgRes.blob();
-            const buffer = await blob.arrayBuffer();
-            imageToSend = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+            const reader = new FileReader();
+            const base64 = await new Promise<string>((resolve) => {
+              reader.onloadend = () => {
+                const result = reader.result as string;
+                resolve(result.split(",")[1] || "");
+              };
+              reader.readAsDataURL(blob);
+            });
+            imageToSend = base64;
             mimeToSend = blob.type || "image/jpeg";
           }
         } catch (err) {
