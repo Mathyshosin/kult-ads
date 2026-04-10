@@ -315,6 +315,9 @@ export default function GeneratePage() {
         timestamp: Date.now(),
         _debug: {
           geminiPrompt: visualPrompt,
+          sceneDescription: "",
+          templateType: null,
+          referenceImageLabels: refImages.map((r: { label: string }) => r.label.slice(0, 100)),
           templateImageBase64: prepData.templateImageBase64 || null,
           templateMimeType: prepData.templateMimeType || null,
         },
