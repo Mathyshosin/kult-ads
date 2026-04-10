@@ -81,14 +81,13 @@ function SkeletonCard() {
 
 // ── Cooking-style generating card ──
 function GeneratingCard({ ad }: { ad: GeneratedAd }) {
-  const tips = [
-    "Préparation des ingrédients...",
-    "Ajout d'une pincée de créativité...",
-    "Cuisson en cours...",
-    "Touche finale...",
-    "Presque prêt...",
+  const steps = [
+    { key: "preparing", label: "Preparation...", icon: "⚙️" },
+    { key: "generating", label: "Gemini genere...", icon: "🎨" },
+    { key: "saving", label: "Sauvegarde...", icon: "💾" },
   ];
-  const tip = useMemo(() => tips[Math.floor(Math.random() * tips.length)], []);
+  const currentStep = ad.generationStep || "preparing";
+  const currentIndex = steps.findIndex((s) => s.key === currentStep);
 
   return (
     <div
@@ -97,35 +96,38 @@ function GeneratingCard({ ad }: { ad: GeneratedAd }) {
       } rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50 via-white to-violet-50 border border-blue-100/50`}
     >
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
-        {/* Animated pan icon */}
+        {/* Step icon */}
         <div className="relative">
-          <div className="text-4xl animate-bounce-soft">🍳</div>
+          <div className="text-4xl animate-bounce-soft">{steps[currentIndex]?.icon || "⚙️"}</div>
           <div className="absolute -top-2 -right-2 text-lg animate-pulse">✨</div>
         </div>
         <div className="text-center px-6">
-          <p className="text-sm font-semibold text-gray-900">On prépare votre ad</p>
-          <p className="text-xs text-gray-400 mt-1.5 italic">{tip}</p>
+          <p className="text-sm font-semibold text-gray-900">{steps[currentIndex]?.label || "Preparation..."}</p>
         </div>
-        {/* Progress dots */}
-        <div className="flex gap-1.5">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="w-2 h-2 rounded-full bg-blue-400"
-              style={{
-                animation: `pulse 1.4s ease-in-out ${i * 0.2}s infinite`,
-                opacity: 0.3,
-              }}
-            />
+        {/* Step progress bar */}
+        <div className="flex items-center gap-2 px-8 w-full max-w-[200px]">
+          {steps.map((s, i) => (
+            <div key={s.key} className="flex items-center flex-1">
+              <div className={`w-full h-1.5 rounded-full transition-all duration-500 ${
+                i <= currentIndex ? "bg-blue-500" : "bg-gray-200"
+              }`} />
+            </div>
+          ))}
+        </div>
+        {/* Step labels */}
+        <div className="flex justify-between px-8 w-full max-w-[200px]">
+          {steps.map((s, i) => (
+            <span
+              key={s.key}
+              className={`text-[9px] font-medium transition-colors ${
+                i <= currentIndex ? "text-blue-600" : "text-gray-300"
+              }`}
+            >
+              {s.icon}
+            </span>
           ))}
         </div>
       </div>
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 80%, 100% { opacity: 0.3; transform: scale(1); }
-          40% { opacity: 1; transform: scale(1.3); }
-        }
-      `}</style>
     </div>
   );
 }
@@ -589,6 +591,7 @@ export default function AdsGalleryPage() {
     let creditCost = 0;
     try {
       // ── Phase 1: Prepare (credits + API key) ──
+      updateGeneratedAd(targetId, { generationStep: "preparing" });
       const prepareRes = await fetch("/api/generate-ad/prepare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -671,6 +674,7 @@ export default function AdsGalleryPage() {
       });
 
       // ── Phase 4: Call Gemini directly from browser ──
+      updateGeneratedAd(targetId, { generationStep: "generating" });
       const { generateImageClient } = await import("@/lib/gemini-client");
       const aspectRatio = targetFormat === "story" ? "9:16" : "1:1";
 
@@ -688,6 +692,7 @@ export default function AdsGalleryPage() {
       }
 
       // ── Phase 5: Save ──
+      updateGeneratedAd(targetId, { generationStep: "saving" });
       const adId = `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       const newAd = {
         id: adId,

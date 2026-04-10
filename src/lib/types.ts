@@ -62,6 +62,7 @@ export interface GeneratedAd {
   storagePath?: string;          // Supabase Storage path for server-side download
   timestamp: number;
   status?: "generating" | "completed" | "failed";
+  generationStep?: "preparing" | "generating" | "saving";
   error?: string;
   _debug?: {
     geminiPrompt: string;

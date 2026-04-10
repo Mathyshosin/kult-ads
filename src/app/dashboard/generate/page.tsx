@@ -58,6 +58,7 @@ export default function GeneratePage() {
   const startGeneration = useWizardStore((s) => s.startGeneration);
   const completeGeneration = useWizardStore((s) => s.completeGeneration);
   const failGeneration = useWizardStore((s) => s.failGeneration);
+  const updateGeneratedAd = useWizardStore((s) => s.updateGeneratedAd);
   const syncGeneratedAd = useWizardStore((s) => s.syncGeneratedAd);
   const currentUser = useAuthStore((s) => s.currentUser);
   const addToast = useToastStore((s) => s.addToast);
@@ -171,6 +172,7 @@ export default function GeneratePage() {
       if (!brandAnalysis) return;
 
       // ── Phase 1: Prepare (server-side — fast, ~2-3s) ──
+      updateGeneratedAd(placeholderId, { generationStep: "preparing" });
       const prepareRes = await fetch("/api/generate-ad/prepare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -280,6 +282,7 @@ export default function GeneratePage() {
       });
 
       // ── Phase 4: Call Gemini DIRECTLY from browser (no timeout!) ──
+      updateGeneratedAd(placeholderId, { generationStep: "generating" });
       const { generateImageClient } = await import("@/lib/gemini-client");
       const aspectRatio = selectedFormat === "story" ? "9:16" : "1:1";
 
@@ -300,6 +303,7 @@ export default function GeneratePage() {
       }
 
       // ── Phase 5: Save result ──
+      updateGeneratedAd(placeholderId, { generationStep: "saving" });
       const adId = `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       const ad = {
         id: adId,
