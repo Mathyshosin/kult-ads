@@ -32,16 +32,19 @@ export async function generateImage(
   prompt: string,
   aspectRatio: string = "1:1",
   referenceImages: ReferenceImage[] = [],
-  maxRetries: number = 2
+  maxRetries: number = 2,
+  skipCompression: boolean = false,
 ): Promise<{ imageBase64: string; mimeType: string } | null> {
-  // Compress all reference images before sending to Gemini
-  // This reduces payload from ~2-4MB to ~80KB per image → Gemini responds 3-4x faster
-  const compressedRefs = await Promise.all(
-    referenceImages.map(async (img) => {
-      const compressed = await compressForGemini(img.base64);
-      return { ...img, base64: compressed.base64, mimeType: compressed.mimeType };
-    })
-  );
+  // Compress reference images unless skipCompression is set
+  // skipCompression = true for custom prompt mode (saves 3-5s cold start from sharp import)
+  const compressedRefs = skipCompression
+    ? referenceImages
+    : await Promise.all(
+        referenceImages.map(async (img) => {
+          const compressed = await compressForGemini(img.base64);
+          return { ...img, base64: compressed.base64, mimeType: compressed.mimeType };
+        })
+      );
 
   const contents: Array<
     { text: string } | { inlineData: { mimeType: string; data: string } }

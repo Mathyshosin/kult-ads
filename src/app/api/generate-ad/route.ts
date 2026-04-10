@@ -370,7 +370,8 @@ STRICT RULES:
     // ── IMAGE ONLY: skip Haiku copy to maximize time for Gemini ──
     console.log(`[generate-ad] Calling Gemini (${referenceImages.length} refs)...`);
 
-    const visualResult = await generateImage(visualPrompt, aspectRatio, referenceImages, 1);
+    const isCustomPrompt = !!(template?.generationPrompt);
+    const visualResult = await generateImage(visualPrompt, aspectRatio, referenceImages, 1, isCustomPrompt);
 
     if (!visualResult) {
       console.error("[generate-ad] Gemini returned null — image generation failed after all retries");
