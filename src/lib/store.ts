@@ -219,22 +219,52 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
       status: "generating",
     };
     set((state) => ({ generatedAds: [placeholder, ...state.generatedAds] }));
+    // Persist active generation IDs so they survive navigation/re-renders
+    try {
+      const active = JSON.parse(sessionStorage.getItem("activeGenerations") || "[]") as string[];
+      active.push(id);
+      sessionStorage.setItem("activeGenerations", JSON.stringify(active));
+    } catch { /* ignore */ }
     return id;
   },
 
-  completeGeneration: (id, data) =>
-    set((state) => ({
-      generatedAds: state.generatedAds.map((ad) =>
-        ad.id === id ? { ...ad, ...data, id: (data as Record<string, unknown>).id as string || id, status: "completed" as const, timestamp: ad.timestamp } : ad
-      ),
-    })),
+  completeGeneration: (id, data) => {
+    const serverId = (data as Record<string, unknown>).id as string || id;
+    set((state) => {
+      // Try to find by original placeholder ID or by server ID
+      const found = state.generatedAds.some((ad) => ad.id === id);
+      if (found) {
+        return {
+          generatedAds: state.generatedAds.map((ad) =>
+            ad.id === id ? { ...ad, ...data, id: serverId, status: "completed" as const, timestamp: ad.timestamp } : ad
+          ),
+        };
+      }
+      // Placeholder was lost (navigation/hydration race) — add as new completed ad
+      console.warn(`[store] Placeholder ${id} not found — adding completed ad directly`);
+      return {
+        generatedAds: [{ ...data, id: serverId, status: "completed" as const, timestamp: Date.now() } as GeneratedAd, ...state.generatedAds],
+      };
+    });
+    // Clean up sessionStorage
+    try {
+      const active = JSON.parse(sessionStorage.getItem("activeGenerations") || "[]") as string[];
+      sessionStorage.setItem("activeGenerations", JSON.stringify(active.filter((a) => a !== id)));
+    } catch { /* ignore */ }
+  },
 
-  failGeneration: (id, error) =>
+  failGeneration: (id, error) => {
     set((state) => ({
       generatedAds: state.generatedAds.map((ad) =>
         ad.id === id ? { ...ad, status: "failed" as const, error } : ad
       ),
-    })),
+    }));
+    // Clean up sessionStorage
+    try {
+      const active = JSON.parse(sessionStorage.getItem("activeGenerations") || "[]") as string[];
+      sessionStorage.setItem("activeGenerations", JSON.stringify(active.filter((a) => a !== id)));
+    } catch { /* ignore */ }
+  },
 
   // ── Supabase sync methods ──
 
