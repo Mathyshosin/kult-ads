@@ -346,6 +346,12 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
   },
 
   hydrateFromSupabase: async (userId) => {
+    // GUARD: if already hydrated, never re-run
+    if (get().isHydrated) {
+      console.log("[sync] Already hydrated — skipping");
+      return;
+    }
+
     try {
       const result = await loadLatestBrandAnalysis(userId);
       if (result) {
@@ -358,6 +364,12 @@ export const useWizardStore = create<WizardState>()((set, get) => ({
           brandLogo: logo,
           isHydrated: true,
         });
+
+        // GUARD: if ads already loaded (e.g. startGeneration was called), skip reload
+        if (get().adsLoaded) {
+          console.log("[sync] Ads already loaded — skipping reload");
+          return;
+        }
 
         // Phase 2a: last 10 ads with signed URLs — fast (small batch)
         const firstAds = await loadGeneratedAds(userId, result.id, { limit: 10 });

@@ -9,6 +9,9 @@ import { useAuthStore } from "@/lib/auth-store";
 import { ToastContainer } from "@/components/toast";
 import GiftPopup from "@/components/gift-popup";
 
+// Global flag — survives component remounts (refs don't)
+let _hydrationStarted = false;
+
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const currentUser = useAuthStore((s) => s.currentUser);
   const hydrateFromSupabase = useWizardStore((s) => s.hydrateFromSupabase);
@@ -16,11 +19,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [subChecked, setSubChecked] = useState(false);
-  const hydrationStarted = useRef(false);
 
   useEffect(() => {
-    if (currentUser && !isHydrated && !hydrationStarted.current) {
-      hydrationStarted.current = true;
+    if (currentUser && !isHydrated && !_hydrationStarted) {
+      _hydrationStarted = true;
       hydrateFromSupabase(currentUser.id);
     }
   }, [currentUser, isHydrated, hydrateFromSupabase]);
