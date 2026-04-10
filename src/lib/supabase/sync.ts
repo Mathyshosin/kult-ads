@@ -573,6 +573,39 @@ export async function deleteAllGeneratedAds(
   }
 }
 
+// ── Delete entire brand (analysis + products + offers + images + ads) ──
+export async function deleteEntireBrand(
+  userId: string,
+  brandAnalysisId: string
+): Promise<void> {
+  const sb = supabase();
+
+  // 1. Delete all generated ads (storage + DB)
+  await deleteAllGeneratedAds(userId, brandAnalysisId);
+
+  // 2. Delete all uploaded images (storage + DB)
+  const { data: images } = await sb
+    .from("uploaded_images")
+    .select("id, storage_path")
+    .eq("user_id", userId)
+    .eq("brand_analysis_id", brandAnalysisId);
+
+  if (images && images.length > 0) {
+    const paths = images.map((r) => r.storage_path).filter(Boolean);
+    if (paths.length > 0) {
+      await sb.storage.from("user-images").remove(paths);
+    }
+    await sb.from("uploaded_images").delete().eq("user_id", userId).eq("brand_analysis_id", brandAnalysisId);
+  }
+
+  // 3. Delete products and offers
+  await sb.from("products").delete().eq("brand_analysis_id", brandAnalysisId);
+  await sb.from("offers").delete().eq("brand_analysis_id", brandAnalysisId);
+
+  // 4. Delete brand analysis
+  await sb.from("brand_analyses").delete().eq("id", brandAnalysisId).eq("user_id", userId);
+}
+
 // ── Get recently used template IDs for a user (for randomization) ──
 export async function getRecentTemplateIds(
   userId: string,

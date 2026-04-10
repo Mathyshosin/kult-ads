@@ -125,8 +125,11 @@ export default function BrandPage() {
   const syncLogo = useWizardStore((s) => s.syncLogo);
   const syncDeleteImage = useWizardStore((s) => s.syncDeleteImage);
   const syncDeleteLogo = useWizardStore((s) => s.syncDeleteLogo);
+  const brandAnalysisId = useWizardStore((s) => s.brandAnalysisId);
+  const reset = useWizardStore((s) => s.reset);
   const currentUser = useAuthStore((s) => s.currentUser);
   const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
 
   // ── Analysis state ──
   const [url, setUrl] = useState("");
@@ -1361,6 +1364,38 @@ export default function BrandPage() {
           </Section>
         )}
       </div>
+
+      {/* Danger zone */}
+      {brandAnalysis && brandAnalysisId && (
+        <div className="max-w-2xl mx-auto mt-12 mb-8 border border-red-200 rounded-2xl p-6 bg-red-50/50">
+          <h3 className="text-sm font-bold text-red-700 mb-1">Supprimer ma marque</h3>
+          <p className="text-xs text-red-500/80 mb-4">
+            Supprime toutes les donnees : analyse, produits, offres, images et publicites generees. Cette action est irreversible.
+          </p>
+          <button
+            disabled={deleting}
+            onClick={async () => {
+              if (!confirm("Supprimer toute ta marque ? Toutes les donnees seront perdues.")) return;
+              if (!confirm("Derniere confirmation : cette action est irreversible.")) return;
+              setDeleting(true);
+              try {
+                const { deleteEntireBrand } = await import("@/lib/supabase/sync");
+                await deleteEntireBrand(currentUser!.id, brandAnalysisId);
+                reset();
+                window.location.reload();
+              } catch (err) {
+                console.error("Error deleting brand:", err);
+                alert("Erreur lors de la suppression.");
+                setDeleting(false);
+              }
+            }}
+            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+          >
+            {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            {deleting ? "Suppression..." : "Supprimer toute ma marque"}
+          </button>
+        </div>
+      )}
 
       {/* Sticky action buttons */}
       {brandAnalysis && (
