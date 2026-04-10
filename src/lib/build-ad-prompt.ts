@@ -90,19 +90,23 @@ export function detectMimeType(
 // Shared instruction appended to ALL prompts to fix spelling errors
 // ---------------------------------------------------------------------------
 
-const SPELLING_RULE = `
-CRITICAL SPELLING RULES:
+function buildSpellingRule(brandName?: string): string {
+  let rule = `CRITICAL SPELLING AND BRAND NAME RULES:
 - All text must be in perfect French with ZERO spelling mistakes.
-- Never use "&" — always write "et".
 - Never duplicate letters in words (e.g. "certiiifié" is wrong, "certifié" is correct).
-- Double-check every word before rendering it on the image.
-- Brand name "${""}" must be spelled exactly as provided — do not modify it.`.trim();
+- Never use "&" instead of "et" in general text.
+- Double-check every single word before rendering it on the image.`;
+
+  if (brandName) {
+    rule += `
+- BRAND NAME IS SACRED: The brand name is exactly "${brandName}" — copy it CHARACTER BY CHARACTER. Do not translate it, do not change "AND" to "et", do not change "CO" to "Co", do not add or remove spaces, do not modify capitalization. Write it EXACTLY as: "${brandName}".`;
+  }
+
+  return rule;
+}
 
 function appendSpellingRule(prompt: string, brandName?: string): string {
-  const rule = brandName
-    ? SPELLING_RULE.replace('${""}', brandName)
-    : SPELLING_RULE.replace('- Brand name "${""}" must be spelled exactly as provided — do not modify it.', '');
-  return prompt + "\n\n" + rule;
+  return prompt + "\n\n" + buildSpellingRule(brandName);
 }
 
 // ---------------------------------------------------------------------------
