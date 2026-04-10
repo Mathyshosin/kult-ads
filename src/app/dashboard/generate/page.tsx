@@ -231,10 +231,11 @@ export default function GeneratePage() {
         body: genBody,
       });
 
-      // Auto-retry up to 2 times on failure (3 attempts total)
+      // Auto-retry with exponential backoff (3 attempts total: initial + 2 retries)
       for (let retry = 0; retry < 2 && !res.ok && res.status !== 402; retry++) {
-        console.log(`[generate] Retry ${retry + 1}...`);
-        await new Promise((r) => setTimeout(r, 1500));
+        const waitMs = (retry + 1) * 3000; // 3s, 6s — gives Gemini rate limits time to clear
+        console.log(`[generate] Retry ${retry + 1} in ${waitMs / 1000}s...`);
+        await new Promise((r) => setTimeout(r, waitMs));
         res = await fetch("/api/generate-ad", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
