@@ -325,6 +325,7 @@ ABSOLUTELY FORBIDDEN:
         visualPrompt += "\nIMPORTANT: This is a vertical 9:16 story format. Adapt the layout vertically — stack elements top to bottom with more spacing. Leave top 15% and bottom 20% empty for story UI overlays.";
       }
       if (ctaRule) visualPrompt += `\n${ctaRule}`;
+      visualPrompt += `\nAll prices must be displayed in euros (€), not dollars.`;
 
     } else if (isReference || template) {
       // Build brand context lines (only non-empty fields)
