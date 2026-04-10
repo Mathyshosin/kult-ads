@@ -137,6 +137,10 @@ export default function BrandPage() {
   const [analysisError, setAnalysisError] = useState("");
   const isLoading = phase >= 0;
 
+  // ── Product selection after analysis ──
+  const [pendingAnalysis, setPendingAnalysis] = useState<{ analysis: Record<string, unknown>; downloadedImages: Array<{ productId: string; base64: string; mimeType: string; imageUrl: string }> } | null>(null);
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+
   // ── Image state ──
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -216,19 +220,27 @@ export default function BrandPage() {
       const analysis = await analyzeRes.json();
       setPhase(2);
 
-      // Extract downloaded product images before setting brand analysis
       const downloadedProductImages = analysis.downloadedProductImages || [];
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { downloadedProductImages: _imgs, ...cleanAnalysis } = analysis;
 
+      const products = cleanAnalysis.products || [];
+
+      if (products.length > 2) {
+        // More than 2 products: show selection UI
+        setPendingAnalysis({ analysis: { ...cleanAnalysis, url: url.trim() }, downloadedImages: downloadedProductImages });
+        setSelectedProductIds(new Set(products.slice(0, 2).map((p: { id: string }) => p.id)));
+        setPhase(-1);
+        return;
+      }
+
+      // 2 or fewer products: save directly
       setBrandAnalysis({ ...cleanAnalysis, url: url.trim() });
 
-      // ── Sync brand analysis FIRST to get brandAnalysisId (required for image uploads) ──
       if (currentUser) {
         await syncBrandAnalysis(currentUser.id);
       }
 
-      // ── Auto-import scraped product images (AFTER brandAnalysisId is set) ──
       if (downloadedProductImages.length > 0) {
         for (const img of downloadedProductImages) {
           const filename = img.imageUrl.split("/").pop()?.split("?")[0] || "product.jpg";
@@ -244,7 +256,6 @@ export default function BrandPage() {
           addImage(newImage);
           if (currentUser) await syncImage(currentUser.id, newImage);
         }
-        console.log(`[brand] Auto-imported ${downloadedProductImages.length} product images`);
       }
 
       setPhase(-1);
@@ -603,6 +614,104 @@ export default function BrandPage() {
         </Section>
 
         {/* ═══════════════════════════════════════════ */}
+        {/* Product selection (after analysis with 3+ products) */}
+        {/* ═══════════════════════════════════════════ */}
+        {pendingAnalysis && (
+          <Section title="Selectionnez vos produits" icon={Package} defaultOpen={true}>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                L&apos;analyse a trouve <strong>{(pendingAnalysis.analysis as { products?: { id: string; name: string; description?: string }[] }).products?.length || 0} produits</strong>. Selectionnez les <strong>2 produits</strong> que vous souhaitez utiliser pour vos publicites.
+              </p>
+              <div className="space-y-2">
+                {((pendingAnalysis.analysis as { products?: { id: string; name: string; description?: string }[] }).products || []).map((p: { id: string; name: string; description?: string }) => {
+                  const isSelected = selectedProductIds.has(p.id);
+                  const isDisabled = !isSelected && selectedProductIds.size >= 2;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        setSelectedProductIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(p.id)) {
+                            next.delete(p.id);
+                          } else if (next.size < 2) {
+                            next.add(p.id);
+                          }
+                          return next;
+                        });
+                      }}
+                      disabled={isDisabled}
+                      className={`w-full flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${
+                        isSelected
+                          ? "border-blue-400 bg-blue-50 ring-1 ring-blue-300"
+                          : isDisabled
+                          ? "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed"
+                          : "border-gray-200 bg-white hover:border-gray-300"
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        isSelected ? "border-blue-500 bg-blue-500" : "border-gray-300"
+                      }`}>
+                        {isSelected && <Check className="w-3 h-3 text-white" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{p.name}</p>
+                        {p.description && <p className="text-xs text-gray-500 truncate">{p.description}</p>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-400">{selectedProductIds.size}/2 selectionnes</p>
+                <button
+                  disabled={selectedProductIds.size === 0}
+                  onClick={async () => {
+                    const allProducts = (pendingAnalysis.analysis as { products?: { id: string; name: string; description?: string }[] }).products || [];
+                    const filteredProducts = allProducts.filter((p: { id: string }) => selectedProductIds.has(p.id));
+                    const filteredAnalysis = { ...pendingAnalysis.analysis, products: filteredProducts };
+
+                    // Filter offers to only keep those linked to selected products
+                    const offers = (pendingAnalysis.analysis as { offers?: { id: string; productId?: string }[] }).offers || [];
+                    const filteredOffers = offers.filter((o: { productId?: string }) => !o.productId || selectedProductIds.has(o.productId));
+                    (filteredAnalysis as { offers?: unknown[] }).offers = filteredOffers;
+
+                    setBrandAnalysis(filteredAnalysis as Parameters<typeof setBrandAnalysis>[0]);
+
+                    if (currentUser) {
+                      await syncBrandAnalysis(currentUser.id);
+                    }
+
+                    // Import only images for selected products
+                    const selectedImages = pendingAnalysis.downloadedImages.filter((img) => selectedProductIds.has(img.productId));
+                    for (const img of selectedImages) {
+                      const filename = img.imageUrl.split("/").pop()?.split("?")[0] || "product.jpg";
+                      const newImage = {
+                        id: `scraped-${img.productId}-${Date.now()}`,
+                        previewUrl: `data:${img.mimeType};base64,${img.base64}`,
+                        base64: img.base64,
+                        mimeType: img.mimeType,
+                        name: filename,
+                        productId: img.productId,
+                        isAiGenerated: false,
+                      };
+                      addImage(newImage);
+                      if (currentUser) await syncImage(currentUser.id, newImage);
+                    }
+
+                    setPendingAnalysis(null);
+                    setSelectedProductIds(new Set());
+                  }}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-40"
+                >
+                  Valider la selection
+                </button>
+              </div>
+            </div>
+          </Section>
+        )}
+
+        {/* ═══════════════════════════════════════════ */}
         {/* SECTION 2: Informations de la marque       */}
         {/* ═══════════════════════════════════════════ */}
         {brandAnalysis && (
@@ -913,24 +1022,29 @@ export default function BrandPage() {
                 );
               })}
 
-              <button
-                onClick={() => {
-                  const newId = `prod-${Date.now()}`;
-                  addProduct({
-                    id: newId,
-                    name: "Nouveau produit",
-                    description: "",
-                    price: "",
-                    features: [],
-                  });
-                  setExpandedProduct(newId);
-                  debouncedSync();
-                }}
-                className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:text-gray-900 hover:border-primary/40 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Ajouter un produit
-              </button>
+              {brandAnalysis.products.length < 2 && (
+                <button
+                  onClick={() => {
+                    const newId = `prod-${Date.now()}`;
+                    addProduct({
+                      id: newId,
+                      name: "Nouveau produit",
+                      description: "",
+                      price: "",
+                      features: [],
+                    });
+                    setExpandedProduct(newId);
+                    debouncedSync();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:text-gray-900 hover:border-primary/40 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Ajouter un produit
+                </button>
+              )}
+              {brandAnalysis.products.length >= 2 && (
+                <p className="text-xs text-gray-400 text-center py-2">Maximum 2 produits</p>
+              )}
             </div>
           </Section>
         )}
