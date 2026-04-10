@@ -87,6 +87,25 @@ export function detectMimeType(
 }
 
 // ---------------------------------------------------------------------------
+// Shared instruction appended to ALL prompts to fix spelling errors
+// ---------------------------------------------------------------------------
+
+const SPELLING_RULE = `
+CRITICAL SPELLING RULES:
+- All text must be in perfect French with ZERO spelling mistakes.
+- Never use "&" — always write "et".
+- Never duplicate letters in words (e.g. "certiiifié" is wrong, "certifié" is correct).
+- Double-check every word before rendering it on the image.
+- Brand name "${""}" must be spelled exactly as provided — do not modify it.`.trim();
+
+function appendSpellingRule(prompt: string, brandName?: string): string {
+  const rule = brandName
+    ? SPELLING_RULE.replace('${""}', brandName)
+    : SPELLING_RULE.replace('- Brand name "${""}" must be spelled exactly as provided — do not modify it.', '');
+  return prompt + "\n\n" + rule;
+}
+
+// ---------------------------------------------------------------------------
 // buildAdPrompt
 // ---------------------------------------------------------------------------
 
@@ -125,7 +144,7 @@ export function buildAdPrompt(params: BuildAdPromptParams): string {
 
   // ── Story conversion ──
   if (isModification && isStoryConversion) {
-    return `STORY CANVAS CONVERSION — 9:16 vertical format.
+    return appendSpellingRule(`STORY CANVAS CONVERSION — 9:16 vertical format.
 
 YOUR ONLY TASK: Take the square ad and extend its canvas vertically.
 - Extend the background colors and decorative elements above and below the content zone.
@@ -136,23 +155,30 @@ ABSOLUTELY FORBIDDEN:
 - Adding any new element (text, icon, badge, image, shape, overlay, pattern)
 - Removing any existing element
 - Moving or resizing any existing element
-- Changing any text content or color`;
+- Changing any text content or color`, brandContext.brandName);
   }
 
   // ── Modification ──
   if (isModification) {
-    return `You are editing an existing advertisement image.
+    return appendSpellingRule(`You are editing an existing advertisement image.
 
 MODIFICATION REQUESTED: "${modificationPrompt}"
 
+STEP-BY-STEP INSTRUCTIONS:
+1. Look at the existing ad image carefully.
+2. Identify exactly what needs to change based on the modification request above.
+3. Apply ONLY that specific change.
+4. Keep absolutely everything else pixel-perfect identical: same layout, same colors, same text placement, same images, same composition, same background, same fonts, same positions.
+
 CRITICAL RULES:
-- Apply ONLY the modification described above.
-- Keep absolutely everything else identical: same layout, same colors, same text placement, same images, same composition, same background, same fonts.
 - The output must be visually identical to the original EXCEPT for the specific change requested.
-- Do NOT add any new element that wasn't requested.
-- Do NOT remove any element that wasn't mentioned.
+- Do NOT add any new element that wasn't explicitly requested.
+- Do NOT remove any element that wasn't explicitly mentioned.
 - Do NOT change the style, mood, or overall aesthetic.
-- All text in French.`;
+- Do NOT move or resize elements unless specifically asked.
+- If asked to change text: change ONLY that text, keep all other text identical.
+- If asked to change color: change ONLY that color, keep all other colors identical.
+- All text in French.`, brandContext.brandName);
   }
 
   // ── Custom per-template prompt (generationPrompt) ──
@@ -185,7 +211,7 @@ CRITICAL RULES:
     if (ctaRule) visualPrompt += `\n${ctaRule}`;
     visualPrompt += `\nAll prices must be displayed in euros (€), not dollars.`;
 
-    return visualPrompt;
+    return appendSpellingRule(visualPrompt, brandContext.brandName);
   }
 
   // ── Generic template / reference mode ──
@@ -201,7 +227,7 @@ CRITICAL RULES:
         : brandContext.productPrice ? `Price: ${brandContext.productPrice}` : null,
     ].filter(Boolean).join("\n");
 
-    return `You are a senior media buyer and creative strategist.
+    return appendSpellingRule(`You are a senior media buyer and creative strategist.
 
 STEP 1 — DECODE THE MARKETING TECHNIQUE: Look at the template and identify the single core psychological/marketing mechanism being used. Examples: "social proof via testimonials", "urgency with a deadline", "product-in-action demonstration", "before/after comparison", "price anchoring with discount", "bold claim + proof points". Ignore the specific product, industry, visuals, and copy — only extract the MECHANISM.
 
@@ -217,11 +243,11 @@ BRAND CONTEXT:
 ${brandLines}
 Product: "${brandContext.productName}"${brandContext.productDescription ? ` — ${brandContext.productDescription}` : ""}
 
-All text in French.${ctaRule ? ` ${ctaRule}` : ""}${storyRule}`;
+All text in French.${ctaRule ? ` ${ctaRule}` : ""}${storyRule}`, brandContext.brandName);
   }
 
   // ── Basic mode (no template, no reference) ──
-  return `Create a professional Instagram ad for "${brandContext.brandName}" selling "${brandContext.productName}".
+  return appendSpellingRule(`Create a professional Instagram ad for "${brandContext.brandName}" selling "${brandContext.productName}".
 Use the reference image as creative direction — match its overall style, mood, and marketing approach.
 
 ELEMENT COUNT RULE: Count every visible element in the reference (text blocks, images, icons). Your output must have EXACTLY the same number of elements — no more. If the reference is minimal, stay minimal.
@@ -233,7 +259,7 @@ Write a short headline (2–5 words max).${ctaRule ? ` ${ctaRule}` : " Do NOT ad
 STRICT RULES:
 - Use ONLY real information provided. Never invent prices, claims, percentages, or reviews.
 - Brand name is "${brandContext.brandName}" — exact spelling.
-- ALL text in French.${storyRule}`;
+- ALL text in French.${storyRule}`, brandContext.brandName);
 }
 
 // ---------------------------------------------------------------------------
