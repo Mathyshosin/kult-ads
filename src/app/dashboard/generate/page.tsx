@@ -313,6 +313,11 @@ export default function GeneratePage() {
         offerId: offer?.id,
         templateId: prepData.templateId,
         timestamp: Date.now(),
+        _debug: {
+          geminiPrompt: visualPrompt,
+          templateImageBase64: prepData.templateImageBase64 || null,
+          templateMimeType: prepData.templateMimeType || null,
+        },
       };
 
       completeGeneration(placeholderId, ad);
