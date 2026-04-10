@@ -463,6 +463,7 @@ export default function GeneratePage() {
                   key={t.id}
                   onClick={() => {
                     setSelectedTemplateId(t.id);
+                    setSelectedFormat(t.format === "story" ? "story" : "square");
                     setStep("product");
                   }}
                   className={`group relative rounded-2xl overflow-hidden bg-gray-100 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 active:scale-[0.97] break-inside-avoid w-full ${
