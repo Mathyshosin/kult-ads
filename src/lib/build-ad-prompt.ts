@@ -105,8 +105,11 @@ function buildSpellingRule(brandName?: string): string {
   return rule;
 }
 
+const PRICE_RULE = `
+PRICE DISPLAY RULE: Do NOT display any price on the image unless the prompt above EXPLICITLY mentions a price, {{price}}, {{originalPrice}}, {{salePrice}}, or a specific amount in euros. If the prompt does not mention prices, do not add any — even if price data is available.`;
+
 function appendSpellingRule(prompt: string, brandName?: string): string {
-  return prompt + "\n\n" + buildSpellingRule(brandName);
+  return prompt + "\n\n" + buildSpellingRule(brandName) + "\n" + PRICE_RULE;
 }
 
 // ---------------------------------------------------------------------------
