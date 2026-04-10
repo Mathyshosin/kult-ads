@@ -166,85 +166,22 @@ export default function GeneratePage() {
     offer: { id: string; title: string; description: string; discountType?: string; discountValue?: string; originalPrice?: string; salePrice?: string; productId?: string; validUntil?: string } | null | undefined,
     image: (typeof uploadedImages)[number] | undefined
   ) {
+    let creditCost = 0;
     try {
-      let templateId: string | undefined = selectedTemplateId || undefined;
-
-      if (generationMode === "auto" && !templateId) {
-        const selectRes = await fetch("/api/templates/select", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ format: selectedFormat, count: 1 }),
-        });
-        if (selectRes.ok) {
-          const { templateIds } = await selectRes.json();
-          templateId = templateIds?.[0];
-        }
-      }
-
       if (!brandAnalysis) return;
-      // Compress images before sending to reduce upload time (~2MB → ~200KB)
-      const { compressBase64 } = await import("@/lib/image-utils");
 
-      // Product: 1024px (needs detail for faithful reproduction)
-      // Reference/template: 768px (just needs layout understanding)
-      let compressedProduct: { base64: string; mimeType: string } | undefined;
-      if (image?.base64) {
-        compressedProduct = await compressBase64(image.base64, image.mimeType, 1024);
-      }
-
-      let compressedRef: { base64: string; mimeType: string } | undefined;
-      if (generationMode === "reference" && referenceAd?.base64) {
-        compressedRef = await compressBase64(referenceAd.base64, referenceAd.mimeType, 768);
-      }
-
-      // Send only essential data — no logo, no full brandAnalysis bloat
-      const genBody = JSON.stringify({
-        brandAnalysis: {
-          brandName: brandAnalysis.brandName,
-          brandDescription: brandAnalysis.brandDescription,
-          tone: brandAnalysis.tone,
-          colors: brandAnalysis.colors,
-          targetAudience: brandAnalysis.targetAudience,
-          uniqueSellingPoints: brandAnalysis.uniqueSellingPoints,
-          products: brandAnalysis.products,
-          offers: brandAnalysis.offers,
-        },
-        product,
-        offer,
-        productImageBase64: compressedProduct?.base64,
-        productImageMimeType: compressedProduct?.mimeType,
-        format: selectedFormat,
-        templateId: generationMode === "library" ? selectedTemplateId : templateId,
-        customPrompt: generationMode === "custom" ? customPrompt.trim() || undefined : undefined,
-        referenceAdBase64: compressedRef?.base64,
-        referenceAdMimeType: compressedRef?.mimeType,
-        referenceInstruction:
-          generationMode === "reference"
-            ? customPrompt.trim() || undefined
-            : undefined,
-        ctaText: ctaEnabled && ctaText.trim() ? ctaText.trim() : undefined,
-      });
-
-      let res = await fetch("/api/generate-ad", {
+      // ── Phase 1: Prepare (server-side — fast, ~2-3s) ──
+      const prepareRes = await fetch("/api/generate-ad/prepare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: genBody,
+        body: JSON.stringify({
+          templateId: selectedTemplateId || undefined,
+          format: selectedFormat,
+        }),
       });
 
-      // Auto-retry with exponential backoff (3 attempts total: initial + 2 retries)
-      for (let retry = 0; retry < 2 && !res.ok && res.status !== 402; retry++) {
-        const waitMs = (retry + 1) * 3000; // 3s, 6s — gives Gemini rate limits time to clear
-        console.log(`[generate] Retry ${retry + 1} in ${waitMs / 1000}s...`);
-        await new Promise((r) => setTimeout(r, waitMs));
-        res = await fetch("/api/generate-ad", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: genBody,
-        });
-      }
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => null);
+      if (!prepareRes.ok) {
+        const errData = await prepareRes.json().catch(() => null);
         if (errData?.code === "NO_CREDITS") {
           failGeneration(placeholderId, "Plus de crédits disponibles.");
           addToast({
@@ -254,16 +191,132 @@ export default function GeneratePage() {
           });
           return;
         }
-        failGeneration(placeholderId, errData?.error || "La génération a échoué.");
+        throw new Error(errData?.error || "Erreur preparation");
+      }
+
+      const prepData = await prepareRes.json();
+      creditCost = prepData.creditCost;
+
+      // ── Phase 2: Build prompt (client-side) ──
+      const { buildAdPrompt, buildReferenceImages, detectMimeType } = await import("@/lib/build-ad-prompt");
+      const { compressBase64 } = await import("@/lib/image-utils");
+
+      const brandCtx = {
+        brandName: brandAnalysis.brandName,
+        brandDescription: brandAnalysis.brandDescription,
+        tone: brandAnalysis.tone,
+        targetAudience: brandAnalysis.targetAudience,
+        uniqueSellingPoints: brandAnalysis.uniqueSellingPoints,
+        competitorProducts: brandAnalysis.competitorProducts,
+        productName: product.name,
+        productDescription: product.description || "",
+        productPrice: product.price,
+        productOriginalPrice: offer?.originalPrice || product.originalPrice,
+        productSalePrice: offer?.salePrice || product.salePrice,
+        offerTitle: offer?.title,
+        offerDescription: offer?.description,
+      };
+
+      const isRef = generationMode === "reference" && !!referenceAd?.base64;
+      const hasTemplate = !!prepData.templateId;
+
+      const visualPrompt = buildAdPrompt({
+        mode: "generation",
+        brandContext: brandCtx,
+        format: selectedFormat,
+        generationPrompt: prepData.generationPrompt,
+        customPrompt: generationMode === "custom" ? customPrompt.trim() || undefined : undefined,
+        ctaText: ctaEnabled && ctaText.trim() ? ctaText.trim() : undefined,
+        hasTemplate,
+        isReference: isRef,
+      });
+
+      // ── Phase 3: Assemble + compress reference images (client-side) ──
+      // Compress template image if provided
+      let templateBase64 = prepData.templateImageBase64;
+      let templateMime = prepData.templateMimeType || "image/jpeg";
+      if (templateBase64) {
+        const c = await compressBase64(templateBase64, templateMime, 512);
+        templateBase64 = c.base64;
+        templateMime = c.mimeType;
+      }
+
+      // Compress product image
+      let productBase64 = image?.base64;
+      let productMime = image?.mimeType || "image/jpeg";
+      if (productBase64) {
+        const c = await compressBase64(productBase64, productMime, 768);
+        productBase64 = c.base64;
+        productMime = c.mimeType;
+      }
+
+      // Compress reference ad if applicable
+      let refAdBase64 = isRef ? referenceAd?.base64 : undefined;
+      let refAdMime = isRef ? referenceAd?.mimeType || "image/jpeg" : undefined;
+      if (refAdBase64) {
+        const c = await compressBase64(refAdBase64, refAdMime || "image/jpeg", 768);
+        refAdBase64 = c.base64;
+        refAdMime = c.mimeType;
+      }
+
+      const metadata = prepData.templateAnalysis;
+      const isTextOnly = metadata?.isTextOnly || false;
+      const templateShowsProduct = metadata?.templateHasProductPhoto !== false;
+
+      const refImages = buildReferenceImages({
+        mode: "generation",
+        generationPrompt: prepData.generationPrompt,
+        templateImageBase64: templateBase64,
+        templateMimeType: templateMime,
+        productImageBase64: productBase64,
+        productImageMimeType: productMime ? detectMimeType(productMime, productMime) : undefined,
+        productName: product.name,
+        referenceAdBase64: refAdBase64,
+        referenceAdMimeType: refAdMime,
+        isReference: isRef,
+        hasTemplate,
+        isTextOnly,
+        templateShowsProduct,
+      });
+
+      // ── Phase 4: Call Gemini DIRECTLY from browser (no timeout!) ──
+      const { generateImageClient } = await import("@/lib/gemini-client");
+      const aspectRatio = selectedFormat === "story" ? "9:16" : "1:1";
+
+      const result = await generateImageClient(prepData.apiKey, visualPrompt, aspectRatio, refImages);
+
+      if (!result) {
+        // Refund credits on failure
+        if (creditCost > 0) {
+          fetch("/api/generate-ad/refund", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ creditCost }),
+          }).catch(() => {});
+        }
+        failGeneration(placeholderId, "La génération a échoué.");
         addToast({ type: "error", message: "Échec de la génération" });
         return;
       }
 
-      const ad = await res.json();
+      // ── Phase 5: Save result ──
+      const adId = `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const ad = {
+        id: adId,
+        format: selectedFormat,
+        imageBase64: result.imageBase64,
+        mimeType: result.mimeType,
+        headline: brandCtx.offerTitle || brandCtx.uniqueSellingPoints?.[0] || product.name,
+        bodyText: brandCtx.productDescription?.slice(0, 80) || "",
+        callToAction: ctaEnabled && ctaText.trim() ? ctaText.trim() : "",
+        productId: product.id,
+        offerId: offer?.id,
+        templateId: prepData.templateId,
+        timestamp: Date.now(),
+      };
+
       completeGeneration(placeholderId, ad);
-      // Skip client-side sync if server already saved to DB
-      if (currentUser && !ad._savedToDb) syncGeneratedAd(currentUser.id, { ...ad, id: placeholderId });
-      // Update credits counter in header
+      if (currentUser) syncGeneratedAd(currentUser.id, { ...ad, id: adId });
       window.dispatchEvent(new Event("credits-updated"));
       addToast({
         type: "success",
@@ -271,6 +324,14 @@ export default function GeneratePage() {
         action: { label: "Voir", href: "/dashboard/ads" },
       });
     } catch {
+      // Refund credits on unexpected error
+      if (creditCost > 0) {
+        fetch("/api/generate-ad/refund", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ creditCost }),
+        }).catch(() => {});
+      }
       failGeneration(placeholderId, "Erreur réseau.");
       addToast({ type: "error", message: "Erreur réseau lors de la génération" });
     }

@@ -582,29 +582,31 @@ export default function AdsGalleryPage() {
     const product = brandAnalysis.products.find((p) => p.id === ad.productId) || brandAnalysis.products[0];
     if (!product) return;
 
-    const productImage = uploadedImages.find((img) => img.productId === product.id);
     const targetFormat = formatOverride || ad.format;
-
-    // Always create a NEW ad — keep the original intact
     const targetId = startGeneration({ format: targetFormat, productId: ad.productId });
     setSelectedAd(null);
 
+    let creditCost = 0;
     try {
-      // Always send the image from client — avoids server-side Supabase download (saves 3-5s)
-      const isStoryConversion = formatOverride === "story" && ad.format !== "story";
-      let modBody: Record<string, unknown> = {
-        brandAnalysis,
-        product,
-        format: targetFormat,
-        modificationPrompt: prompt,
-        previousAdId: ad.id,
-        isStoryConversion,
-      };
+      // ── Phase 1: Prepare (credits + API key) ──
+      const prepareRes = await fetch("/api/generate-ad/prepare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ format: targetFormat }),
+      });
 
+      if (!prepareRes.ok) {
+        const errData = await prepareRes.json().catch(() => null);
+        throw new Error(errData?.error || "Erreur preparation");
+      }
+
+      const prepData = await prepareRes.json();
+      creditCost = prepData.creditCost;
+
+      // ── Phase 2: Get previous ad image ──
       let imageToSend = ad.imageBase64;
       let mimeToSend = ad.mimeType;
 
-      // If no base64 in memory but has a signed URL (loaded from Supabase), fetch it client-side
       if (!imageToSend && ad.imageUrl) {
         try {
           const imgRes = await fetch(ad.imageUrl);
@@ -622,58 +624,98 @@ export default function AdsGalleryPage() {
             mimeToSend = blob.type || "image/jpeg";
           }
         } catch (err) {
-          console.error("[modify] Failed to fetch ad image from URL:", err);
+          console.error("[modify] Failed to fetch ad image:", err);
         }
       }
 
-      if (imageToSend) {
-        const compressed = await compressBase64(imageToSend, mimeToSend);
-        modBody.previousAdBase64 = compressed.base64;
-        modBody.previousAdMimeType = compressed.mimeType;
+      if (!imageToSend) {
+        throw new Error("Image de l'ad introuvable.");
       }
-      const genBody = JSON.stringify(modBody);
 
-      let res = await fetch("/api/generate-ad", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: genBody,
+      // Compress
+      const compressed = await compressBase64(imageToSend, mimeToSend);
+
+      // ── Phase 3: Build prompt + reference images ──
+      const { buildAdPrompt, buildReferenceImages } = await import("@/lib/build-ad-prompt");
+
+      const isStoryConversion = formatOverride === "story" && ad.format !== "story";
+      const mode = isStoryConversion ? "storyConversion" as const : "modification" as const;
+
+      const offer = brandAnalysis.offers?.find((o) => o.productId === product.id);
+      const brandCtx = {
+        brandName: brandAnalysis.brandName,
+        productName: product.name,
+        productDescription: product.description || "",
+        offerTitle: offer?.title,
+      };
+
+      const visualPrompt = buildAdPrompt({
+        mode,
+        brandContext: brandCtx,
+        format: targetFormat,
+        modificationPrompt: prompt,
+        hasTemplate: false,
+        isReference: false,
       });
 
-      // Auto-retry with exponential backoff (3 attempts total)
-      for (let retry = 0; retry < 2 && !res.ok && res.status !== 402; retry++) {
-        const waitMs = (retry + 1) * 3000;
-        console.log(`[modify] Retry ${retry + 1} in ${waitMs / 1000}s...`);
-        await new Promise((r) => setTimeout(r, waitMs));
-        res = await fetch("/api/generate-ad", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: genBody,
-        });
-      }
+      const refImages = buildReferenceImages({
+        mode,
+        previousAdBase64: compressed.base64,
+        previousAdMimeType: compressed.mimeType,
+        modificationPrompt: prompt,
+        productName: product.name,
+        isReference: false,
+        hasTemplate: false,
+        isTextOnly: false,
+        templateShowsProduct: false,
+      });
 
-      if (!res.ok) {
-        const text = await res.text();
-        let errMsg = `Erreur ${res.status}`;
-        try {
-          const err = JSON.parse(text);
-          errMsg = err.error || errMsg;
-        } catch {
-          errMsg = text.slice(0, 200) || errMsg;
+      // ── Phase 4: Call Gemini directly from browser ──
+      const { generateImageClient } = await import("@/lib/gemini-client");
+      const aspectRatio = targetFormat === "story" ? "9:16" : "1:1";
+
+      const result = await generateImageClient(prepData.apiKey, visualPrompt, aspectRatio, refImages);
+
+      if (!result) {
+        if (creditCost > 0) {
+          fetch("/api/generate-ad/refund", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ creditCost }),
+          }).catch(() => {});
         }
-        throw new Error(errMsg);
+        throw new Error("La modification a échoué.");
       }
 
-      const data = await res.json();
+      // ── Phase 5: Save ──
+      const adId = `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const newAd = {
+        id: adId,
+        format: targetFormat,
+        imageBase64: result.imageBase64,
+        mimeType: result.mimeType,
+        headline: ad.headline,
+        bodyText: ad.bodyText,
+        callToAction: ad.callToAction,
+        productId: product.id,
+        offerId: ad.offerId,
+        templateId: ad.templateId,
+        timestamp: Date.now(),
+      };
 
-      // Complete the new ad placeholder (original is untouched)
-      completeGeneration(targetId, { ...data, format: targetFormat });
-      // Skip client-side sync if server already saved to DB
-      if (currentUser && brandAnalysisId && !data._savedToDb) {
-        syncGeneratedAd(currentUser.id, { ...data, id: targetId, format: targetFormat });
+      completeGeneration(targetId, newAd);
+      if (currentUser && brandAnalysisId) {
+        syncGeneratedAd(currentUser.id, { ...newAd, id: adId });
       }
-      // Update credits counter in header
       window.dispatchEvent(new Event("credits-updated"));
     } catch (err) {
+      if (creditCost > 0) {
+        fetch("/api/generate-ad/refund", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ creditCost }),
+        }).catch(() => {});
+      }
       failGeneration(targetId, err instanceof Error ? err.message : "Échec de la modification");
     }
   };
