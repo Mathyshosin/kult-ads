@@ -224,7 +224,15 @@ export default function BrandPage() {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { downloadedProductImages: _imgs, ...cleanAnalysis } = analysis;
 
-      const products = cleanAnalysis.products || [];
+      // Keep only name + features from scraping — client fills in the rest
+      const products = (cleanAnalysis.products || []).map((p: { id: string; name: string; features?: string[] }) => ({
+        ...p,
+        description: "",
+        price: "",
+        originalPrice: "",
+        salePrice: "",
+      }));
+      cleanAnalysis.products = products;
 
       if (products.length > 2) {
         // More than 2 products: show selection UI
@@ -824,7 +832,7 @@ export default function BrandPage() {
         )}
 
         {/* ═══════════════════════════════════════════ */}
-        {/* SECTION 3: Produits                        */}
+        {/* SECTION 3: Produits — step by step          */}
         {/* ═══════════════════════════════════════════ */}
         {brandAnalysis && (
           <Section
@@ -832,40 +840,92 @@ export default function BrandPage() {
             icon={Package}
             badge={brandAnalysis.products.length}
           >
-            <div className="space-y-3">
+            <div className="space-y-4">
+              {/* Product tabs */}
+              {brandAnalysis.products.length > 1 && (
+                <div className="flex gap-2">
+                  {brandAnalysis.products.map((p, i) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setExpandedProduct(p.id)}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                        (expandedProduct || brandAnalysis.products[0]?.id) === p.id
+                          ? "bg-blue-500 text-white shadow-sm"
+                          : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                      }`}
+                    >
+                      Produit {i + 1}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Product cards */}
               {brandAnalysis.products.map((product) => {
-                const isExpanded = expandedProduct === product.id;
-                const productImage = uploadedImages.find(
-                  (img) => img.productId === product.id
-                );
+                const isActive = brandAnalysis.products.length === 1 || (expandedProduct || brandAnalysis.products[0]?.id) === product.id;
+                if (!isActive) return null;
+
+                const productImage = uploadedImages.find((img) => img.productId === product.id);
 
                 return (
-                  <div
-                    key={product.id}
-                    className="border border-gray-200 rounded-xl overflow-hidden"
-                  >
-                    {/* Compact card header */}
-                    <div
-                      onClick={() =>
-                        setExpandedProduct(isExpanded ? null : product.id)
-                      }
-                      className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50/50 transition-colors"
-                    >
+                  <div key={product.id} className="space-y-5">
+                    {/* Product name */}
+                    <InlineEditableField
+                      label="Nom du produit"
+                      value={product.name}
+                      onSave={(v) => handleProductFieldSave(product.id, "name", v)}
+                    />
+
+                    {/* Product image — prominent */}
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-2 block">Photo produit</label>
                       {productImage ? (
-                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
+                        <div className="relative w-full max-w-[280px]">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={productImage.previewUrl}
                             alt={product.name}
-                            className="w-full h-full object-cover"
+                            className="w-full aspect-square object-contain rounded-2xl border border-gray-200 bg-white"
                           />
+                          <div className="absolute top-2 right-2 flex gap-1.5">
+                            <label className="w-8 h-8 rounded-lg bg-white/90 border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors">
+                              <Camera className="w-4 h-4 text-gray-500" />
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  if (!e.target.files?.length) return;
+                                  // Remove old image
+                                  removeImage(productImage.id);
+                                  if (currentUser) syncDeleteImage(currentUser.id, productImage.id);
+                                  // Upload new
+                                  const formData = new FormData();
+                                  formData.append("images", e.target.files[0]);
+                                  const res = await fetch("/api/upload", { method: "POST", body: formData });
+                                  if (!res.ok) return;
+                                  const { images } = await res.json();
+                                  if (images[0]) {
+                                    const newImg = { id: images[0].id, previewUrl: images[0].dataUrl, base64: images[0].base64, mimeType: images[0].mimeType, name: images[0].name, productId: product.id, isAiGenerated: false };
+                                    addImage(newImg);
+                                    if (currentUser) await syncImage(currentUser.id, newImg);
+                                  }
+                                }}
+                              />
+                            </label>
+                            <button
+                              onClick={() => { removeImage(productImage.id); if (currentUser) syncDeleteImage(currentUser.id, productImage.id); }}
+                              className="w-8 h-8 rounded-lg bg-white/90 border border-gray-200 flex items-center justify-center hover:bg-red-50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-400" />
+                            </button>
+                          </div>
                         </div>
                       ) : (
-                        <label
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-10 h-10 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 flex-shrink-0 flex items-center justify-center cursor-pointer hover:border-amber-400 hover:bg-amber-100 transition-colors"
-                          title="Ajouter une image produit"
-                        >
-                          <Camera className="w-4 h-4 text-amber-500" />
+                        <label className="flex flex-col items-center justify-center w-full max-w-[280px] aspect-square border-2 border-dashed border-blue-300 bg-blue-50/50 rounded-2xl cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                          <Camera className="w-8 h-8 text-blue-400 mb-2" />
+                          <span className="text-sm font-medium text-blue-600">Ajouter une photo</span>
+                          <span className="text-[11px] text-blue-400 mt-1 text-center px-4">Fond blanc ou PNG transparent pour de meilleurs resultats</span>
                           <input
                             type="file"
                             accept="image/png,image/jpeg,image/webp"
@@ -879,145 +939,68 @@ export default function BrandPage() {
                                 if (!res.ok) return;
                                 const { images } = await res.json();
                                 if (images[0]) {
-                                  const newImg = {
-                                    id: images[0].id,
-                                    previewUrl: images[0].dataUrl,
-                                    base64: images[0].base64,
-                                    mimeType: images[0].mimeType,
-                                    name: images[0].name,
-                                    productId: product.id,
-                                    isAiGenerated: false,
-                                  };
+                                  const newImg = { id: images[0].id, previewUrl: images[0].dataUrl, base64: images[0].base64, mimeType: images[0].mimeType, name: images[0].name, productId: product.id, isAiGenerated: false };
                                   addImage(newImg);
                                   if (currentUser) await syncImage(currentUser.id, newImg);
                                 }
-                              } catch (err) {
-                                console.error("Quick upload error:", err);
-                              }
+                              } catch (err) { console.error("Upload error:", err); }
                             }}
                           />
                         </label>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {product.name}
-                        </p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {product.salePrice && (
-                            <span className="text-xs font-semibold text-blue-500">
-                              {product.salePrice}
-                            </span>
-                          )}
-                          {product.price && !product.salePrice && (
-                            <span className="text-xs text-gray-500">
-                              {product.price}
-                            </span>
-                          )}
-                          {product.price && product.salePrice && (
-                            <span className="text-xs text-gray-500 line-through">
-                              {product.price}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeProduct(product.id);
-                            debouncedSync();
-                          }}
-                          className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                        <ChevronDown
-                          className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-                            isExpanded ? "rotate-180" : ""
-                          }`}
+                    </div>
+
+                    {/* Description */}
+                    <InlineEditableField
+                      label="Description"
+                      value={product.description}
+                      onSave={(v) => handleProductFieldSave(product.id, "description", v)}
+                      type="textarea"
+                      placeholder="Decrivez votre produit en quelques phrases..."
+                    />
+
+                    {/* Prices */}
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-2 block">Prix</label>
+                      <div className="grid grid-cols-3 gap-3">
+                        <InlineEditableField
+                          label="Prix actuel"
+                          value={product.price || ""}
+                          onSave={(v) => handleProductFieldSave(product.id, "price", v)}
+                          placeholder="29,90€"
+                        />
+                        <InlineEditableField
+                          label="Prix barre"
+                          value={product.originalPrice || ""}
+                          onSave={(v) => handleProductFieldSave(product.id, "originalPrice", v)}
+                          placeholder="49,90€"
+                        />
+                        <InlineEditableField
+                          label="Prix promo"
+                          value={product.salePrice || ""}
+                          onSave={(v) => handleProductFieldSave(product.id, "salePrice", v)}
+                          placeholder="19,90€"
                         />
                       </div>
                     </div>
 
-                    {/* Expanded edit fields */}
-                    {isExpanded && (
-                      <div className="px-4 pb-4 pt-1 border-t border-gray-200 space-y-3">
-                        <InlineEditableField
-                          label="Nom"
-                          value={product.name}
-                          onSave={(v) =>
-                            handleProductFieldSave(product.id, "name", v)
-                          }
-                        />
-                        <InlineEditableField
-                          label="Description"
-                          value={product.description}
-                          onSave={(v) =>
-                            handleProductFieldSave(
-                              product.id,
-                              "description",
-                              v
-                            )
-                          }
-                          type="textarea"
-                          placeholder="Description du produit"
-                        />
-                        <div className="grid grid-cols-3 gap-3">
-                          <InlineEditableField
-                            label="Prix"
-                            value={product.price || ""}
-                            onSave={(v) =>
-                              handleProductFieldSave(product.id, "price", v)
-                            }
-                            placeholder="29,90 EUR"
-                          />
-                          <InlineEditableField
-                            label="Prix original"
-                            value={product.originalPrice || ""}
-                            onSave={(v) =>
-                              handleProductFieldSave(
-                                product.id,
-                                "originalPrice",
-                                v
-                              )
-                            }
-                            placeholder="39,90 EUR"
-                          />
-                          <InlineEditableField
-                            label="Prix promo"
-                            value={product.salePrice || ""}
-                            onSave={(v) =>
-                              handleProductFieldSave(
-                                product.id,
-                                "salePrice",
-                                v
-                              )
-                            }
-                            placeholder="19,90 EUR"
-                          />
-                        </div>
-                        <InlineEditableField
-                          label="Caractéristiques (séparées par des virgules)"
-                          value={product.features.join(", ")}
-                          onSave={(v) =>
-                            handleProductFieldSave(product.id, "features", v)
-                          }
-                          type="list"
-                          placeholder="Naturel, Bio, Vegan..."
-                        />
-                        <button
-                          onClick={() => {
-                            removeProduct(product.id);
-                            debouncedSync();
-                            setExpandedProduct(null);
-                          }}
-                          className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          Supprimer ce produit
-                        </button>
-                      </div>
-                    )}
+                    {/* Features */}
+                    <InlineEditableField
+                      label="Caracteristiques (separees par des virgules)"
+                      value={product.features.join(", ")}
+                      onSave={(v) => handleProductFieldSave(product.id, "features", v)}
+                      type="list"
+                      placeholder="Naturel, Bio, Vegan..."
+                    />
+
+                    {/* Delete */}
+                    <button
+                      onClick={() => { removeProduct(product.id); debouncedSync(); }}
+                      className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Supprimer ce produit
+                    </button>
                   </div>
                 );
               })}
@@ -1026,13 +1009,7 @@ export default function BrandPage() {
                 <button
                   onClick={() => {
                     const newId = `prod-${Date.now()}`;
-                    addProduct({
-                      id: newId,
-                      name: "Nouveau produit",
-                      description: "",
-                      price: "",
-                      features: [],
-                    });
+                    addProduct({ id: newId, name: "Nouveau produit", description: "", price: "", features: [] });
                     setExpandedProduct(newId);
                     debouncedSync();
                   }}
