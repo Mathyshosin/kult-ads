@@ -121,6 +121,16 @@ export async function POST(request: Request) {
     // ── Mode detection ──
     const isModification = !!(modificationPrompt && previousAdBase64);
     const isReference = !!(referenceAdBase64 && !isModification);
+
+    // Fail fast if modification requested but no image available
+    if (modificationPrompt && !previousAdBase64) {
+      console.error(`[generate-ad] Modification requested but no image found. previousAdId=${previousAdId}, hasRawBase64=${!!rawPreviousAdBase64}`);
+      return NextResponse.json(
+        { error: "Image de l'ad introuvable. Regenerez l'ad ou rechargez la page." },
+        { status: 400 }
+      );
+    }
+
     console.log(`[generate-ad] Starting generation. templateId=${templateId}, format=${format}, customPrompt=${!!customPrompt}, isReference=${isReference}, isModification=${isModification}`);
 
     // ── Get template image (library mode only, skip if reference/modification mode) ──

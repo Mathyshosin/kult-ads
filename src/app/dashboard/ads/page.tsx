@@ -590,7 +590,7 @@ export default function AdsGalleryPage() {
     setSelectedAd(null);
 
     try {
-      // If ad has base64 (just generated), compress and send. Otherwise use server-side download via ID.
+      // Always send the image from client — avoids server-side Supabase download (saves 3-5s)
       const isStoryConversion = formatOverride === "story" && ad.format !== "story";
       let modBody: Record<string, unknown> = {
         brandAnalysis,
@@ -600,8 +600,27 @@ export default function AdsGalleryPage() {
         previousAdId: ad.id,
         isStoryConversion,
       };
-      if (ad.imageBase64) {
-        const compressed = await compressBase64(ad.imageBase64, ad.mimeType);
+
+      let imageToSend = ad.imageBase64;
+      let mimeToSend = ad.mimeType;
+
+      // If no base64 in memory but has a signed URL (loaded from Supabase), fetch it client-side
+      if (!imageToSend && ad.imageUrl) {
+        try {
+          const imgRes = await fetch(ad.imageUrl);
+          if (imgRes.ok) {
+            const blob = await imgRes.blob();
+            const buffer = await blob.arrayBuffer();
+            imageToSend = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+            mimeToSend = blob.type || "image/jpeg";
+          }
+        } catch (err) {
+          console.error("[modify] Failed to fetch ad image from URL:", err);
+        }
+      }
+
+      if (imageToSend) {
+        const compressed = await compressBase64(imageToSend, mimeToSend);
         modBody.previousAdBase64 = compressed.base64;
         modBody.previousAdMimeType = compressed.mimeType;
       }
