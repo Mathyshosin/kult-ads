@@ -85,8 +85,8 @@ export async function deductCredit(userId: string): Promise<{ success: boolean; 
 
   if (!data) return { success: false, cost: 0 };
 
-  // Free plan: 1 credit per action, Paid plans: 10 credits per action
-  const cost = data.plan === "free" ? 1 : 10;
+  // Fixed cost: 10 credits per generation for all plans
+  const cost = 10;
 
   if (data.credits_remaining < cost) return { success: false, cost: 0 };
 

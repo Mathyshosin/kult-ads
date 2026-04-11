@@ -11,8 +11,8 @@ export async function POST(request: Request) {
 
     const { creditCost } = await request.json();
 
-    // Cap refund at 10 max (security: prevent abuse)
-    const amount = Math.min(Math.max(0, Number(creditCost) || 0), 10);
+    // Cap refund at 100 max (security: prevent abuse — supports beast mode up to 10 × 10)
+    const amount = Math.min(Math.max(0, Number(creditCost) || 0), 100);
     if (amount > 0) {
       const { addCredits } = await import("@/lib/supabase/subscriptions");
       await addCredits(user.id, amount);

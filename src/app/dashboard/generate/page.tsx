@@ -75,6 +75,7 @@ export default function GeneratePage() {
   const [editedOffer, setEditedOffer] = useState<{ title: string; discountValue: string; originalPrice: string; salePrice: string } | null>(null);
   const [ctaEnabled, setCtaEnabled] = useState(false);
   const [ctaText, setCtaText] = useState("");
+  const [beastCount, setBeastCount] = useState(5);
 
   // Clear reference ad on unmount (don't persist between visits)
   useEffect(() => {
@@ -151,6 +152,18 @@ export default function GeneratePage() {
     const baseOffer = brandAnalysis.offers.find((o) => o.productId === selectedProduct.id) || null;
     const offer = editedOffer && baseOffer ? { ...baseOffer, ...editedOffer } : baseOffer;
 
+    if (generationMode === "beast") {
+      // Beast mode: create N placeholders and launch all in parallel
+      const placeholderIds: string[] = [];
+      for (let i = 0; i < beastCount; i++) {
+        placeholderIds.push(startGeneration({ format: selectedFormat, productId: selectedProduct.id }));
+      }
+      router.push("/dashboard/ads");
+      doBeastGeneration(placeholderIds, selectedProduct, offer, image).catch(console.error);
+      return;
+    }
+
+    // Normal mode (existing code)
     const placeholderId = startGeneration({
       format: selectedFormat,
       productId: selectedProduct.id,
@@ -159,6 +172,174 @@ export default function GeneratePage() {
     router.push("/dashboard/ads");
 
     doGeneration(placeholderId, selectedProduct, offer, image).catch(console.error);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function doBeastGeneration(placeholderIds: string[], product: Product, offer: any, image: any) {
+    try {
+      if (!brandAnalysis) return;
+
+      // Phase 1: Prepare with beastCount (single server call for all)
+      const prepareRes = await fetch("/api/generate-ad/prepare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ format: selectedFormat, beastCount: placeholderIds.length }),
+      });
+
+      if (!prepareRes.ok) {
+        const errData = await prepareRes.json().catch(() => null);
+        if (errData?.code === "NO_CREDITS") {
+          placeholderIds.forEach(id => failGeneration(id, "Plus de crédits."));
+          addToast({ type: "error", message: "Plus de crédits !", action: { label: "Voir les offres", href: "/dashboard/subscription" } });
+          return;
+        }
+        throw new Error(errData?.error || "Erreur preparation");
+      }
+
+      const prepData = await prepareRes.json();
+      const templates = prepData.templates || [prepData]; // array of template data
+
+      // Phase 2-5: Launch all generations in parallel
+      const { buildAdPrompt, buildReferenceImages, detectMimeType } = await import("@/lib/build-ad-prompt");
+      const { compressBase64 } = await import("@/lib/image-utils");
+      const { generateImageClient } = await import("@/lib/gemini-client");
+
+      // Compress product image once (shared across all generations)
+      let productBase64 = image?.base64;
+      let productMime = image?.mimeType || "image/jpeg";
+      if (productBase64) {
+        const c = await compressBase64(productBase64, productMime, 768);
+        productBase64 = c.base64;
+        productMime = c.mimeType;
+      }
+
+      const brandCtx = {
+        brandName: brandAnalysis.brandName,
+        brandDescription: brandAnalysis.brandDescription,
+        tone: brandAnalysis.tone,
+        targetAudience: brandAnalysis.targetAudience,
+        uniqueSellingPoints: brandAnalysis.uniqueSellingPoints,
+        competitorProducts: brandAnalysis.competitorProducts,
+        productName: product.name,
+        productDescription: product.description || "",
+        productPrice: product.price,
+        productOriginalPrice: offer?.originalPrice || product.originalPrice,
+        productSalePrice: offer?.salePrice || product.salePrice,
+        offerTitle: offer?.title,
+        offerDescription: offer?.description,
+      };
+
+      let failCount = 0;
+
+      // Launch all in parallel
+      const promises = placeholderIds.map(async (placeholderId, i) => {
+        const tplData = templates[i % templates.length]; // cycle through available templates
+
+        try {
+          updateGeneratedAd(placeholderId, { generationStep: "generating" });
+
+          // Compress template image
+          let tplBase64 = tplData.templateImageBase64 || tplData.imageBase64;
+          let tplMime = tplData.templateMimeType || tplData.mimeType || "image/jpeg";
+          if (tplBase64) {
+            const c = await compressBase64(tplBase64, tplMime, 512);
+            tplBase64 = c.base64;
+            tplMime = c.mimeType;
+          }
+
+          const genPrompt = tplData.generationPrompt;
+          const hasTemplate = !!tplData.id || !!tplData.templateId;
+          const metadata = tplData.templateAnalysis;
+
+          const visualPrompt = buildAdPrompt({
+            mode: "generation",
+            brandContext: brandCtx,
+            format: selectedFormat,
+            generationPrompt: genPrompt,
+            hasTemplate,
+            isReference: false,
+          });
+
+          const refImages = buildReferenceImages({
+            mode: "generation",
+            generationPrompt: genPrompt,
+            templateImageBase64: tplBase64,
+            templateMimeType: tplMime,
+            productImageBase64: productBase64,
+            productImageMimeType: productMime ? detectMimeType(productMime, productMime) : undefined,
+            productName: product.name,
+            isReference: false,
+            hasTemplate,
+            isTextOnly: metadata?.isTextOnly || false,
+            templateShowsProduct: metadata?.templateHasProductPhoto !== false,
+          });
+
+          const aspectRatio = selectedFormat === "story" ? "9:16" : "1:1";
+          const result = await generateImageClient(prepData.apiKey, visualPrompt, aspectRatio, refImages);
+
+          if (!result) {
+            failCount++;
+            failGeneration(placeholderId, "Génération échouée");
+            return;
+          }
+
+          updateGeneratedAd(placeholderId, { generationStep: "saving" });
+
+          const adId = `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+          const ad = {
+            id: adId,
+            format: selectedFormat,
+            imageBase64: result.imageBase64,
+            mimeType: result.mimeType,
+            headline: brandCtx.offerTitle || brandCtx.uniqueSellingPoints?.[0] || product.name,
+            bodyText: brandCtx.productDescription?.slice(0, 80) || "",
+            callToAction: "",
+            productId: product.id,
+            offerId: offer?.id,
+            templateId: tplData.id || tplData.templateId,
+            timestamp: Date.now(),
+            _debug: {
+              geminiPrompt: visualPrompt,
+              sceneDescription: "",
+              templateType: null,
+              referenceImageLabels: refImages.map((r: { label: string }) => r.label.slice(0, 100)),
+              templateImageBase64: tplBase64 || null,
+              templateMimeType: tplMime || null,
+            },
+          };
+
+          completeGeneration(placeholderId, ad);
+          if (currentUser) syncGeneratedAd(currentUser.id, { ...ad, id: adId });
+        } catch {
+          failCount++;
+          failGeneration(placeholderId, "Erreur réseau");
+        }
+      });
+
+      await Promise.allSettled(promises);
+
+      // Refund failed generations
+      if (failCount > 0) {
+        const refundAmount = failCount * 10;
+        fetch("/api/generate-ad/refund", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ creditCost: refundAmount }),
+        }).catch(() => {});
+      }
+
+      window.dispatchEvent(new Event("credits-updated"));
+      const successCount = placeholderIds.length - failCount;
+      if (successCount > 0) {
+        addToast({ type: "success", message: `${successCount} publicité${successCount > 1 ? "s" : ""} générée${successCount > 1 ? "s" : ""} !` });
+      }
+      if (failCount > 0) {
+        addToast({ type: "error", message: `${failCount} génération${failCount > 1 ? "s" : ""} échouée${failCount > 1 ? "s" : ""} (crédits remboursés)` });
+      }
+    } catch {
+      placeholderIds.forEach(id => failGeneration(id, "Erreur réseau"));
+      addToast({ type: "error", message: "Erreur lors de la génération" });
+    }
   }
 
   async function doGeneration(
@@ -426,6 +607,15 @@ export default function GeneratePage() {
       },
     ];
 
+    const beastMode = {
+      key: "beast" as GenerationMode,
+      emoji: "\uD83D\uDD25",
+      title: "Mode BEAST",
+      description: "Génère 5 à 10 ads d'un coup avec des templates variés",
+      badge: "Nouveau",
+      gradient: "from-orange-500 to-red-500",
+    };
+
     return (
       <div className="-mt-8 flex items-center justify-center min-h-[calc(100vh-3.5rem)] py-12">
         <div className="max-w-3xl w-full px-4 sm:px-6 animate-fade-in-up">
@@ -466,6 +656,30 @@ export default function GeneratePage() {
               </button>
             ))}
           </div>
+
+          {/* Beast Mode card */}
+          <button
+            onClick={() => handleModeSelect(beastMode.key)}
+            className="group relative w-full bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border border-orange-200 p-6 text-left hover:border-orange-300 hover:shadow-lg hover:shadow-orange-500/10 transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98] mt-4"
+          >
+            <span className="absolute -top-2.5 left-4 text-[10px] font-bold text-white bg-gradient-to-r from-orange-500 to-red-500 px-3 py-1 rounded-full shadow-sm">
+              {beastMode.badge}
+            </span>
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${beastMode.gradient} flex items-center justify-center shadow-sm flex-shrink-0`}>
+                <span className="text-xl">{beastMode.emoji}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
+                  {beastMode.title}
+                </h3>
+                <p className="text-sm text-gray-400 mt-0.5 leading-relaxed">
+                  {beastMode.description}
+                </p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-orange-300 group-hover:text-orange-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
+            </div>
+          </button>
         </div>
       </div>
     );
@@ -588,7 +802,7 @@ export default function GeneratePage() {
                 Quel produit promouvoir ?
               </h1>
               <p className="text-sm text-gray-400 mt-0.5">
-                {generationMode === "auto" ? "Ads Aléatoire" : generationMode === "library" ? "Depuis la Bibliothèque" : generationMode === "reference" ? "Copy-Ads" : "Prompt Personnalisé"}
+                {generationMode === "auto" ? "Ads Aléatoire" : generationMode === "library" ? "Depuis la Bibliothèque" : generationMode === "reference" ? "Copy-Ads" : generationMode === "beast" ? "Mode BEAST" : "Prompt Personnalisé"}
               </p>
             </div>
           </div>
@@ -766,6 +980,32 @@ export default function GeneratePage() {
             ) : null;
           })()}
 
+          {/* Beast count selector */}
+          {generationMode === "beast" && (
+            <div className="space-y-3">
+              <label className="text-sm font-semibold text-gray-700 block">Nombre d&apos;ads</label>
+              <div className="flex gap-2">
+                {[5, 6, 7, 8, 9, 10].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setBeastCount(n)}
+                    className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
+                      beastCount === n
+                        ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
+                <span className="text-sm text-orange-700">Coût total</span>
+                <span className="text-lg font-bold text-orange-600">{beastCount * 10} crédits</span>
+              </div>
+            </div>
+          )}
+
           {/* Format */}
           <section className="space-y-2.5">
             <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Format</h3>
@@ -885,12 +1125,21 @@ export default function GeneratePage() {
           <button
             onClick={handleGenerate}
             disabled={launching || !canGenerate}
-            className="w-full flex items-center justify-center gap-2.5 text-white py-4 rounded-2xl text-sm font-semibold bg-gradient-to-r from-blue-500 to-violet-500 hover:shadow-lg hover:shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed mt-2"
+            className={`w-full flex items-center justify-center gap-2.5 text-white py-4 rounded-2xl text-sm font-semibold transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed mt-2 ${
+              generationMode === "beast"
+                ? "bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg hover:shadow-orange-500/20"
+                : "bg-gradient-to-r from-blue-500 to-violet-500 hover:shadow-lg hover:shadow-blue-500/20"
+            }`}
           >
             {launching ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Lancement...
+              </>
+            ) : generationMode === "beast" ? (
+              <>
+                <span className="text-base">🔥</span>
+                Lancer {beastCount} générations
               </>
             ) : (
               <>

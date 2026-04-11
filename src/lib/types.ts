@@ -91,4 +91,4 @@ export interface AdTemplate {
 
 export type WizardStep = 1 | 2 | 3 | 4;
 
-export type GenerationMode = "auto" | "custom" | "reference" | "library";
+export type GenerationMode = "auto" | "custom" | "reference" | "library" | "beast";
