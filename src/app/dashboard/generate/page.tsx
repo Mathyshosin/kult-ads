@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Zap,
   Shuffle,
+  Check,
   Pencil,
   ImageIcon,
   X,
@@ -58,12 +59,13 @@ export default function GeneratePage() {
   const startGeneration = useWizardStore((s) => s.startGeneration);
   const completeGeneration = useWizardStore((s) => s.completeGeneration);
   const failGeneration = useWizardStore((s) => s.failGeneration);
+  const addGeneratedAd = useWizardStore((s) => s.addGeneratedAd);
   const updateGeneratedAd = useWizardStore((s) => s.updateGeneratedAd);
   const syncGeneratedAd = useWizardStore((s) => s.syncGeneratedAd);
   const currentUser = useAuthStore((s) => s.currentUser);
   const addToast = useToastStore((s) => s.addToast);
 
-  const [step, setStep] = useState<"mode" | "library" | "product" | "options">("mode");
+  const [step, setStep] = useState<"mode" | "library" | "product" | "options" | "studio">("mode");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedImage, setSelectedImage] = useState("");
   const [customPrompt, setCustomPrompt] = useState("");
@@ -76,6 +78,10 @@ export default function GeneratePage() {
   const [ctaEnabled, setCtaEnabled] = useState(false);
   const [ctaText, setCtaText] = useState("");
   const [beastCount, setBeastCount] = useState(5);
+  const [studioResult, setStudioResult] = useState<{ imageBase64: string; mimeType: string } | null>(null);
+  const [studioGenerating, setStudioGenerating] = useState(false);
+  const [studioError, setStudioError] = useState<string | null>(null);
+  const [studioStep, setStudioStep] = useState<"idle" | "preparing" | "generating" | "saving">("idle");
 
   // Clear reference ad on unmount (don't persist between visits)
   useEffect(() => {
@@ -360,6 +366,7 @@ export default function GeneratePage() {
         body: JSON.stringify({
           templateId: selectedTemplateId || undefined,
           format: selectedFormat,
+          generationMode,
         }),
       });
 
@@ -811,7 +818,7 @@ export default function GeneratePage() {
                 return (
                   <button
                     key={product.id}
-                    onClick={() => { setSelectedProduct(product); setStep("options"); }}
+                    onClick={() => { setSelectedProduct(product); if (generationMode === "custom") { setStep("studio"); } else { setStep("options"); } }}
                     className="group w-full bg-white rounded-2xl border border-gray-200 p-4 text-left hover:border-blue-200 hover:shadow-md transition-all duration-200"
                   >
                     <div className="flex items-center gap-4">
@@ -851,6 +858,330 @@ export default function GeneratePage() {
               </button>
             </div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════
+  // STEP: Studio — creative prompt workspace
+  // ══════════════════════════════════════════
+  if (step === "studio" && selectedProduct) {
+    const productImage = uploadedImages.find((img) => img.productId === selectedProduct.id) || uploadedImages[0];
+
+    const handleStudioGenerate = async () => {
+      if (studioGenerating) return;
+      if (!customPrompt.trim() && !brandAnalysis) return;
+      setStudioGenerating(true);
+      setStudioResult(null);
+      setStudioError(null);
+      setStudioStep("preparing");
+
+      try {
+        // Prepare (credits + API key)
+        const prepareRes = await fetch("/api/generate-ad/prepare", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ format: selectedFormat, generationMode: "custom" }),
+        });
+
+        if (!prepareRes.ok) {
+          const errData = await prepareRes.json().catch(() => null);
+          if (errData?.code === "NO_CREDITS") {
+            setStudioError("Plus de credits !");
+            setStudioGenerating(false);
+            setStudioStep("idle");
+            return;
+          }
+          throw new Error(errData?.error || "Erreur preparation");
+        }
+
+        const prepData = await prepareRes.json();
+
+        // Build prompt
+        setStudioStep("generating");
+        const { buildAdPrompt, buildReferenceImages, detectMimeType } = await import("@/lib/build-ad-prompt");
+        const { compressBase64 } = await import("@/lib/image-utils");
+        const { generateImageClient } = await import("@/lib/gemini-client");
+
+        const offer = brandAnalysis!.offers?.find((o) => o.productId === selectedProduct.id);
+        const brandCtx = {
+          brandName: brandAnalysis!.brandName,
+          brandDescription: brandAnalysis!.brandDescription,
+          tone: brandAnalysis!.tone,
+          targetAudience: brandAnalysis!.targetAudience,
+          uniqueSellingPoints: brandAnalysis!.uniqueSellingPoints,
+          competitorProducts: brandAnalysis!.competitorProducts,
+          productName: selectedProduct.name,
+          productDescription: selectedProduct.description || "",
+          productPrice: selectedProduct.price,
+          productOriginalPrice: offer?.originalPrice || selectedProduct.originalPrice,
+          productSalePrice: offer?.salePrice || selectedProduct.salePrice,
+          offerTitle: offer?.title,
+          offerDescription: offer?.description,
+        };
+
+        // Use custom prompt or creative mode
+        const promptText = customPrompt.trim() || `Create a stunning, creative, eye-catching Instagram ad for "${brandAnalysis!.brandName}" selling "${selectedProduct.name}". Be bold, creative, and original. Use the product photo exactly as provided. The ad should feel premium, modern, and impossible to scroll past. All text in French.`;
+
+        const visualPrompt = buildAdPrompt({
+          mode: "generation",
+          brandContext: brandCtx,
+          format: selectedFormat,
+          customPrompt: promptText,
+          hasTemplate: false,
+          isReference: false,
+        });
+
+        // Compress product image
+        let prodBase64 = productImage?.base64;
+        let prodMime = productImage?.mimeType || "image/jpeg";
+        if (prodBase64) {
+          const c = await compressBase64(prodBase64, prodMime, 768);
+          prodBase64 = c.base64;
+          prodMime = c.mimeType;
+        }
+
+        const refImages = buildReferenceImages({
+          mode: "generation",
+          productImageBase64: prodBase64,
+          productImageMimeType: prodMime ? detectMimeType(prodMime, prodMime) : undefined,
+          productName: selectedProduct.name,
+          isReference: false,
+          hasTemplate: false,
+          isTextOnly: false,
+          templateShowsProduct: true,
+        });
+
+        const aspectRatio = selectedFormat === "story" ? "9:16" : "1:1";
+        const result = await generateImageClient(prepData.apiKey, visualPrompt, aspectRatio, refImages);
+
+        if (!result) {
+          // Refund
+          fetch("/api/generate-ad/refund", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ creditCost: prepData.creditCost }),
+          }).catch(() => {});
+          setStudioError("La generation a echoue. Reessayez.");
+          setStudioGenerating(false);
+          setStudioStep("idle");
+          window.dispatchEvent(new Event("credits-updated"));
+          return;
+        }
+
+        setStudioStep("idle");
+        setStudioResult(result);
+        window.dispatchEvent(new Event("credits-updated"));
+      } catch (err) {
+        setStudioError(err instanceof Error ? err.message : "Erreur");
+        setStudioStep("idle");
+      }
+      setStudioGenerating(false);
+    };
+
+    const handleStudioSave = async () => {
+      if (!studioResult || !currentUser) return;
+      const adId = `ad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const offer = brandAnalysis!.offers?.find((o) => o.productId === selectedProduct.id);
+      const ad = {
+        id: adId,
+        format: selectedFormat,
+        imageBase64: studioResult.imageBase64,
+        mimeType: studioResult.mimeType,
+        headline: offer?.title || selectedProduct.name,
+        bodyText: selectedProduct.description?.slice(0, 80) || "",
+        callToAction: "",
+        productId: selectedProduct.id,
+        offerId: offer?.id,
+        timestamp: Date.now(),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      addGeneratedAd(ad as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      syncGeneratedAd(currentUser.id, ad as any);
+      addToast({ type: "success", message: "Publicite sauvegardee !" });
+    };
+
+    const handleStudioKeyDown = (e: React.KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        handleStudioGenerate();
+      }
+    };
+
+    return (
+      <div className="-mt-8 min-h-[calc(100vh-3.5rem)]">
+        <div className="max-w-[1400px] mx-auto px-6 py-8">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-6">
+            <button
+              onClick={() => setStep("product")}
+              className="p-2 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-gray-900 transition-all shadow-sm"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Studio Creatif</h1>
+              <p className="text-sm text-gray-400">{selectedProduct.name} — Prompt Personnalise</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-[1fr_420px] gap-8">
+            {/* Left — prompt + controls */}
+            <div className="space-y-5">
+              {/* Product chip */}
+              <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-3">
+                {productImage && (
+                  <img src={productImage.previewUrl} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{selectedProduct.name}</p>
+                  <p className="text-xs text-gray-400">Produit selectionne</p>
+                </div>
+              </div>
+
+              {/* Prompt */}
+              <div>
+                <div className="flex items-baseline justify-between mb-2">
+                  <span className="text-sm font-semibold text-gray-800">Prompt</span>
+                  <span className="text-xs text-gray-400">Ctrl+Enter pour generer</span>
+                </div>
+                <textarea
+                  value={customPrompt}
+                  onChange={(e) => setCustomPrompt(e.target.value)}
+                  onKeyDown={handleStudioKeyDown}
+                  placeholder="Decrivez votre publicite ideale... Ex: Un fond rose avec le produit au centre, entouré de fleurs, texte 'Offre Speciale -50%' en gros"
+                  className="w-full h-36 border border-gray-200 rounded-xl p-4 text-sm resize-y bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-300"
+                />
+              </div>
+
+              {/* Creative mode button */}
+              <button
+                onClick={() => {
+                  setCustomPrompt("");
+                }}
+                disabled={studioGenerating}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-purple-300 bg-purple-50/50 text-purple-600 text-sm font-medium hover:bg-purple-50 hover:border-purple-400 transition-colors disabled:opacity-40"
+              >
+                <span className="text-lg">🎨</span>
+                Laisse Klonr etre creatif
+              </button>
+
+              {/* Format */}
+              <div>
+                <span className="text-sm font-semibold text-gray-800 mb-2 block">Format</span>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { value: "square" as const, label: "1:1", sub: "Carre" },
+                    { value: "story" as const, label: "9:16", sub: "Story" },
+                  ]).map((f) => (
+                    <button
+                      key={f.value}
+                      onClick={() => setSelectedFormat(f.value)}
+                      className={`py-3 rounded-xl border text-center transition-all ${
+                        selectedFormat === f.value
+                          ? "border-gray-900 bg-white shadow-sm"
+                          : "border-gray-200 bg-white hover:border-gray-300"
+                      }`}
+                    >
+                      <div className={`text-sm font-bold ${selectedFormat === f.value ? "text-gray-900" : "text-gray-600"}`}>
+                        {f.label}
+                      </div>
+                      <div className="text-[11px] text-gray-400">{f.sub}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Config line */}
+              <div className="text-xs text-gray-400">
+                Config : <span className="text-blue-600">{selectedFormat === "story" ? "9:16" : "1:1"}</span> · {customPrompt.length} caracteres · <span className="text-orange-500">10 credits</span>
+              </div>
+
+              {/* Generate button */}
+              <button
+                onClick={handleStudioGenerate}
+                disabled={studioGenerating}
+                className="w-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 text-white rounded-2xl py-4 text-sm font-semibold transition-all disabled:opacity-40 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+              >
+                {studioGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {studioStep === "preparing" ? "Preparation..." : studioStep === "generating" ? "Gemini genere..." : "Sauvegarde..."}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    {customPrompt.trim() ? "Generer" : "Laisser Klonr creer"}
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Right — result */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 flex flex-col items-center justify-center min-h-[500px]">
+              {studioGenerating ? (
+                <div className="text-center">
+                  <Loader2 className="w-10 h-10 animate-spin text-blue-400 mx-auto mb-4" />
+                  <p className="text-sm font-medium text-gray-600">
+                    {studioStep === "preparing" ? "Preparation..." : studioStep === "generating" ? "Gemini genere votre publicite..." : "Sauvegarde..."}
+                  </p>
+                  <div className="flex items-center gap-2 mt-4 w-full max-w-[200px] mx-auto">
+                    {["preparing", "generating", "saving"].map((s, i) => (
+                      <div key={s} className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${
+                        ["preparing", "generating", "saving"].indexOf(studioStep) >= i ? "bg-blue-500" : "bg-gray-200"
+                      }`} />
+                    ))}
+                  </div>
+                </div>
+              ) : studioResult ? (
+                <div className="w-full space-y-4">
+                  <img
+                    src={`data:${studioResult.mimeType};base64,${studioResult.imageBase64}`}
+                    alt="Result"
+                    className="w-full rounded-xl object-contain"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleStudioSave}
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white rounded-xl py-2.5 text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Check className="w-4 h-4" />
+                      Sauvegarder
+                    </button>
+                    <button
+                      onClick={handleStudioGenerate}
+                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl py-2.5 text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Shuffle className="w-4 h-4" />
+                      Regenerer
+                    </button>
+                  </div>
+                </div>
+              ) : studioError ? (
+                <div className="text-center px-6">
+                  <p className="text-sm text-red-500 mb-4">{studioError}</p>
+                  <button
+                    onClick={handleStudioGenerate}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Reessayer
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-violet-50 flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="w-7 h-7 text-blue-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-500">Studio Creatif</p>
+                  <p className="text-xs text-gray-400 mt-1 max-w-[250px] mx-auto">
+                    Ecrivez votre prompt ou laissez Klonr creer pour vous. Le resultat s&apos;affiche ici.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     );

@@ -14,7 +14,8 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { templateId, format = "square", skipCreditCheck, beastCount } = body;
+    const { templateId, format = "square", skipCreditCheck, beastCount, generationMode } = body;
+    const skipTemplate = generationMode === "reference" || generationMode === "custom";
     const count = Math.min(Math.max(1, Number(beastCount) || 1), 10);
 
     // ── Credit deduction ──
@@ -68,7 +69,9 @@ export async function POST(request: Request) {
       templateAnalysis: unknown;
     }> = [];
 
-    if (count > 1) {
+    if (skipTemplate) {
+      // Reference/Custom mode: no template needed
+    } else if (count > 1) {
       // Beast mode: load multiple random templates
       const usedIds = new Set<string>();
       for (let i = 0; i < count; i++) {
