@@ -576,14 +576,6 @@ export default function GeneratePage() {
   if (step === "mode") {
     const modes: { key: GenerationMode; icon: React.ElementType; title: string; description: string; badge?: string; gradient: string }[] = [
       {
-        key: "auto",
-        icon: Shuffle,
-        title: "Ads Aléatoire",
-        description: "L'IA choisit le meilleur template et crée votre ad automatiquement",
-        badge: "Le plus utilisé",
-        gradient: "from-blue-500 to-cyan-400",
-      },
-      {
         key: "library",
         icon: BookOpen,
         title: "Depuis la Bibliothèque",
@@ -607,15 +599,6 @@ export default function GeneratePage() {
       },
     ];
 
-    const beastMode = {
-      key: "beast" as GenerationMode,
-      emoji: "\uD83D\uDD25",
-      title: "Mode BEAST",
-      description: "Génère 5 à 10 ads d'un coup avec des templates variés",
-      badge: "Nouveau",
-      gradient: "from-orange-500 to-red-500",
-    };
-
     return (
       <div className="-mt-8 flex items-center justify-center min-h-[calc(100vh-3.5rem)] py-12">
         <div className="max-w-3xl w-full px-4 sm:px-6 animate-fade-in-up">
@@ -631,55 +614,56 @@ export default function GeneratePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* 🔥 Mode BEAST — hero card */}
+          <button
+            onClick={() => handleModeSelect("beast")}
+            className="group relative w-full bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6 text-left hover:shadow-2xl hover:shadow-orange-500/30 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] mb-4"
+          >
+            <span className="absolute -top-2.5 left-4 text-[10px] font-bold text-orange-600 bg-white px-3 py-1 rounded-full shadow-sm">
+              Le plus populaire
+            </span>
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                <span className="text-3xl">🔥</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-white">
+                  Mode BEAST
+                </h3>
+                <p className="text-sm text-white/80 mt-0.5">
+                  Generez 5 a 10 publicites d'un coup — templates varies, resultats instantanes
+                </p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0" />
+            </div>
+          </button>
+
+          {/* Other modes */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {modes.map((mode) => (
               <button
                 key={mode.key}
                 onClick={() => handleModeSelect(mode.key)}
-                className="group relative bg-white rounded-2xl border border-gray-200 p-6 text-left hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98]"
+                className="group relative bg-white rounded-2xl border border-gray-200 p-5 text-left hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98]"
               >
                 {mode.badge && (
                   <span className="absolute -top-2.5 left-4 text-[10px] font-bold text-white bg-gradient-to-r from-blue-500 to-violet-500 px-3 py-1 rounded-full shadow-sm">
                     {mode.badge}
                   </span>
                 )}
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${mode.gradient} flex items-center justify-center mb-4 shadow-sm`}>
-                  <mode.icon className="w-5 h-5 text-white" />
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${mode.gradient} flex items-center justify-center mb-3 shadow-sm`}>
+                  <mode.icon className="w-4 h-4 text-white" />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                <h3 className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                   {mode.title}
                 </h3>
-                <p className="text-sm text-gray-400 mt-1.5 leading-relaxed">
+                <p className="text-xs text-gray-400 mt-1 leading-relaxed">
                   {mode.description}
                 </p>
-                <ArrowRight className="absolute top-6 right-5 w-4 h-4 text-gray-300 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+                <ArrowRight className="absolute top-5 right-4 w-3.5 h-3.5 text-gray-300 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
               </button>
             ))}
           </div>
-
-          {/* Beast Mode card */}
-          <button
-            onClick={() => handleModeSelect(beastMode.key)}
-            className="group relative w-full bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border border-orange-200 p-6 text-left hover:border-orange-300 hover:shadow-lg hover:shadow-orange-500/10 transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98] mt-4"
-          >
-            <span className="absolute -top-2.5 left-4 text-[10px] font-bold text-white bg-gradient-to-r from-orange-500 to-red-500 px-3 py-1 rounded-full shadow-sm">
-              {beastMode.badge}
-            </span>
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${beastMode.gradient} flex items-center justify-center shadow-sm flex-shrink-0`}>
-                <span className="text-xl">{beastMode.emoji}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
-                  {beastMode.title}
-                </h3>
-                <p className="text-sm text-gray-400 mt-0.5 leading-relaxed">
-                  {beastMode.description}
-                </p>
-              </div>
-              <ArrowRight className="w-4 h-4 text-orange-300 group-hover:text-orange-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
-            </div>
-          </button>
         </div>
       </div>
     );
@@ -802,7 +786,7 @@ export default function GeneratePage() {
                 Quel produit promouvoir ?
               </h1>
               <p className="text-sm text-gray-400 mt-0.5">
-                {generationMode === "auto" ? "Ads Aléatoire" : generationMode === "library" ? "Depuis la Bibliothèque" : generationMode === "reference" ? "Copy-Ads" : generationMode === "beast" ? "Mode BEAST" : "Prompt Personnalisé"}
+                {generationMode === "beast" ? "Mode BEAST 🔥" : generationMode === "library" ? "Depuis la Bibliothèque" : generationMode === "reference" ? "Copy-Ads" : "Prompt Personnalisé"}
               </p>
             </div>
           </div>
