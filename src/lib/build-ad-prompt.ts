@@ -90,26 +90,34 @@ export function detectMimeType(
 // Shared instruction appended to ALL prompts to fix spelling errors
 // ---------------------------------------------------------------------------
 
-function buildSpellingRule(brandName?: string): string {
-  let rule = `CRITICAL SPELLING AND BRAND NAME RULES:
-- All text must be in perfect French with ZERO spelling mistakes.
-- Never duplicate letters in words (e.g. "certiiifié" is wrong, "certifié" is correct).
-- Never use "&" instead of "et" in general text.
-- Double-check every single word before rendering it on the image.`;
+function buildTextPrefix(brandName?: string): string {
+  let prefix = `⚠️ TEXT QUALITY — READ BEFORE GENERATING:
+- EVERY word on this image MUST be in French. NEVER use English words.
+- ZERO spelling mistakes allowed. Each letter matters.
+- NEVER duplicate letters (WRONG: "certiiifié", "satisfiites", "mensturelle" — RIGHT: "certifié", "satisfaites", "menstruelle").
+- NEVER use "&" — always write "et" in general text.
+- NEVER mix French and English in the same text block.`;
 
   if (brandName) {
-    rule += `
-- BRAND NAME IS SACRED: The brand name is exactly "${brandName}" — copy it CHARACTER BY CHARACTER. Do not translate it, do not change "AND" to "et", do not change "CO" to "Co", do not add or remove spaces, do not modify capitalization. Write it EXACTLY as: "${brandName}".`;
+    prefix += `
+- BRAND NAME EXCEPTION: "${brandName}" must be written EXACTLY as shown — character by character, no translation, no modification.`;
   }
 
-  return rule;
+  return prefix;
 }
 
-const PRICE_RULE = `
-PRICE DISPLAY RULE: Do NOT display any price on the image unless the prompt above EXPLICITLY mentions a price, {{price}}, {{originalPrice}}, {{salePrice}}, or a specific amount in euros. If the prompt does not mention prices, do not add any — even if price data is available.`;
+function buildTextSuffix(): string {
+  return `
+FINAL CHECKS BEFORE OUTPUT:
+- Re-read every word on the image. Fix any spelling error.
+- Verify all text is in French (no English words).
+- Verify no letter is duplicated inside any word.
+- Verify "&" is not used anywhere (use "et" instead).
+- Do NOT display any price unless the prompt above explicitly mentions a price amount. If no price is mentioned, show no price.`;
+}
 
 function appendSpellingRule(prompt: string, brandName?: string): string {
-  return prompt + "\n\n" + buildSpellingRule(brandName) + "\n" + PRICE_RULE;
+  return buildTextPrefix(brandName) + "\n\n" + prompt + "\n\n" + buildTextSuffix();
 }
 
 // ---------------------------------------------------------------------------
